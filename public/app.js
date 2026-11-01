@@ -237,12 +237,12 @@ function errMsg(e) {
     research_empty: `公開情報を十分に見つけられませんでした（回数と利用枠は使っていません）。会社名を正式名称にするか、公式サイトの URL を入れてもう一度お試しください。${e && e.reason ? '（' + e.reason + '）' : ''}`,
     url: 'URL の形が正しくありません。「https://」から始まる求人ページの URL を貼ってください。',
     site_not_allowed: 'このサイトは利用規約などの理由で自動では読み込めません。求人ページの本文をコピーして、下の欄に貼り付けてください。',
-    robots: 'このページはサイトの設定（robots.txt）で自動の読み込みが許可されていません。本文をコピーして貼り付けてください。',
-    login_required: 'ログインが必要なページのため読み込めません。本文をコピーして貼り付けてください。',
-    page_error: 'ページを開けませんでした。URL を確かめるか、本文をコピーして貼り付けてください。',
-    not_html: '求人ページ（HTML）ではないため読み込めません。本文をコピーして貼り付けてください。',
-    too_little: '本文をほとんど読み取れませんでした（画面を JavaScript で表示するページの可能性があります）。本文をコピーして貼り付けてください。',
-    unreachable: 'ページに接続できませんでした。時間をおいて試すか、本文をコピーして貼り付けてください。',
+    robots: 'このページはサイトの設定（robots.txt）で自動の読み込みが許可されていません。本文をコピーして、下の欄に貼り付けてください。',
+    login_required: 'ログインが必要なページのため読み込めません。本文をコピーして、下の欄に貼り付けてください。',
+    page_error: 'ページを開けませんでした。URL を確かめるか、本文をコピーして下の欄に貼り付けてください。',
+    not_html: 'ウェブページではないため読み込めません（PDF や画像の可能性があります）。開いて本文をコピーし、下の欄に貼り付けてください。',
+    too_little: '本文をほとんど読み取れませんでした（画面を JavaScript で表示するページの可能性があります）。本文をコピーして、下の欄に貼り付けてください。',
+    unreachable: 'ページに接続できませんでした。時間をおいて試すか、本文をコピーして下の欄に貼り付けてください。',
   }[c];
   return m || ('エラーが発生しました（' + (c || (e && e.message) || 'unknown') + '）。もう一度お試しください。');
 }
@@ -351,7 +351,10 @@ function showConflict() {
 let modalResolve = null; let modalLock = false;
 function openModal(html, o) {
   $('#sheet').innerHTML = html; $('#modal').classList.remove('hidden'); document.body.classList.add('noscroll'); modalLock = !!(o && o.lock);
-  const f = $('#sheet').querySelector('input,button.primary'); if (f) setTimeout(() => f.focus(), 30);
+  $('#modal').scrollTop = 0;   // a tall sheet on a phone opens at its title and reason, not at the buttons
+  const f = $('#sheet').querySelector('input'); const t = $('#sheet').querySelector('#modalTitle');
+  if (t) t.setAttribute('tabindex', '-1');
+  setTimeout(() => { const el = f || t || $('#sheet').querySelector('button.primary'); if (el) el.focus({ preventScroll: true }); $('#modal').scrollTop = 0; }, 30);
 }
 function closeModal(v) { $('#modal').classList.add('hidden'); document.body.classList.remove('noscroll'); modalLock = false; if (modalResolve) { const r = modalResolve; modalResolve = null; r(v); } }
 $('#modal').addEventListener('click', (e) => { if (e.target.id === 'modal' && !modalLock) closeModal(false); });
@@ -628,13 +631,13 @@ async function fetchJobUrl(c) {
   if (!acct.me.paid) { openBuy('求人ページの URL からの読み込みは、利用枠を購入した方が使える機能です。', 'buyer'); return; }
   const url = (c.jobUrl || '').trim();
   if (!url) { toast('求人ページの URL を入れてください'); const i = document.querySelector(`[data-cid="${c.id}"] [data-cf=jobUrl]`); if (i) i.focus(); return; }
-  c.fetchStatus = 'run'; c.fetchError = ''; c.fetchCode = ''; c.fetchNote = ''; render();
+  c.fetchStatus = 'run'; c.fetchError = ''; c.fetchCode = ''; c.fetchNote = []; render();
   try {
     const r = await api('POST', '/api/fetch-job', { url });
     c.jobPrev = c.job; c.job = Sx(r.text).slice(0, 12000); c.jobOpen = true;
     if (!c.name && r.company) c.name = Sx(r.company).slice(0, 120);
     c.fetchNote = [r.count > 1 ? `このページには求人が${r.count}件ありました。最初の1件を読み込んだので、目的の求人か確かめてください。` : '',
-      r.expired ? `この求人は掲載期限（${Sx(r.expired)}）を過ぎている可能性があります。` : ''].filter(Boolean).join(' ');
+      r.expired ? `この求人は掲載期限（${Sx(r.expired)}）を過ぎている可能性があります。` : ''].filter(Boolean);
     c.fetchStatus = ''; toast('求人ページを読み込みました。内容を確かめてから分析してください');
     save(); render();
     setTimeout(() => { const t = document.querySelector(`[data-cid="${c.id}"] [data-cf=job]`); if (t) { t.scrollIntoView({ block: 'center', behavior: 'smooth' }); t.focus({ preventScroll: true }); } }, 60);
@@ -655,7 +658,8 @@ function normResearch(r) {
     identity: { official_site: safeUrl(id.official_site), match: Sx(id.match) }, overview: Sx(r.overview), hiring_context: Sx(r.hiring_context),
     facts: A(r.facts).map((x, i) => item(x, i)).filter((x) => x.text && x.url), position: A(r.position).map((x) => item(x)).filter((x) => x.text && x.url),
     hooks: hooks.filter((x) => x.why), questions: qs.filter((q) => q.q),
-    check_yourself: A(r.check_yourself).map(Sx).filter(Boolean), caveats: A(r.caveats).map(Sx).filter(Boolean), at: r.at || Date.now() };
+    check_yourself: A(r.check_yourself).map((x) => (typeof x === 'string' ? { point: Sx(x), ask: '', ask_tr: '' } : { point: Sx(x.point), ask: Sx(x.ask), ask_tr: Sx(x.ask_tr) })).filter((x) => x.point || x.ask),
+    caveats: A(r.caveats).map(Sx).filter(Boolean), at: r.at || Date.now() };
 }
 async function makeResearch(c) {
   c.researchStatus = 'run'; c.researchSince = Date.now(); c.researchError = ''; render();
@@ -714,7 +718,7 @@ function researchHTML(c) {
     s += '</div><div>';
     if (r.hooks.length) s += `<h5>志望動機の材料になりそうなこと</h5><ul>${r.hooks.map((x) => { const f = fact(x.fact); return `<li>${h(x.why)}${f ? `<span class="rs-sub">${h(f.text)}</span>` : ''}</li>`; }).join('')}</ul>`;
     if (r.questions.length) s += `<h5>逆質問の候補</h5><ul>${r.questions.map((q) => `<li><span data-noi18n>${h(q.q)}</span>${trl(q.q_tr)}${FOR[q.for] ? `<span class="rs-sub">${FOR[q.for]}</span>` : ''}</li>`).join('')}</ul>`;
-    if (r.check_yourself.length) s += `<h5>自分で確かめたいこと</h5><ul>${r.check_yourself.map((x) => `<li>${h(x)}</li>`).join('')}</ul>`;
+    if (r.check_yourself.length) s += `<h5>自分で確かめたいこと</h5><ul>${r.check_yourself.map((x) => `<li>${h(x.point)}${x.ask ? `<span class="rs-sub"><span>聞き方の例：</span><span data-noi18n>「${h(x.ask)}」</span></span>${trl(x.ask_tr)}` : ''}</li>`).join('')}</ul>`;
     s += `<details class="mini"><summary>口コミサイトについて</summary><p>口コミサイトは AI の調査に使っていません。匿名の投稿は書き手の職種や時期を確かめられず、AI が要約すると一部の声が事実のように見えるためです。応募や入社を判断する材料として読むのは役立ちます。読むときは、直近2〜3年の投稿か、職種・部署が近いか、同じ点が複数の投稿で繰り返されているかを見てください。面接では口コミを根拠にせず、気になる点は中立な質問に言い換えて、人事面談やオファー面談で確かめましょう。</p></details>`;
     s += '</div></div>';
     if (r.caveats.length) s += r.caveats.map((x) => `<p class="hint tiny" style="margin:4px 0 0">※ ${h(x)}</p>`).join('');
@@ -1184,8 +1188,8 @@ function urlRowHTML(c) {
   if (c.fetchError) {
     s += `<div class="status err" role="alert" style="margin:2px 0 6px">${h(c.fetchError)}</div>`;
     if (['site_not_allowed', 'robots', 'login_required', 'too_little', 'not_html'].includes(c.fetchCode)) s += `<p class="hint tiny" style="margin:0 0 8px"><span>ページ全体をコピーして貼り付けても大丈夫です（関係のない部分は分析のときに読み飛ばします）。</span>${c.name ? ` <a href="https://www.google.com/search?q=${encodeURIComponent(c.name + ' 採用')}" target="_blank" rel="noopener noreferrer">この会社の採用ページを探す</a>` : ''}</p>`;
-  } else s += '<p class="hint tiny" style="margin:2px 0 8px">会社の採用ページなどから本文を読み込みます。転職サイト（doda・リクナビ・ビズリーチなど）や、ログインが必要なページは読み込めないため、本文を貼り付けてください。</p>';
-  if (c.fetchNote) s += `<div class="fb warn" style="margin:0 0 8px">${h(c.fetchNote)}</div>`;
+  } else s += '<p class="hint tiny" style="margin:2px 0 8px">会社の採用ページなどから本文を読み込みます。転職サイト（doda・リクナビ・ビズリーチ・Indeed・LinkedIn など）や、ログインが必要なページは読み込めないため、本文を貼り付けてください。</p>';
+  if (c.fetchNote && c.fetchNote.length) s += `<div class="fb warn" style="margin:0 0 8px">${[].concat(c.fetchNote).map((x) => `<span>${h(x)}</span>`).join('')}</div>`;
   return s;
 }
 function companyHTML(c) {

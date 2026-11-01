@@ -9,7 +9,7 @@ const root = new URL('../', import.meta.url).pathname;
 const JA = /[぀-ヿ㐀-鿿！-｠　-〿]/;
 const keys = new Map();
 // text that is data, not page text (dates, the 学歴・職歴 lines of the 履歴書)
-const IGNORE = new Set(['步骤', '周日', '周一', '周二', '周三', '周四', '周五', '周六', '{0}年{1}月{2}日', '日月火水木金土', '{0}/{1}（{2}）', '年', '日', '月', '｜現在に至る', '一身上の都合により退職', '貴社の規定に従います。', '採用', 'グループ', '{0}年{1}月']);
+const IGNORE = new Set(['步骤', '周日', '周一', '周二', '周三', '周四', '周五', '周六', '{0}年{1}月{2}日', '日月火水木金土', '{0}/{1}（{2}）', '年', '日', '月', '｜現在に至る', '一身上の都合により退職', '貴社の規定に従います。', '採用', 'グループ', '{0}年{1}月', '$1年$2月']);
 const put = (k, where) => {
   k = k.replace(/\s+/g, ' ').trim();
   if (!k || !JA.test(k)) return;

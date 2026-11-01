@@ -479,7 +479,8 @@ main{padding-bottom:40px}
 
 /* language switch in the header: 日本語 / English / 中文 */
 .langs{display:flex;gap:2px;align-items:center;margin-right:6px;font-size:12.5px}
-.langs a{padding:5px 8px;border-radius:999px;color:var(--ink2);text-decoration:none}
+.langs a{padding:5px 8px;border-radius:999px;color:var(--ink2);text-decoration:none;white-space:nowrap}
+@media (max-width:440px){fl-header:has(#acct .credit) .langs{display:none}}
 .langs a:hover{background:rgba(11,18,32,.05);color:var(--ink)}
 .langs a[aria-current="page"]{color:var(--ink);font-weight:600}
 @media (max-width:640px){.langs a[aria-current="page"]{display:none}.langs{font-size:12px}}

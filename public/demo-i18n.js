@@ -131,8 +131,8 @@ window.DEMO_I18N = {
       "motivation": {
         "long": "現職では従業員50〜300名規模の顧客を中心に担当してきましたが、より大きく複雑な組織での活用推進に挑戦したいと考え、中堅企業向けの貴社を志望しました。2026年4月に始められたオンボーディング専任体制は、導入資料を標準化して導入期間を45日から30日に短縮した私の経験が、最も生きる場面だと考えています。ヘルススコアを設計してチームの運用に定着させ、解約率を8.1%から4.3%に改善した経験も生かし、関係者の多いお客様の定着を、人に頼らない仕組みで支えたいと考えています。入社後はまず導入プロセスの標準化から取り組み、誰が担当しても同じ判断ができるチームをつくります。",
         "short": "より大きく複雑な組織での活用推進に挑戦したく、中堅企業向けの貴社を志望しました。2026年4月に始められたオンボーディング専任体制のもとで、導入期間を45日から30日に短縮した経験と、ヘルススコアをチームで運用した経験を生かし、CSの仕組みづくりとチームのリードに取り組みます。",
-        "long_tr": "In my current job I have mainly handled customers with 50–300 employees, but I want to take on driving adoption in larger, more complex organizations, so I am applying to your company, which serves mid-sized businesses. The dedicated onboarding setup you started in April 2026 is where I believe my experience will help most: I standardized onboarding materials and shortened the time to go-live from 45 to 30 days. I also designed a health score, made it part of how the team works and improved the churn rate from 8.1% to 4.3%, and I want to use that experience to support customers with many stakeholders through systems that don’t depend on individuals. After joining, I would start by standardizing the onboarding process and build a team in which anyone in charge can make the same decisions.",
-        "short_tr": "I want to take on driving adoption in larger, more complex organizations, so I am applying to your company, which serves mid-sized businesses. Under the dedicated onboarding setup you started in April 2026, I will use my experience shortening the time to go-live from 45 to 30 days and running a health score with my team to build CS systems and lead the team.",
+        "long_tr": "In my current job I have mainly handled customers with 50–300 employees, but I want to take on driving adoption in larger, more complex organizations, so I am applying to your company, which serves mid-sized businesses. 「オンボーディング専任体制」 (the dedicated onboarding team) you started in April 2026 is where I believe my experience will help most: I standardized onboarding materials and shortened the time to go-live from 45 to 30 days. I also designed a health score, made it part of how the team works and improved the churn rate from 8.1% to 4.3%, and I want to use that experience to support customers with many stakeholders through systems that don’t depend on individuals. After joining, I would start by standardizing the onboarding process and build a team in which anyone in charge can make the same decisions.",
+        "short_tr": "I want to take on driving adoption in larger, more complex organizations, so I am applying to your company, which serves mid-sized businesses. Under 「オンボーディング専任体制」 (the dedicated onboarding team) you started in April 2026, I will use my experience shortening the time to go-live from 45 to 30 days and running a health score with my team to build CS systems and lead the team.",
         "used": [
           "F2"
         ]
@@ -193,11 +193,11 @@ window.DEMO_I18N = {
           "intent": "How deeply you have researched the company, and whether you can repeat your results after joining",
           "points": [
             "The customer base: mid-sized companies",
-            "Where the dedicated onboarding setup from April 2026 (public information) meets your experience",
+            "Where 「オンボーディング専任体制」 (April 2026, public information) meets your experience",
             "How you would use it after joining"
           ],
           "answer": "中堅企業向けにサービスを提供されている点と、2026年4月にオンボーディング専任体制を始められた点に惹かれました。私も営業時代から、導入して終わりではなく定着まで支えることを大切にしてきました。現職では導入資料を標準化して導入期間を45日から30日に短縮し、ヘルススコアをチームで運用してきました。この経験は、貴社のオンボーディング設計と解約防止の仕事にそのまま生かせると考えています。",
-          "answer_tr": "I was drawn to the fact that you serve mid-sized companies and that you started a dedicated onboarding setup in April 2026. Since my sales days, I have cared about supporting customers not just until implementation but until they really use the product. In my current job I standardized onboarding materials, shortening the time to go-live from 45 to 30 days, and I have run a health score with my team. I believe this experience will be directly useful in your onboarding design and churn prevention work."
+          "answer_tr": "I was drawn to the fact that you serve mid-sized companies and that you started 「オンボーディング専任体制」 (a dedicated onboarding team) in April 2026. Since my sales days, I have cared about supporting customers not just until implementation but until they really use the product. In my current job I standardized onboarding materials, shortening the time to go-live from 45 to 30 days, and I have run a health score with my team. I believe this experience will be directly useful in your onboarding design and churn prevention work."
         },
         {
           "q": "あなたの強みと弱みを教えてください",
@@ -254,7 +254,7 @@ window.DEMO_I18N = {
         "解約の兆しをチームで共有する仕組みは、今どのように運用されていますか？"
       ],
       "reverse_tr": [
-        "In my current job I have worked on shortening onboarding. Under the dedicated onboarding setup, what role do you expect CS leaders to play?",
+        "In my current job I have worked on shortening onboarding. Under 「オンボーディング専任体制」 (the dedicated onboarding team), what role do you expect CS leaders to play?",
         "What state would you expect me to have reached three months after joining?",
         "How does the team currently share early signs of churn?"
       ],
@@ -423,7 +423,7 @@ window.DEMO_I18N = {
           "id": "F2",
           "topic": "最近の動き",
           "entity": "応募先",
-          "text": "Announced a dedicated onboarding setup in which the CS team handles implementation support",
+          "text": "Announced 「オンボーディング専任体制」 (a dedicated onboarding team), in which the CS team handles implementation support",
           "url": "https://example.com/samplecloud/news/2026-04",
           "title": "News release (sample)",
           "date": "2026-04"
@@ -478,7 +478,7 @@ window.DEMO_I18N = {
           "q": "オンボーディング専任体制を始めてから、CSリーダーにはどのような役割を期待されていますか？",
           "premise": "F2",
           "for": "現場",
-          "q_tr": "Since starting the dedicated onboarding setup, what role do you expect CS leaders to play?"
+          "q_tr": "Since starting the dedicated onboarding team (オンボーディング専任体制), what role do you expect CS leaders to play?"
         },
         {
           "q": "大企業向けに広げていく中で、CSチームの担当の持ち方はどう変わっていく見込みですか？",
@@ -488,8 +488,16 @@ window.DEMO_I18N = {
         }
       ],
       "check_yourself": [
-        "How leaders are evaluated: ask “Which metrics are leaders evaluated on?”",
-        "Size of accounts: ask “When will the team start handling more large companies?”"
+        {
+          "point": "How CS leaders are evaluated",
+          "ask": "リーダーはどのような指標で評価されていますか？",
+          "ask_tr": "Which metrics are leaders evaluated on?"
+        },
+        {
+          "point": "When the size of your accounts will change",
+          "ask": "大企業のお客様の担当は、いつ頃から増えていく見込みですか？",
+          "ask_tr": "When do you expect the team to start handling more large companies?"
+        }
       ],
       "caveats": [
         "How the funds will be used is as described in the November 2025 announcement"
@@ -627,8 +635,8 @@ window.DEMO_I18N = {
       "motivation": {
         "long": "現職では従業員50〜300名規模の顧客を中心に担当してきましたが、より大きく複雑な組織での活用推進に挑戦したいと考え、中堅企業向けの貴社を志望しました。2026年4月に始められたオンボーディング専任体制は、導入資料を標準化して導入期間を45日から30日に短縮した私の経験が、最も生きる場面だと考えています。ヘルススコアを設計してチームの運用に定着させ、解約率を8.1%から4.3%に改善した経験も生かし、関係者の多いお客様の定着を、人に頼らない仕組みで支えたいと考えています。入社後はまず導入プロセスの標準化から取り組み、誰が担当しても同じ判断ができるチームをつくります。",
         "short": "より大きく複雑な組織での活用推進に挑戦したく、中堅企業向けの貴社を志望しました。2026年4月に始められたオンボーディング専任体制のもとで、導入期間を45日から30日に短縮した経験と、ヘルススコアをチームで運用した経験を生かし、CSの仕組みづくりとチームのリードに取り組みます。",
-        "long_tr": "在现在的公司，我主要负责员工 50～300 人规模的客户，但我希望挑战在更大、更复杂的组织中推动产品的使用，因此应聘面向中型企业的贵公司。贵公司 2026 年 4 月开始的专职入门引导体制，正是我的经验最能发挥作用的地方：我曾把导入资料标准化，把上线周期从 45 天缩短到 30 天。我还设计了健康度评分并让团队用起来，把解约率从 8.1% 降到 4.3%。我希望运用这些经验，用不依赖个人的机制，帮助相关人员众多的客户真正用起来。入职后，我会先从导入流程的标准化着手，打造一个无论谁负责都能做出同样判断的团队。",
-        "short_tr": "我希望挑战在更大、更复杂的组织中推动产品的使用，因此应聘面向中型企业的贵公司。在贵公司 2026 年 4 月开始的专职入门引导体制下，我将运用把上线周期从 45 天缩短到 30 天、以及和团队一起运营健康度评分的经验，着手建设 CS 机制并带领团队。",
+        "long_tr": "在现在的公司，我主要负责员工 50～300 人规模的客户，但我希望挑战在更大、更复杂的组织中推动产品的使用，因此应聘面向中型企业的贵公司。贵公司 2026 年 4 月启动的「オンボーディング専任体制」（客户上线专职团队），正是我的经验最能发挥作用的地方：我曾把上线资料标准化，把上线周期从 45 天缩短到 30 天。我还设计了健康度评分并让团队用起来，把解约率从 8.1% 降到 4.3%。我希望运用这些经验，用不依赖个人的机制，帮助相关人员众多的客户真正用起来。入职后，我会先从上线流程的标准化着手，打造一个无论谁负责都能做出同样判断的团队。",
+        "short_tr": "我希望挑战在更大、更复杂的组织中推动产品的使用，因此应聘面向中型企业的贵公司。在贵公司 2026 年 4 月启动的「オンボーディング専任体制」（客户上线专职团队）下，我将运用把上线周期从 45 天缩短到 30 天、以及和团队一起运营健康度评分的经验，着手建设 CS 机制并带领团队。",
         "used": [
           "F2"
         ]
@@ -689,11 +697,11 @@ window.DEMO_I18N = {
           "intent": "企业研究的深度，以及入职后能否复制成果",
           "points": [
             "客户群是中型企业",
-            "2026 年 4 月的专职入门引导体制（公开信息）与自己经验的交集",
+            "「オンボーディング専任体制」（2026 年 4 月，公开信息）与自己经验的交集",
             "入职后如何运用"
           ],
           "answer": "中堅企業向けにサービスを提供されている点と、2026年4月にオンボーディング専任体制を始められた点に惹かれました。私も営業時代から、導入して終わりではなく定着まで支えることを大切にしてきました。現職では導入資料を標準化して導入期間を45日から30日に短縮し、ヘルススコアをチームで運用してきました。この経験は、貴社のオンボーディング設計と解約防止の仕事にそのまま生かせると考えています。",
-          "answer_tr": "我被贵公司面向中型企业提供服务，以及 2026 年 4 月启动专职入门引导体制这两点所吸引。我从做销售时起，就一直重视不止于导入、而是支持客户直到真正用起来。在现在的公司，我把导入资料标准化，把上线周期从 45 天缩短到 30 天，并和团队一起运营健康度评分。我认为这些经验可以直接用在贵公司的入门引导设计和防止解约的工作中。"
+          "answer_tr": "我被贵公司面向中型企业提供服务，以及 2026 年 4 月启动「オンボーディング専任体制」（客户上线专职团队）这两点所吸引。我从做销售时起，就一直重视不止于上线、而是支持客户直到真正用起来。在现在的公司，我把上线资料标准化，把上线周期从 45 天缩短到 30 天，并和团队一起运营健康度评分。我认为这些经验可以直接用在贵公司的客户上线设计和防止解约的工作中。"
         },
         {
           "q": "あなたの強みと弱みを教えてください",
@@ -750,7 +758,7 @@ window.DEMO_I18N = {
         "解約の兆しをチームで共有する仕組みは、今どのように運用されていますか？"
       ],
       "reverse_tr": [
-        "我在现在的公司一直致力于缩短导入周期。在专职入门引导体制下，贵公司期待 CS 组长承担什么样的角色？",
+        "我在现在的公司一直致力于缩短客户上线周期。在「オンボーディング専任体制」（客户上线专职团队）下，贵公司期待 CS 组长承担什么样的角色？",
         "入职 3 个月后，贵公司希望我达到什么样的状态？",
         "目前团队是如何共享客户解约的苗头的？"
       ],
@@ -864,7 +872,7 @@ window.DEMO_I18N = {
           "id": "F2",
           "topic": "最近の動き",
           "entity": "応募先",
-          "text": "宣布启动由 CS 团队负责导入支持的“专职入门引导体制”",
+          "text": "宣布启动「オンボーディング専任体制」（由 CS 团队专职负责客户上线实施支持的团队）",
           "url": "https://example.com/samplecloud/news/2026-04",
           "title": "新闻稿（示例）",
           "date": "2026-04"
@@ -873,7 +881,7 @@ window.DEMO_I18N = {
           "id": "F3",
           "topic": "経営方針・中期経営計画",
           "entity": "応募先",
-          "text": "表示 C 轮融资的资金将用于加强 CS 体制和开发面向大企业的功能",
+          "text": "表示 C 轮融资的资金将用于扩充 CS 团队和开发面向大企业的功能",
           "url": "https://example.com/samplecloud/news/2025-11",
           "title": "新闻稿（示例）",
           "date": "2025-11"
@@ -899,7 +907,7 @@ window.DEMO_I18N = {
       ],
       "position": [
         {
-          "text": "CS 按导入企业分别负责，组长负责 3～5 人团队的 KPI",
+          "text": "CS 按客户企业分配负责人，组长负责 3～5 人团队的 KPI",
           "url": "https://example.com/samplecloud/recruit/cs",
           "title": "招聘页面 CS 部门（示例）"
         }
@@ -907,7 +915,7 @@ window.DEMO_I18N = {
       "hooks": [
         {
           "fact": "F2",
-          "why": "正是开始加强导入初期支持的时期，CS 的职责在扩大"
+          "why": "正是开始加强客户上线初期支持的时期，CS 的职责在扩大"
         },
         {
           "fact": "F4",
@@ -919,7 +927,7 @@ window.DEMO_I18N = {
           "q": "オンボーディング専任体制を始めてから、CSリーダーにはどのような役割を期待されていますか？",
           "premise": "F2",
           "for": "現場",
-          "q_tr": "开始专职入门引导体制后，贵公司期待 CS 组长承担什么样的角色？"
+          "q_tr": "启动「オンボーディング専任体制」（客户上线专职团队）后，贵公司期待 CS 组长承担什么样的角色？"
         },
         {
           "q": "大企業向けに広げていく中で、CSチームの担当の持ち方はどう変わっていく見込みですか？",
@@ -929,8 +937,16 @@ window.DEMO_I18N = {
         }
       ],
       "check_yourself": [
-        "组长的考核指标：可以问“组长按哪些指标考核？”",
-        "负责客户的规模：可以问“大企业客户大概什么时候开始增加？”"
+        {
+          "point": "CS 组长的考核指标",
+          "ask": "リーダーはどのような指標で評価されていますか？",
+          "ask_tr": "组长按哪些指标考核？"
+        },
+        {
+          "point": "负责客户的规模何时变化",
+          "ask": "大企業のお客様の担当は、いつ頃から増えていく見込みですか？",
+          "ask_tr": "大企业客户大概什么时候开始增加？"
+        }
       ],
       "caveats": [
         "融资资金的用途是 2025 年 11 月发布时的说明"

@@ -342,10 +342,10 @@ export function P_RESEARCH(ctx, c) {
 - 見つからなかった項目は書かない（件数を埋めるために作らない）。
 - hooks：志望動機の材料になりそうな事実と、その理由（会社側の視点）。候補者の経験には触れない。
 - questions：facts を前提にした、公開情報では答えが分からない問いだけ。サイトや求人票を読めば答えが分かる問い（事業内容・制度・拠点など）、条件だけの問い（年収・残業・休日）、相手を試す問い、「はい／いいえ」で終わる問いは書かない。for は聞く相手（現場・マネージャーには仕事の進め方とチーム、部門長には部門の課題と期待、役員には事業の方向性）。
-- check_yourself：公開情報では分からず、入社を判断するために説明会・面接・人事面談で確かめるとよい点。中立な聞き方が分かるように書く。
-${L ? `- 言語：本人は${L}で読む。company は日本語の正式名称、questions の q は日本語（面接で使うため）で書き、q_tr にその${L}訳を書く。topic・entity・for は下の日本語の選択肢のまま。それ以外の文章（overview、hiring_context、identity.match、facts と position の text、hooks の why、check_yourself、caveats）は${L}で書く。${ctx.uiLang === 'zh' ? '中国語は中国大陸で自然な表現にし、日本語の漢語をそのまま使わない。' : ''}\n` : ''}
+- check_yourself：公開情報では分からず、入社を判断するために説明会・面接・人事面談で確かめるとよい点（point）と、その中立な聞き方（ask、日本語）。
+${L ? `- 言語：本人は${L}で読む。company は日本語の正式名称、questions の q と check_yourself の ask は日本語（面接で使うため）で書き、q_tr・ask_tr にその${L}訳を書く。topic・entity・for は下の日本語の選択肢のまま。それ以外の文章（overview、hiring_context、identity.match、facts と position の text、hooks の why、check_yourself の point、caveats）は${L}で書く。会社固有の名前（制度・製品・部署・スローガン）は日本語の原文を「」で残し、訳を（）で添える（本人が会社のサイトと照らし合わせ、面接で言えるように）。${ctx.uiLang === 'zh' ? '中国語は中国大陸で自然な表現にし、日本語の漢語をそのまま使わない。' : ''}\n` : ''}
 # 出力形式（JSONのみ）
-{"company":"正式な会社名","confidence":"high|medium|low","identity":{"official_site":"公式サイトの URL","match":"求人票と一致した点（30字以内）"},"overview":"事業と規模の要約（80字以内）","hiring_context":"募集背景の手がかり（求人票・採用ページに書かれている場合だけ。推測しない。なければ空）","facts":[{"id":"F1","topic":"事業・顧客|経営方針・中期経営計画|トップメッセージ|直近の決算|最近の動き|採用・求める人物像|プロダクト・技術|会社が説明する強み","entity":"応募先|グループ","text":"60字以内","url":"","title":"出典ページの名前","date":"YYYY-MM または空"}],"position":[{"text":"この職種・部署について公開情報から分かること（60字以内）","url":"","title":""}],"hooks":[{"fact":"F2","why":"志望動機の材料になる理由（会社側の視点、40字以内）"}],"questions":[{"q":"逆質問","${L ? 'q_tr":"","' : ''}premise":"F2","for":"現場|部門長|役員"}],"check_yourself":["確かめるとよい点と、中立な聞き方（40字以内）"],"caveats":["情報の古さ・不確かさについての注意（あれば）"]}
+{"company":"正式な会社名","confidence":"high|medium|low","identity":{"official_site":"公式サイトの URL","match":"求人票と一致した点（30字以内）"},"overview":"事業と規模の要約（80字以内）","hiring_context":"募集背景の手がかり（求人票・採用ページに書かれている場合だけ。推測しない。なければ空）","facts":[{"id":"F1","topic":"事業・顧客|経営方針・中期経営計画|トップメッセージ|直近の決算|最近の動き|採用・求める人物像|プロダクト・技術|会社が説明する強み","entity":"応募先|グループ","text":"60字以内","url":"","title":"出典ページの名前","date":"YYYY-MM または空"}],"position":[{"text":"この職種・部署について公開情報から分かること（60字以内）","url":"","title":""}],"hooks":[{"fact":"F2","why":"志望動機の材料になる理由（会社側の視点、40字以内）"}],"questions":[{"q":"逆質問","${L ? 'q_tr":"","' : ''}premise":"F2","for":"現場|部門長|役員"}],"check_yourself":[{"point":"確かめるとよい点（30字以内）","ask":"中立な聞き方（日本語、40字以内）"${L ? ',"ask_tr":""' : ''}}],"caveats":["情報の古さ・不確かさについての注意（あれば）"]}
 件数：facts 4〜8（id は F1 から順に）、position 0〜3、hooks 2〜3、questions 2〜3、check_yourself 2〜3、caveats 0〜2。
 
 # 応募先
