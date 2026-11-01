@@ -59,7 +59,8 @@
           u.credits -= 1; u.slots.push(c.id);
         }
         await wait(body.task === 'generate' || body.task === 'pack' ? 2600 : 1500);
-        const v = JSON.parse(JSON.stringify(MOCK[body.task] || {}));
+        const ul = body.ctx && body.ctx.uiLang;
+        const v = JSON.parse(JSON.stringify(MOCK[body.task + '_' + ul] || MOCK[body.task] || {}));
         if (body.task === 'analyze' && c && c.name) v.company = c.name;
         return res(200, { result: v, credits: u.credits, slot: c && u.slots.includes(c.id) ? 'have' : '' });
       }

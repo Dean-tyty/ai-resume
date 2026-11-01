@@ -1,7 +1,7 @@
 // Payments with Stripe Checkout (the company's Stripe account; this product's own Product, Prices and
 // webhook). Packs and prices: config.js PACKS; the Stripe Price ids: secrets STRIPE_PRICE_P5, STRIPE_PRICE_P10.
 //
-//   POST /api/checkout {pack}        -> {url} of a Checkout page; Stripe sends the user back to /?paid=<session>
+//   POST /api/checkout {pack, lang}  -> {url} of a Checkout page; Stripe sends the user back to /?paid=<session> (/en/, /zh/ by lang)
 //   POST /api/checkout/confirm {session}  the return page asks at once (the webhook may come a little later)
 //   POST /api/stripe                 the webhook (checkout.session.completed / async_payment_succeeded)
 //
@@ -29,15 +29,17 @@ export async function checkout(request, env, auth) {
   const b = await body(request, 1024);
   const pack = b && PACKS[b.pack] ? b.pack : '';
   if (!pack) return fail(400, 'pack');
-  const origin = new URL(request.url).origin;
-  if (env.STRIPE_MOCK === '1' && auth.dev) return json({ url: origin + '/api/dev/pay?pack=' + pack });
+  // back to the page in the user's language: / or /en/ or /zh/
+  const lang = ['en', 'zh'].includes(b.lang) ? b.lang : 'ja';
+  const origin = new URL(request.url).origin; const home = origin + (lang === 'ja' ? '/' : '/' + lang + '/');
+  if (env.STRIPE_MOCK === '1' && auth.dev) return json({ url: origin + '/api/dev/pay?pack=' + pack + '&lang=' + lang });
   const price = env['STRIPE_PRICE_' + pack.toUpperCase()];
   if (!env.STRIPE_SECRET_KEY || !price) return fail(503, 'not_configured');
   const { user } = await account(env, auth);
   const params = {
-    mode: 'payment', locale: 'ja',
+    mode: 'payment', locale: lang,
     'line_items[0][price]': price, 'line_items[0][quantity]': '1',
-    success_url: origin + '/?paid={CHECKOUT_SESSION_ID}', cancel_url: origin + '/?paid=cancel',
+    success_url: home + '?paid={CHECKOUT_SESSION_ID}', cancel_url: home + '?paid=cancel',
     client_reference_id: auth.id, 'metadata[product]': 'resume', 'metadata[user]': auth.id, 'metadata[pack]': pack,
     'payment_intent_data[metadata][product]': 'resume', 'payment_intent_data[metadata][user]': auth.id, 'payment_intent_data[metadata][pack]': pack,
   };
@@ -120,10 +122,11 @@ export async function devPay(request, env, ctx) {
   const url = new URL(request.url);
   const pack = url.searchParams.get('pack');
   if (!PACKS[pack]) return new Response('unknown pack', { status: 400 });
+  const lang = url.searchParams.get('lang'); const home = ['en', 'zh'].includes(lang) ? '/' + lang + '/' : '/';
   return new Response(`<!doctype html><meta charset="utf-8"><title>テスト決済</title><body style="font-family:sans-serif;padding:40px">
 <h1>テスト決済（開発用）</h1><p>${PACKS[pack].label}を購入したことにします。</p>
-<button id="b">支払う</button> <a href="/?paid=cancel">キャンセル</a>
-<script>document.getElementById('b').onclick=async()=>{const u=localStorage.getItem('resume-dev-user')||'';const r=await fetch('/api/dev/pay',{method:'POST',headers:{authorization:'Dev '+u,'content-type':'application/json'},body:JSON.stringify({pack:${JSON.stringify(pack)}})});const j=await r.json();location.href='/?paid='+j.session;};</script>`, { headers: { 'content-type': 'text/html; charset=utf-8' } });
+<button id="b">支払う</button> <a href="${home}?paid=cancel">キャンセル</a>
+<script>document.getElementById('b').onclick=async()=>{const u=localStorage.getItem('resume-dev-user')||'';const r=await fetch('/api/dev/pay',{method:'POST',headers:{authorization:'Dev '+u,'content-type':'application/json'},body:JSON.stringify({pack:${JSON.stringify(pack)}})});const j=await r.json();location.href='${home}?paid='+j.session;};</script>`, { headers: { 'content-type': 'text/html; charset=utf-8' } });
 }
 export async function devPayPost(request, env, ctx, auth) {
   const b = await body(request, 1024);

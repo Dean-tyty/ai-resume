@@ -81,3 +81,59 @@ await t('same company despite legal form / brackets / spacing', async () => {
   assert.ok(!sameCompany('株式会社サンプルクラウド', '株式会社テスト二号'));
 });
 console.log(`${n} passed in all`);
+
+// ---- engineer (project) format
+const ER = (() => { const w = {}; new Function('window', 'module', readFileSync(new URL('../public/engine.js', import.meta.url), 'utf8'))(w, undefined); return w.ResumeEngine; })();
+const FX = JSON.parse(readFileSync(new URL('./fixtures/engineer.json', import.meta.url), 'utf8'));
+await t('phases and environment are normalized', async () => {
+  const d = ER.normalizeDoc({ careers: [{ company: 'A', blocks: [
+    { phases: ['要件定義〜テスト'], env: { lang: ['Java', 'Go'], DB: ['MySQL'] } },
+    { phases: '製造、単体テスト、保守', env: ['フレームワーク：Rails'] },
+    { phases: ['提案', '企画'] }] }] });
+  const [a, b, c2] = d.careers[0].blocks;
+  assert.deepEqual(a.phases, ['要件定義', '基本設計', '詳細設計', '実装', 'テスト']);
+  assert.deepEqual(a.env, ['言語：Java、Go', 'DB：MySQL']);
+  assert.deepEqual(b.phases, ['実装', 'テスト', '運用・保守']);
+  assert.deepEqual(b.env, ['FW：Rails']);
+  assert.deepEqual(c2.phases, [], 'no phase is made up from 提案/企画');
+  assert.ok(ER.hasProjects(FX.doc)); assert.ok(!ER.hasProjects(D.doc));
+});
+await t('engineer prompt only for engineer data', async () => {
+  const eng = PROMPTS.P_GENERATE({ ...ctx, profile: { careers: [{ roles: [{ projects: [{ name: 'x' }] }] }] } }, c);
+  assert.ok(eng.includes('エンジニア形式') && eng.includes('skillTable'));
+  assert.ok(!PROMPTS.P_GENERATE(ctx, c).includes('skillTable'));
+});
+await t('engineer Word file is well-formed and has the project table', async () => {
+  for (const th of Object.keys(ER.THEMES)) {
+    const files = ER.buildDocxXml(FX.doc, th, { target: 'windows' });
+    const x = files['word/document.xml'];
+    // balanced tags (a cheap well-formedness check)
+    const opens = (x.match(/<w:(tbl|tr|tc|p)(?=[\s>])[^>]*>/g) || []).filter((m) => !m.endsWith('/>')).length, closes = (x.match(/<\/w:(tbl|tr|tc|p)>/g) || []).length;
+    assert.equal(opens, closes, th + ' tags balanced');
+    assert.ok(x.includes('テクニカルスキル'), th + ' skill table');
+    assert.ok(x.includes('Spring Boot'), th + ' environment');
+    if (th === 'engineer') assert.ok(x.includes('役割・規模／開発環境'));
+  }
+});
+console.log(`${n} passed with engineer`);
+
+// English / Chinese page: the same prompts with the reader's language, and the English resume
+await t('prompts for the English and Chinese pages', async () => {
+  for (const uiLang of ['en', 'zh']) {
+    const cx = { ...ctx, uiLang };
+    const out = [PROMPTS.P_PROFILE(cx), PROMPTS.P_ANALYZE(cx, c), PROMPTS.P_PACK(cx, c), PROMPTS.P_PREP(cx, c, 2), PROMPTS.P_EXPLAIN(cx, c), PROMPTS.P_ENGLISH(cx, c)];
+    out.forEach((p, i) => assert.ok(!/undefined|\[object Object\]/.test(p), uiLang + ' prompt ' + i));
+    const name = uiLang === 'en' ? '英語' : '中国語';
+    assert.ok(out[1].includes(name) && out[2].includes('answer_tr') && out[3].includes('q_tr'), uiLang + ' language rules');
+  }
+  assert.ok(!PROMPTS.P_PACK(ctx, c).includes('answer_tr'), 'Japanese page: no translations asked');
+});
+await t('English resume layout fits and builds', async () => {
+  const w = {}; new Function('window', readFileSync(new URL('../public/demo.js', import.meta.url), 'utf8'))(w);
+  const d = ER.normalizeEn(w.DEMO.english);
+  assert.equal(d.experience.length, 2); assert.ok(d.experience[0].roles[0].bullets.length >= 3);
+  const files = ER.buildDocxEnXml(d, { dense: 1 });
+  assert.ok(files['word/document.xml'].includes('EXPERIENCE') || files['word/document.xml'].includes('Experience'));
+  assert.ok(files['word/styles.xml'].includes('en-US'));
+});
+console.log(`${n} passed in total`);

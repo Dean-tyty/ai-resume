@@ -471,3 +471,21 @@ main{padding-bottom:40px}
 .first4{margin-bottom:16px;background:var(--paper)}
 .assure{background:var(--ok-soft);color:var(--ok);border-radius:12px;padding:10px 14px;line-height:1.8}
 .modal .row .btn.primary{white-space:normal;text-align:center}
+
+.importer{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;margin:4px 0 2px;padding:10px 12px;border:1px dashed var(--line2);border-radius:12px;background:var(--paper)}
+.importer .hint{flex:1 1 220px}
+#in-raw.drop{border-color:var(--ink);box-shadow:0 0 0 3px rgba(11,18,32,.12);background:var(--salt)}
+
+/* language switch in the header: 日本語 / English / 中文 */
+.langs{display:flex;gap:2px;align-items:center;margin-right:6px;font-size:12.5px}
+.langs a{padding:5px 8px;border-radius:999px;color:var(--ink2);text-decoration:none}
+.langs a:hover{background:rgba(11,18,32,.05);color:var(--ink)}
+.langs a[aria-current="page"]{color:var(--ink);font-weight:600}
+@media (max-width:640px){.langs a[aria-current="page"]{display:none}.langs{font-size:12px}}
+
+/* a translation under Japanese text (English / Chinese page) */
+.trl{color:var(--ink2);font-size:.92em;margin-top:4px;line-height:1.6}
+summary .trl{display:block;font-weight:400}
+
+/* shown on the English / Chinese pages only */
+html[lang="ja"] .foreign-only{display:none}

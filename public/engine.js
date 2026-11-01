@@ -16,7 +16,8 @@
   };
   const ASC = 0.88; // BIZ UD ascent / em
 
-  const FONT_FILES = { 'mincho-r': 'fonts/mincho-r.ttf', 'gothic-r': 'fonts/gothic-r.ttf', 'gothic-b': 'fonts/gothic-b.ttf' };
+  const FONT_FILES = { 'mincho-r': 'fonts/mincho-r.ttf', 'gothic-r': 'fonts/gothic-r.ttf', 'gothic-b': 'fonts/gothic-b.ttf', 'latin-r': 'fonts/latin-r.ttf', 'latin-b': 'fonts/latin-b.ttf', 'latin-i': 'fonts/latin-i.ttf' };
+  // latin-*: Source Sans 3 (SIL OFL), cut down to Latin, for the English résumé
 
   const THEMES = {
     standard: {
@@ -35,6 +36,12 @@
       label: 'プレミアム', note: '実績ハイライトと時系列。IT・Web・スタートアップ・外資系に', body: 'gothic-r', bold: 'gothic-b', accentable: true,
       text: '#1b1f24', sub: '#5f6873', accent: '#1f3a5f', rule: '#1f3a5f', grid: '#d3d9e0', fill: '#f2f4f7', band: '#eef1f5',
       head: 'premium', docx: { body: 'gothic', bold: 'gothic' },
+    },
+    engineer: {
+      label: 'エンジニア', note: 'プロジェクトごとに役割・規模・担当工程・開発環境を表に。ITエンジニア職に', body: 'gothic-r', bold: 'gothic-b', accentable: true,
+      text: '#1b1f24', sub: '#5b6470', accent: '#1f3a5f', rule: '#1f3a5f', grid: '#c3cad3', fill: '#ffffff', band: '#eef2f7',
+      frame: '#9aa7b6', frameW: 0.6, gridW: 0.4, bandRule: 1.2, title: 17, titleTc: 5, achBullet: 'dot',
+      head: 'bar', project: true, docx: { body: 'gothic', bold: 'gothic' },
     },
   };
   // Fonts of the Word file, by where it will be opened: ones that come with that system, so the file looks
@@ -201,17 +208,47 @@
         company: str(c.company), period: normDate(c.period), business: str(c.business), meta: str(c.meta),
         blocks: arr(c.blocks).map((b) => ({
           period: normDate(b.period), heading: str(b.heading),
+          // project format (IT engineers): optional
+          overview: str(b.overview), role: str(b.role), team: str(b.team), phases: normPhases(b.phases), env: normEnv(b.env),
           duties: arr(b.duties).map(str).filter(Boolean),
           achievements: arr(b.achievements).map(str).filter(Boolean),
         })),
       })).filter((c) => c.company || c.blocks.length),
       skills: arr(d.skills).map(str).filter(Boolean),
       tech: arr(d.tech).map(str).filter(Boolean),
+      skillTable: arr(d.skillTable).map((r) => (r && typeof r === 'object' ? { cat: str(r.cat || r.category), name: str(r.name || r.skill), years: str(r.years), level: str(r.level || r.note) } : { cat: '', name: str(r), years: '', level: '' })).filter((r) => r.name),
       qualifications: arr(d.qualifications).map((q) => (typeof q === 'string' ? { date: '', name: str(q) } : { date: normDate(q.date), name: str(q.name) })).filter((q) => q.name),
       pr: arr(d.pr).map((p) => ({ heading: str(p.heading), body: str(p.body) })).filter((p) => p.heading || p.body),
       highlights: arr(d.highlights).map((h) => ({ value: str(h.value), label: str(h.label) })).filter((h) => h.value),
     };
   }
+
+  // 担当工程: the six phases of a Japanese IT project, in order. Input may use other words or a range (「要件定義〜テスト」).
+  const PHASES = ['要件定義', '基本設計', '詳細設計', '実装', 'テスト', '運用・保守'];
+  const PHASE_RE = [/要件/, /基本設計|外部設計|方式設計|アーキテクチャ|^設計$/, /詳細設計|内部設計/, /実装|製造|開発|コーディング|構築|プログラミング/, /テスト|試験|検証|QA/i, /運用|保守|監視/];
+  const phaseOf = (t) => PHASE_RE.findIndex((re) => re.test(t));
+  function normPhases(v) {
+    const on = new Set();
+    arr(v).flatMap((x) => str(x).split(/[、,，／/]+/)).forEach((t) => {
+      t = t.trim(); if (!t) return;
+      const r = /^(.+?)\s*[〜～~\-–→]\s*(.+)$/.exec(t);
+      if (r && phaseOf(r[1]) >= 0 && phaseOf(r[2]) >= 0) { for (let i = phaseOf(r[1]); i <= phaseOf(r[2]); i++) on.add(i); return; }
+      PHASE_RE.forEach((re, i) => { if (re.test(t)) on.add(i); });
+    });
+    return PHASES.filter((_, i) => on.has(i));
+  }
+  // 開発環境: lines like 「言語：Java、TypeScript」 (or an object { 言語: [...] })
+  const ENV_LABEL = { lang: '言語', language: '言語', languages: '言語', fw: 'FW', framework: 'FW', frameworks: 'FW', db: 'DB', database: 'DB', infra: 'インフラ', cloud: 'クラウド', os: 'OS', tools: 'ツール', tool: 'ツール', other: 'その他', 'フレームワーク': 'FW', 'データベース': 'DB', 'ミドルウェア': 'MW' };
+  function normEnv(v) {
+    if (v && typeof v === 'object' && !Array.isArray(v)) {
+      return Object.keys(v).map((k) => { const items = arr(v[k]).map(str).filter(Boolean); return items.length ? (ENV_LABEL[k.toLowerCase()] || k) + '：' + items.join('、') : ''; }).filter(Boolean);
+    }
+    return arr(v).map(str).filter(Boolean).map((line) => {
+      const m = /^([^：:]{1,12})[：:]\s*(.*)$/.exec(line);
+      return m ? (ENV_LABEL[m[1].trim().toLowerCase()] || m[1].trim()) + '：' + m[2].trim() : line;
+    });
+  }
+  const hasProjects = (doc) => doc.careers.some((c) => c.blocks.some((b) => b.env.length || b.phases.length || b.role || b.team));
 
   function splitPeriod(p) {
     p = str(p);
@@ -221,7 +258,7 @@
   }
 
   // ---------- building boxes ----------
-  const EN = { '職務要約': 'SUMMARY', '職務経歴': 'CAREER', '活かせる経験・知識・技術': 'SKILLS', 'スキル・ツール・語学': 'TOOLS & LANGUAGES', '資格・免許': 'CERTIFICATIONS', '自己PR': 'STRENGTHS' };
+  const EN = { '職務要約': 'SUMMARY', '職務経歴': 'CAREER', '活かせる経験・知識・技術': 'SKILLS', 'スキル・ツール・語学': 'TOOLS & LANGUAGES', '資格・免許': 'CERTIFICATIONS', '自己PR': 'STRENGTHS', 'テクニカルスキル': 'TECHNICAL SKILLS' };
 
   // Split "ツール：A、B（x、y）、C" into a category and items, respecting brackets.
   function splitChips(line) {
@@ -365,27 +402,55 @@
       para(doc.summary, { f: th.body, z: S.body, lead: S.bodyLead, c: th.text });
     }
 
+    // --- テクニカルスキル (engineers): first in the engineer design, after 活かせる経験 in the others
+    if (th.project && doc.skillTable.length) skillTableSec();
+
     // --- 職務経歴
     if (doc.careers.length) {
       section = 'career'; heading('職務経歴');
-      if (prem) careerTimeline(); else careerTable();
+      if (prem) careerTimeline(); else careerTable(!!th.project && hasProjects(doc));
     }
 
     function rightLines(b, rightW, style) {
       const R = [];
       const pushLines = (text, o) => wrap(meas, o.f, o.z, text, rightW - (o.hang || 0)).forEach((ln, i) => R.push({ ln, o, first: i === 0 }));
+      const meta = { f: th.body, z: S.small, c: th.sub, justify: false, kind: 'meta' };
       if (b.heading) pushLines(b.heading, { f: th.bold, z: style.headZ, c: th.text, justify: false, kind: 'heading' });
-      const group = (label, items, bullet) => {
+      // in the project table, role / team / environment have their own column and the phases are drawn as marks
+      if (!style.project && (b.role || b.team)) pushLines([b.role ? '役割：' + b.role : '', b.team ? '規模：' + b.team : ''].filter(Boolean).join('　／　'), meta);
+      if (b.overview) pushLines(b.overview, { f: th.body, z: S.tbl, c: th.sub, kind: 'text' });
+      if (b.phases.length) {
+        if (style.project) R.push({ ln: { s: '', w: 0, last: true }, o: { kind: 'phases', z: 7.2 }, first: true, gap: R.length ? 3 : 0, phases: b.phases });
+        else pushLines('担当工程：' + b.phases.join('／'), meta);
+      }
+      const group = (label, items, bullet, plain) => {
         if (!items.length) return;
         const gap = R.length ? style.gap : 0;
         R.push({ ln: { s: label, w: 0, last: true }, o: { f: th.bold, z: style.labelZ, c: style.labelC, justify: false, kind: 'label' }, first: true, gap });
-        items.forEach((it) => pushLines(it, { f: th.body, z: S.tbl, c: th.text, hang: S.tbl * 0.85, bullet, kind: 'bullet' }));
+        items.forEach((it) => pushLines(it, { f: th.body, z: S.tbl, c: th.text, hang: plain ? 0 : S.tbl * 0.85, bullet, kind: 'bullet' }));
       };
       group(style.l1, b.duties, '・');
       group(style.l2, b.achievements, style.achBullet);
+      // 開発環境 outside the project table: the lines run on, 「言語：Java、Go　／　DB：MySQL」
+      if (!style.project && b.env.length) {
+        R.push({ ln: { s: style.l3, w: 0, last: true }, o: { f: th.bold, z: style.labelZ, c: style.labelC, justify: false, kind: 'label', env: true }, first: true, gap: R.length ? style.gap : 0 });
+        const o = { f: th.body, z: S.small + 0.3, c: th.text, justify: false, kind: 'text' };
+        wrapItems(meas, o.f, o.z, b.env, rightW).forEach((ln, i) => R.push({ ln, o, first: i === 0 }));
+      }
       return R;
     }
+    // 担当工程 as six marks, the ones this person did filled
+    function drawPhases(ops, x, yT, lead, phases, z) {
+      const h = z + 5, y = yT + (lead - h) / 2; let cx = x;
+      PHASES.forEach((ph) => {
+        const on = phases.includes(ph); const w = meas.width(th.bold, ph, z) + 8;
+        ops.push(on ? { t: 'rrect', x: cx, y, w, h, r: 2, fill: th.accent } : { t: 'rrect', x: cx, y, w, h, r: 2, fill: '#ffffff', stroke: th.grid, sw: 0.5 });
+        textOp(ops, ph, cx + 4, y, h, th.bold, z, on ? '#ffffff' : mix(th.grid, '#000000', 0.25));
+        cx += w + 3;
+      });
+    }
     function drawRight(ops, r, x, yT, lead, rightW) {
+      if (r.o.kind === 'phases') { drawPhases(ops, x, yT, lead, r.phases, r.o.z); return; }
       const hang = r.o.hang || 0;
       if (r.first && r.o.bullet === 'dot') dot(ops, x + r.o.z * 0.3, yT + (lead - r.o.z) / 2 + 0.52 * r.o.z, r.o.z * 0.17, th.accent);
       else if (r.first && r.o.bullet === 'square') { const q = r.o.z * 0.36; ops.push({ t: 'rect', x: x + r.o.z * 0.12, y: yT + (lead - r.o.z) / 2 + 0.52 * r.o.z - q / 2, w: q, h: q, fill: th.text }); }
@@ -393,15 +458,39 @@
       lineOp(ops, x + hang, yT, lead, r.ln, r.o.f, r.o.z, r.o.c, rightW - hang, r.o.justify !== false);
     }
 
-    function careerTable() {
-      const x0 = 0, x1 = S.colPeriod, x2 = CW;
-      const rightW = CW - S.colPeriod - S.padX * 2;
-      const leftW = S.colPeriod - S.padX * 2;
+    // Environment column of the project table: 「役割」「規模」 and each 「言語：…」 line, label left, value wrapped beside it.
+    function envLines(b, w) {
+      const E = []; const LW = 35, z = 8.4, lz = 7.2;
+      const item = (label, value) => {
+        if (!value) return;
+        const own = meas.width(th.bold, label, lz) > LW - 5;
+        if (own) E.push({ label, value: null });
+        wrap(meas, th.body, z, value, own ? w : w - LW).forEach((ln, i) => E.push({ label: !own && i === 0 ? label : '', ln, x: own ? 0 : LW, w: own ? w : w - LW }));
+      };
+      item('役割', b.role); item('規模', b.team);
+      b.env.forEach((line) => { const m = /^([^：:]{1,12})[：:]\s*(.*)$/.exec(line); if (m) item(m[1], m[2].replace(/\s*、\s*/g, ', ')); else item('環境', line); });
+      E.z = z; E.lz = lz;
+      return E;
+    }
+    function drawEnv(ops, E, e, x, yT, lead) {
+      if (e.label) textOp(ops, e.label, x, yT + (E.z - E.lz) * (ASC - 0.5), lead, th.bold, E.lz, th.accent); // same baseline as the value
+      if (e.ln) lineOp(ops, x + e.x, yT, lead, e.ln, th.body, E.z, th.text, e.w, false);
+    }
+
+    function careerTable(project) {
+      const xs = project ? [0, 74, CW - 128, CW] : [0, S.colPeriod, CW];
+      const heads = project ? ['期間', 'プロジェクト・業務内容', '役割・規模／開発環境'] : ['期間', '業務内容'];
+      const rightW = xs[2] - xs[1] - S.padX * 2;
+      const leftW = xs[1] - S.padX * 2;
+      const envW = project ? xs[3] - xs[2] - S.padX * 2 : 0;
+      const pz = project ? 8.4 : 9;
       const FR = th.frame || th.grid, FW = th.frameW || 0.5, GW = th.gridW || 0.5;
-      const vlines = (ops, X, Y, h) => { [[x0, FR, FW], [x1, th.grid, GW], [x2, FR, FW]].forEach(([x, c, w]) => ops.push({ t: 'line', x1: X + x, y1: Y, x2: X + x, y2: Y + h, w, c })); };
+      const vlines = (ops, X, Y, h) => { xs.forEach((x, i) => { const outer = i === 0 || i === xs.length - 1; ops.push({ t: 'line', x1: X + x, y1: Y, x2: X + x, y2: Y + h, w: outer ? FW : GW, c: outer ? FR : th.grid }); }); };
       const hline = (ops, X, Y, outer) => ops.push({ t: 'line', x1: X, y1: Y, x2: X + CW, y2: Y, w: outer ? FW : GW, c: outer ? FR : th.grid });
       const sides = (ops, X, Y, h) => [0, CW].forEach((x) => ops.push({ t: 'line', x1: X + x, y1: Y, x2: X + x, y2: Y + h, w: FW, c: FR }));
-      const style = { headZ: S.tbl, labelZ: 9, labelC: th.text, gap: 4, l1: '【業務内容】', l2: '【実績・取り組み】', achBullet: th.achBullet || '・' };
+      const style = project
+        ? { project: true, headZ: 9.8, labelZ: 8.6, labelC: th.accent, gap: 4, l1: '【担当業務】', l2: '【実績・取り組み】', achBullet: th.achBullet || '・' }
+        : { headZ: S.tbl, labelZ: 9, labelC: th.text, gap: 4, l1: '【業務内容】', l2: '【実績・取り組み】', l3: '【開発環境】', achBullet: th.achBullet || '・' };
 
       doc.careers.forEach((c, ci) => {
         section = 'career:' + ci;
@@ -444,9 +533,7 @@
             draw(ops, X, Y) {
               ops.push({ t: 'rect', x: X, y: Y, w: CW, h: 18, fill: th.fill });
               hline(ops, X, Y); hline(ops, X, Y + 18); vlines(ops, X, Y, 18);
-              const a = '期間', b = '業務内容';
-              textOp(ops, a, X + (S.colPeriod - meas.width(th.bold, a, 8)) / 2, Y, 18, th.bold, 8, th.sub);
-              textOp(ops, b, X + S.colPeriod + (CW - S.colPeriod - meas.width(th.bold, b, 8)) / 2, Y, 18, th.bold, 8, th.sub);
+              heads.forEach((t, i) => textOp(ops, t, X + xs[i] + (xs[i + 1] - xs[i] - meas.width(th.bold, t, 8)) / 2, Y, 18, th.bold, 8, th.sub));
             },
           });
           return out;
@@ -457,13 +544,13 @@
         c.blocks.forEach((b, bi) => {
           const lastBlock = bi === c.blocks.length - 1;
           const R = rightLines(b, rightW, style);
-          const L = splitPeriod(b.period).flatMap((p) => wrap(meas, th.body, 9, p, leftW).map((l) => l.s));
-          const n = Math.max(R.length, L.length, 1);
+          const L = splitPeriod(b.period).flatMap((p) => wrap(meas, th.body, pz, p, leftW).map((l) => l.s));
+          const E = project ? envLines(b, envW) : [];
+          const n = Math.max(R.length, L.length, E.length, 1);
           for (let i = 0; i < n; i++) {
             const r = R[i]; const first = i === 0; const last = i === n - 1;
             const gap = r && r.gap ? r.gap : 0;
             const h = S.tblLead + gap + (first ? S.padY : 0) + (last ? S.padY : 0);
-            const isLabel = r && r.o.kind === 'label'; const isHeading = r && r.o.kind === 'heading';
             add({
               h, text: true, table,
               keepWithNext: keepRow(R, i, n),
@@ -472,8 +559,9 @@
                 if (first || ctx.pageFirst) hline(ops, X, Y);
                 if (last || ctx.pageLast) hline(ops, X, Y + h, !!ctx.pageLast || (last && lastBlock));
                 const yT = Y + (first ? S.padY : 0) + gap;
-                if (L[i]) textOp(ops, L[i], X + S.padX, yT, S.tblLead, th.body, 9, th.text);
-                if (r) drawRight(ops, r, X + S.colPeriod + S.padX, yT, S.tblLead, rightW);
+                if (L[i]) textOp(ops, L[i], X + S.padX, yT, S.tblLead, th.body, pz, th.text);
+                if (r) drawRight(ops, r, X + xs[1] + S.padX, yT, S.tblLead, rightW);
+                if (E[i]) drawEnv(ops, E, E[i], X + xs[2] + S.padX, yT, S.tblLead);
               },
             });
           }
@@ -483,7 +571,7 @@
 
     function careerTimeline() {
       const PC = 94, LX = PC - 13, rightW = CW - PC;
-      const style = { headZ: 10, labelZ: 7.8, labelC: th.accent, gap: 4, l1: '主な業務', l2: '主な実績', achBullet: 'dot' };
+      const style = { headZ: 10, labelZ: 7.8, labelC: th.accent, gap: 4, l1: '主な業務', l2: '主な実績', l3: '開発環境', achBullet: 'dot' };
       doc.careers.forEach((c, ci) => {
         section = 'career:' + ci;
         space(ci === 0 ? 4 : 16);
@@ -534,6 +622,52 @@
     if (doc.skills.length) {
       section = 'skills'; heading('活かせる経験・知識・技術');
       doc.skills.forEach((s) => para(s, { f: th.body, z: S.body, lead: S.bodyLead, c: th.text, bullet: prem ? 'dot' : '・', hang: S.body, bc: th.sub }));
+    }
+    if (!th.project && doc.skillTable.length) skillTableSec();
+
+    // 分類 | スキル | 経験 | レベル・内容 — the 分類 is written once per group (again at the top of a new page)
+    function skillTableSec() {
+      section = 'skilltable'; heading('テクニカルスキル');
+      const xs = [0, 64, 190, 244, CW], heads = ['分類', 'スキル', '経験', 'レベル・内容'];
+      const z = 8.8, lead = 13.5, pad = 4.5, px = 6, hh = 18;
+      const FR = th.frame || th.grid, FW = th.frameW || 0.5, GW = th.gridW || 0.4;
+      const T = doc.skillTable;
+      const cellW = (k) => xs[k + 1] - xs[k] - px * 2;
+      const header = () => ({
+        h: hh, keepWithNext: true, isBand: true,
+        draw(ops, X, Y) {
+          if (!prem) {
+            ops.push({ t: 'rect', x: X, y: Y, w: CW, h: hh, fill: th.band });
+            ops.push({ t: 'line', x1: X, y1: Y, x2: X + CW, y2: Y, w: FW, c: FR });
+            xs.forEach((x, i) => { const o = i === 0 || i === xs.length - 1; ops.push({ t: 'line', x1: X + x, y1: Y, x2: X + x, y2: Y + hh, w: o ? FW : GW, c: o ? FR : th.grid }); });
+          }
+          ops.push({ t: 'line', x1: X, y1: Y + hh, x2: X + CW, y2: Y + hh, w: prem ? 0.6 : GW, c: prem ? th.accent : th.grid });
+          heads.forEach((t, i) => textOp(ops, t, X + xs[i] + px, Y, hh, th.bold, 8, prem ? th.accent : th.sub));
+        },
+      });
+      const tbl = { contHeader: () => [Object.assign(header(), { isContHeader: true, section: 'skilltable' })] };
+      add(header());
+      T.forEach((r, i) => {
+        const newCat = i === 0 || r.cat !== T[i - 1].cat;
+        const lastOfCat = i === T.length - 1 || T[i + 1].cat !== r.cat;
+        const cat = r.cat ? wrap(meas, th.bold, 8.4, r.cat, cellW(0)) : [];
+        const cells = [r.name, r.years, r.level].map((t, k) => (t ? wrap(meas, k === 0 ? th.bold : th.body, z, t, cellW(k + 1)) : []));
+        const nl = Math.max(1, cat.length, ...cells.map((c) => c.length));
+        const h = nl * lead + pad * 2;
+        add({
+          h, text: true, table: tbl, keepWithNext: false,
+          draw(ops, X, Y, ctx) {
+            const showCat = newCat || ctx.pageFirst;
+            if (!prem) xs.forEach((x, k) => { const o = k === 0 || k === xs.length - 1; ops.push({ t: 'line', x1: X + x, y1: Y, x2: X + x, y2: Y + h, w: o ? FW : GW, c: o ? FR : th.grid }); });
+            const end = i === T.length - 1 || ctx.pageLast;
+            // the line under a row: full width at the end of a group, from the スキル column inside one
+            const x0 = lastOfCat || end ? 0 : xs[1];
+            ops.push({ t: 'line', x1: X + x0, y1: Y + h, x2: X + CW, y2: Y + h, w: end && !prem ? FW : GW, c: end && !prem ? FR : th.grid });
+            if (showCat) cat.forEach((ln, j) => textOp(ops, ln.s, X + xs[0] + px, Y + pad + j * lead, lead, th.bold, 8.4, newCat ? th.text : th.sub));
+            cells.forEach((ls, k) => ls.forEach((ln, j) => lineOp(ops, X + xs[k + 1] + px, Y + pad + j * lead, lead, ln, k === 0 ? th.bold : th.body, z, k === 1 ? th.sub : th.text, cellW(k + 1), k === 2)));
+          },
+        });
+      });
     }
     // --- スキル・ツール・語学
     if (doc.tech.length) {
@@ -608,6 +742,7 @@
   function keepRow(R, i, n) {
     const r = R[i];
     if (r && (r.o.kind === 'label' || r.o.kind === 'heading')) return true;
+    if (R[i + 1] && R[i + 1].o.env) return true; // 開発環境 stays with the block it describes
     if (i >= n - 1) return false;
     if (i < 2 || i >= n - 2) return true;
     return n <= 4;
@@ -921,7 +1056,7 @@
     pdf.registerFontkit(fontkit);
     meta = meta || {};
     pdf.setTitle(meta.title || '職務経歴書'); if (meta.author) pdf.setAuthor(meta.author);
-    pdf.setCreator(''); pdf.setProducer(''); pdf.setLanguage('ja-JP');
+    pdf.setCreator(''); pdf.setProducer(''); pdf.setLanguage(meta.lang || 'ja-JP');
     const usedChars = {};
     lay.pages.forEach((p) => p.ops.forEach((o) => { if (o.t === 'text') { const s = usedChars[o.f] || (usedChars[o.f] = new Set()); for (const ch of o.s) s.add(ch.codePointAt(0)); } }));
     const fonts = {};
@@ -1004,7 +1139,7 @@
     const hx = (h) => h.replace('#', '').toUpperCase();
     const run = (t, o = {}) => {
       const f = o.bold ? FH : FB;
-      return `<w:r><w:rPr><w:rFonts w:ascii="${f}" w:hAnsi="${f}" w:eastAsia="${f}" w:cs="${f}"/>${o.bold ? '<w:b/><w:bCs/>' : ''}<w:color w:val="${hx(o.c || th.text)}"/>${o.sp ? `<w:spacing w:val="${o.sp}"/>` : ''}<w:sz w:val="${Math.round((o.z || S.body) * 2)}"/><w:szCs w:val="${Math.round((o.z || S.body) * 2)}"/></w:rPr><w:t xml:space="preserve">${esc(t)}</w:t></w:r>`;
+      return `<w:r><w:rPr><w:rFonts w:ascii="${f}" w:hAnsi="${f}" w:eastAsia="${f}" w:cs="${f}"/>${o.bold ? '<w:b/><w:bCs/>' : ''}<w:color w:val="${hx(o.c || th.text)}"/>${o.sp ? `<w:spacing w:val="${o.sp}"/>` : ''}<w:sz w:val="${Math.round((o.z || S.body) * 2)}"/><w:szCs w:val="${Math.round((o.z || S.body) * 2)}"/>${o.shd ? `<w:shd w:val="clear" w:color="auto" w:fill="${hx(o.shd)}"/>` : ''}</w:rPr><w:t xml:space="preserve">${esc(t)}</w:t></w:r>`;
     };
     const tab = '<w:r><w:tab/></w:r>';
     const p = (runs, o = {}) => {
@@ -1072,9 +1207,81 @@
 
     if (doc.summary) { heading('職務要約'); doc.summary.split(/\n/).forEach((s) => body.push(p(run(s)))); }
 
+    // project fields outside the project table: 役割・規模, 概要, 担当工程 under the heading; 開発環境 last
+    const extraTop = (b) => {
+      let x = '';
+      if (b.role || b.team) x += p(run([b.role ? '役割：' + b.role : '', b.team ? '規模：' + b.team : ''].filter(Boolean).join('　／　'), { z: S.small, c: th.sub }), { jc: 'left', line: S.tblLead, keepNext: true });
+      if (b.overview) x += p(run(b.overview, { z: S.tbl, c: th.sub }), { line: S.tblLead, keepNext: true });
+      if (b.phases.length) x += p(run('担当工程：' + b.phases.join('／'), { z: S.small, c: th.sub }), { jc: 'left', line: S.tblLead, keepNext: true });
+      return x;
+    };
+    const envText = (b) => p(run(b.env.join('　／　'), { z: S.small + 0.3 }), { jc: 'left', line: S.tblLead });
+    const phaseRuns = (phases) => PHASES.map((ph) => {
+      const on = phases.includes(ph);
+      return run(' ' + ph + ' ', { bold: true, z: 7.2, c: on ? '#ffffff' : mix(th.grid, '#000000', 0.3), shd: on ? th.accent : mix(th.grid, '#ffffff', 0.65) });
+    }).join(run(' ', { z: 7.2 }));
+    const skillTableDocx = () => {
+      heading('テクニカルスキル');
+      const g = [tw(64), tw(126), tw(54)]; g.push(cw - g[0] - g[1] - g[2]);
+      const FR = th.frame || th.grid; const fw = Math.round((th.frameW || 0.5) * 8); const gw = Math.max(2, Math.round((th.gridW || 0.5) * 8));
+      const cell = (w, inner, o = {}) => `<w:tc><w:tcPr><w:tcW w:w="${w}" w:type="dxa"/>${o.bdr ? `<w:tcBorders>${o.bdr}</w:tcBorders>` : ''}${o.shd ? `<w:shd w:val="clear" w:color="auto" w:fill="${hx(o.shd)}"/>` : ''}</w:tcPr>${inner}</w:tc>`;
+      const hp = (t) => p(run(t, { bold: true, z: 8, c: prem ? th.accent : th.sub }), { jc: 'left', line: 13, keepNext: true });
+      let rows = `<w:tr><w:trPr><w:tblHeader/><w:cantSplit/></w:trPr>${['分類', 'スキル', '経験', 'レベル・内容'].map((t, i) => cell(g[i], hp(t), { shd: prem ? null : th.band, bdr: prem ? bd('bottom', 5, th.accent) : '' })).join('')}</w:tr>`;
+      const T = doc.skillTable;
+      T.forEach((r, i) => {
+        const cont = i > 0 && T[i - 1].cat === r.cat;
+        const tp = (t, o) => p(run(t, o), { jc: 'left', line: 13.5 });
+        rows += `<w:tr><w:trPr><w:cantSplit/></w:trPr>${cell(g[0], tp(cont ? '' : r.cat, { bold: true, z: 8.4 }), { bdr: cont ? nil('top') : '' })}${cell(g[1], tp(r.name, { bold: true, z: 8.8 }))}${cell(g[2], tp(r.years, { z: 8.8, c: th.sub }))}${cell(g[3], tp(r.level, { z: 8.8 }))}</w:tr>`;
+      });
+      const borders = prem ? ['top', 'left', 'bottom', 'right', 'insideV'].map(nil).join('') + bd('insideH', 3, th.grid) + bd('bottom', 3, th.grid)
+        : ['top', 'left', 'bottom', 'right'].map((k) => bd(k, fw, FR)).join('') + ['insideH', 'insideV'].map((k) => bd(k, gw, th.grid)).join('');
+      body.push(tbl(g, rows, borders, mar(4.5, 6, 4.5, 6)));
+    };
+    if (th.project && doc.skillTable.length) skillTableDocx();
+
     if (doc.careers.length) {
       heading('職務経歴');
-      if (prem) {
+      if (th.project && hasProjects(doc)) {
+        // 期間 | プロジェクト・業務内容 | 役割・規模／開発環境 — one row per project; a row may break across pages
+        const c1 = tw(74), c3 = tw(128), c2 = cw - c1 - c3;
+        doc.careers.forEach((c, ci) => {
+          if (ci > 0) body.push(p('', { line: 12 }));
+          const meta = [c.business ? '事業内容：' + c.business : '', c.meta].filter(Boolean).join('　／　');
+          let rows = `<w:tr><w:trPr><w:tblHeader/><w:cantSplit/></w:trPr><w:tc><w:tcPr><w:tcW w:w="${cw}" w:type="dxa"/><w:gridSpan w:val="3"/>${th.bandRule ? `<w:tcBorders>${bd('top', Math.round(th.bandRule * 8), th.accent)}</w:tcBorders>` : ''}<w:shd w:val="clear" w:color="auto" w:fill="${hx(th.band)}"/></w:tcPr>`
+            + p(run(c.company, { bold: true, z: 10.5 }) + (c.period ? tab + run(c.period, { z: 9 }) : ''), { jc: 'left', line: 16, tabs: `<w:tab w:val="right" w:pos="${cw - tw(S.padX * 2)}"/>`, keepNext: true })
+            + (meta ? p(run(meta, { z: S.small, c: th.sub }), { line: S.smallLead, keepNext: true }) : '')
+            + '</w:tc></w:tr>';
+          const hcell = (w, t) => `<w:tc><w:tcPr><w:tcW w:w="${w}" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="${hx(th.fill)}"/><w:vAlign w:val="center"/></w:tcPr>${p(run(t, { bold: true, z: 8, c: th.sub }), { jc: 'center', line: 14, keepNext: true })}</w:tc>`;
+          rows += `<w:tr><w:trPr><w:tblHeader/><w:cantSplit/></w:trPr>${hcell(c1, '期間')}${hcell(c2, 'プロジェクト・業務内容')}${hcell(c3, '役割・規模／開発環境')}</w:tr>`;
+          c.blocks.forEach((b) => {
+            const L = splitPeriod(b.period).map((s) => p(run(s, { z: 8.4 }), { jc: 'left', line: S.tblLead })).join('') || p('', { line: S.tblLead });
+            let R = '';
+            if (b.heading) R += p(run(b.heading, { bold: true, z: 9.8 }), { jc: 'left', line: S.tblLead, keepNext: true });
+            if (b.overview) R += p(run(b.overview, { z: S.tbl, c: th.sub }), { line: S.tblLead, keepNext: true });
+            if (b.phases.length) R += p(phaseRuns(b.phases), { jc: 'left', line: S.tblLead + 3, before: 2, keepNext: true });
+            const group = (label, items, dot) => {
+              if (!items.length) return;
+              R += p(run(label, { bold: true, z: 8.6, c: th.accent }), { jc: 'left', line: S.tblLead, before: R ? 4 : 0, keepNext: true });
+              items.forEach((it) => { R += bullet(it, { z: S.tbl, line: S.tblLead, dot }); });
+            };
+            group('【担当業務】', b.duties, false);
+            group('【実績・取り組み】', b.achievements, th.achBullet === 'dot');
+            let En = '';
+            const LW = 35;
+            const item = (label, value) => {
+              if (!value) return;
+              const own = [...label].reduce((a, ch) => a + (/[\x20-\x7e]/.test(ch) ? 0.6 : 1), 0) * 7.2 > LW - 5;
+              if (own) En += p(run(label, { bold: true, z: 7.2, c: th.accent }), { jc: 'left', line: S.tblLead, keepNext: true });
+              En += p((own ? '' : run(label, { bold: true, z: 7.2, c: th.accent }) + tab) + run(value, { z: 8.4 }), { jc: 'left', line: S.tblLead, ind: own ? null : { left: LW, hanging: LW }, tabs: own ? '' : `<w:tab w:val="left" w:pos="${tw(LW)}"/>` });
+            };
+            item('役割', b.role); item('規模', b.team);
+            b.env.forEach((line) => { const m = /^([^：:]{1,12})[：:]\s*(.*)$/.exec(line); if (m) item(m[1], m[2].replace(/\s*、\s*/g, ', ')); else item('環境', line); });
+            rows += `<w:tr><w:tc><w:tcPr><w:tcW w:w="${c1}" w:type="dxa"/></w:tcPr>${L}</w:tc><w:tc><w:tcPr><w:tcW w:w="${c2}" w:type="dxa"/></w:tcPr>${R || p('', { line: S.tblLead })}</w:tc><w:tc><w:tcPr><w:tcW w:w="${c3}" w:type="dxa"/></w:tcPr>${En || p('', { line: S.tblLead })}</w:tc></w:tr>`;
+          });
+          const FR = th.frame || th.grid; const fw = Math.round((th.frameW || 0.5) * 8); const gw = Math.max(2, Math.round((th.gridW || 0.5) * 8));
+          body.push(tbl([c1, c2, c3], rows, ['top', 'left', 'bottom', 'right'].map((k) => bd(k, fw, FR)).join('') + ['insideH', 'insideV'].map((k) => bd(k, gw, th.grid)).join(''), mar(S.padY, S.padX, S.padY, S.padX)));
+        });
+      } else if (prem) {
         const c1 = tw(94), c2 = cw - c1;
         doc.careers.forEach((c, ci) => {
           body.push(p(run(c.company, { bold: true, z: 11.5 }) + (c.period ? tab + run(c.period, { z: 8.8, c: th.sub }) : ''), { jc: 'left', line: 21, before: ci ? 16 : 4, keepNext: true, tabs: `<w:tab w:val="right" w:pos="${cw}"/>` }));
@@ -1086,6 +1293,7 @@
             // one row per group (業務 / 実績); rows may split, so a page can break inside a block, as in the PDF
             const parts = []; let R = '';
             if (b.heading) R += p(run(b.heading, { bold: true, z: 10 }), { jc: 'left', line: S.tblLead, keepNext: true });
+            R += extraTop(b);
             const group = (label, items, dot) => {
               if (!items.length) return;
               R += p(run(label, { bold: true, z: 7.8, c: th.accent }), { jc: 'left', line: S.tblLead, before: R || parts.length ? 4 : 0, keepNext: true });
@@ -1094,6 +1302,7 @@
             group('主な業務', b.duties, false);
             if (R && b.achievements.length) { parts.push(R); R = ''; }
             group('主な実績', b.achievements, true);
+            if (b.env.length) R += p(run('開発環境', { bold: true, z: 7.8, c: th.accent }), { jc: 'left', line: S.tblLead, before: 4, keepNext: true }) + envText(b);
             parts.push(R || p('', { line: S.tblLead }));
             parts.forEach((part, k) => {
               const padB = k === parts.length - 1 && bi < c.blocks.length - 1 ? 9 : 0;
@@ -1120,6 +1329,7 @@
             // as in the PDF (the table header repeats on the next page)
             const parts = []; let R = '';
             if (b.heading) R += p(run(b.heading, { bold: true, z: S.tbl }), { jc: 'left', line: S.tblLead, keepNext: true });
+            R += extraTop(b);
             const group = (label, items, ach) => {
               if (!items.length) return;
               R += p(run(label, { bold: true, z: 9 }), { jc: 'left', line: S.tblLead, before: R || parts.length ? 4 : 0, keepNext: true });
@@ -1128,6 +1338,7 @@
             group('【業務内容】', b.duties, false);
             if (R && b.achievements.length) { parts.push(R); R = ''; }
             group('【実績・取り組み】', b.achievements, true);
+            if (b.env.length) R += p(run('【開発環境】', { bold: true, z: 9 }), { jc: 'left', line: S.tblLead, before: 4, keepNext: true }) + envText(b);
             parts.push(R || p('', { line: S.tblLead }));
             parts.forEach((part, k) => {
               const open = (k < parts.length - 1 ? nil('bottom') : '') + (k > 0 ? nil('top') : '');
@@ -1142,6 +1353,7 @@
       }
     }
     if (doc.skills.length) { heading('活かせる経験・知識・技術'); doc.skills.forEach((s) => body.push(bullet(s, { dot: prem }))); }
+    if (!th.project && doc.skillTable.length) skillTableDocx();
     if (doc.tech.length) {
       heading('スキル・ツール・語学');
       if (prem) doc.tech.forEach((s) => {
@@ -1174,16 +1386,24 @@
     }
     body.push(p(run('以上'), { jc: 'right', before: 4, line: 18 }));
 
+    return docxPackage(body.join(''), { name: doc.name, title: doc.title, fontBody: FB, sub: th.sub, lang: 'ja-JP', fonts: usedFonts.map(([n, alt, fam]) => ({ name: n, alt, fam, charset: '80' })) });
+  }
+
+  // The parts of a .docx around document.xml. o: { name, title, fontBody, sub, lang, fonts: [{ name, alt, fam, charset }] }
+  function docxPackage(bodyXml, o) {
+    const hx = (h) => h.replace('#', '').toUpperCase();
+    const FB = o.fontBody; const ja = o.lang === 'ja-JP';
     const W = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"';
     const sect = `<w:sectPr><w:footerReference w:type="default" r:id="rIdFtr"/><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="${tw(M.t)}" w:right="${tw(M.r)}" w:bottom="${tw(M.b)}" w:left="${tw(M.l)}" w:header="567" w:footer="${tw(28)}" w:gutter="0"/><w:cols w:space="425"/></w:sectPr>`;
-    const document = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<w:document ${W}><w:body>${body.join('')}${sect}</w:body></w:document>`;
-    const fr = (t) => `<w:r><w:rPr><w:rFonts w:ascii="${FB}" w:hAnsi="${FB}" w:eastAsia="${FB}"/><w:color w:val="${hx(th.sub)}"/><w:sz w:val="16"/></w:rPr>${t}</w:r>`;
+    const document = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<w:document ${W}><w:body>${bodyXml}${sect}</w:body></w:document>`;
+    const fr = (t) => `<w:r><w:rPr><w:rFonts w:ascii="${FB}" w:hAnsi="${FB}" w:eastAsia="${FB}"/><w:color w:val="${hx(o.sub)}"/><w:sz w:val="16"/></w:rPr>${t}</w:r>`;
     const fld = (code) => fr('<w:fldChar w:fldCharType="begin"/>') + fr(`<w:instrText xml:space="preserve"> ${code} </w:instrText>`) + fr('<w:fldChar w:fldCharType="separate"/>') + fr('<w:t>1</w:t>') + fr('<w:fldChar w:fldCharType="end"/>');
-    const footer = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<w:ftr ${W}><w:p><w:pPr><w:jc w:val="center"/></w:pPr>${doc.name ? fr(`<w:t xml:space="preserve">${esc(doc.name)}　</w:t>`) : ''}${fld('PAGE')}${fr('<w:t xml:space="preserve"> / </w:t>')}${fld('NUMPAGES')}</w:p></w:ftr>`;
-    const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<w:styles ${W}><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="${FB}" w:hAnsi="${FB}" w:eastAsia="${FB}" w:cs="${FB}"/><w:sz w:val="20"/><w:szCs w:val="20"/><w:lang w:val="ja-JP" w:eastAsia="ja-JP" w:bidi="ar-SA"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:autoSpaceDE w:val="0"/><w:autoSpaceDN w:val="0"/><w:spacing w:after="0" w:line="${tw(S.bodyLead)}" w:lineRule="exact"/><w:jc w:val="both"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style><w:style w:type="table" w:default="1" w:styleId="TableNormal"><w:name w:val="Normal Table"/><w:tblPr><w:tblInd w:w="0" w:type="dxa"/><w:tblCellMar><w:top w:w="0" w:type="dxa"/><w:left w:w="108" w:type="dxa"/><w:bottom w:w="0" w:type="dxa"/><w:right w:w="108" w:type="dxa"/></w:tblCellMar></w:tblPr></w:style></w:styles>`;
-    const settings = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<w:settings ${W}><w:zoom w:percent="100"/><w:defaultTabStop w:val="420"/><w:characterSpacingControl w:val="compressPunctuation"/><w:compat><w:compatSetting w:name="compatibilityMode" w:uri="http://schemas.microsoft.com/office/word" w:val="15"/></w:compat></w:settings>`;
+    const footer = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<w:ftr ${W}><w:p><w:pPr><w:jc w:val="center"/></w:pPr>${o.name ? fr(`<w:t xml:space="preserve">${esc(o.name)}${ja ? '　' : ' — '}</w:t>`) : ''}${fld('PAGE')}${fr('<w:t xml:space="preserve"> / </w:t>')}${fld('NUMPAGES')}</w:p></w:ftr>`;
+    const lang = ja ? '<w:lang w:val="ja-JP" w:eastAsia="ja-JP" w:bidi="ar-SA"/>' : '<w:lang w:val="en-US" w:eastAsia="ja-JP" w:bidi="ar-SA"/>';
+    const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<w:styles ${W}><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="${FB}" w:hAnsi="${FB}" w:eastAsia="${FB}" w:cs="${FB}"/><w:sz w:val="20"/><w:szCs w:val="20"/>${lang}</w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:autoSpaceDE w:val="0"/><w:autoSpaceDN w:val="0"/><w:spacing w:after="0" w:line="${tw(S.bodyLead)}" w:lineRule="exact"/><w:jc w:val="${ja ? 'both' : 'left'}"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style><w:style w:type="table" w:default="1" w:styleId="TableNormal"><w:name w:val="Normal Table"/><w:tblPr><w:tblInd w:w="0" w:type="dxa"/><w:tblCellMar><w:top w:w="0" w:type="dxa"/><w:left w:w="108" w:type="dxa"/><w:bottom w:w="0" w:type="dxa"/><w:right w:w="108" w:type="dxa"/></w:tblCellMar></w:tblPr></w:style></w:styles>`;
+    const settings = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<w:settings ${W}><w:zoom w:percent="100"/><w:defaultTabStop w:val="420"/>${ja ? '<w:characterSpacingControl w:val="compressPunctuation"/>' : ''}<w:compat><w:compatSetting w:name="compatibilityMode" w:uri="http://schemas.microsoft.com/office/word" w:val="15"/></w:compat></w:settings>`;
     const now = new Date().toISOString().replace(/\.\d+Z$/, 'Z');
-    const core = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:title>${esc(doc.title)}</dc:title><dc:creator>${esc(doc.name)}</dc:creator><dcterms:created xsi:type="dcterms:W3CDTF">${now}</dcterms:created><dcterms:modified xsi:type="dcterms:W3CDTF">${now}</dcterms:modified></cp:coreProperties>`;
+    const core = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:title>${esc(o.title)}</dc:title><dc:creator>${esc(o.name)}</dc:creator><dcterms:created xsi:type="dcterms:W3CDTF">${now}</dcterms:created><dcterms:modified xsi:type="dcterms:W3CDTF">${now}</dcterms:modified></cp:coreProperties>`;
     return {
       '[Content_Types].xml': '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/word/settings.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml"/><Override PartName="/word/footer1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/><Override PartName="/word/fontTable.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.fontTable+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/></Types>',
       '_rels/.rels': '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/></Relationships>',
@@ -1192,21 +1412,223 @@
       'word/styles.xml': styles,
       'word/settings.xml': settings,
       'word/footer1.xml': footer,
-      'word/fontTable.xml': `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<w:fonts ${W}>${usedFonts.map(([n, alt, fam]) => `<w:font w:name="${esc(n)}"><w:altName w:val="${esc(alt.join(','))}"/><w:charset w:val="80"/><w:family w:val="${fam}"/><w:pitch w:val="variable"/></w:font>`).join('')}</w:fonts>`,
+      'word/fontTable.xml': `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<w:fonts ${W}>${o.fonts.map((f) => `<w:font w:name="${esc(f.name)}">${f.alt && f.alt.length ? `<w:altName w:val="${esc(f.alt.join(','))}"/>` : ''}<w:charset w:val="${f.charset}"/><w:family w:val="${f.fam}"/><w:pitch w:val="variable"/></w:font>`).join('')}</w:fonts>`,
       'docProps/core.xml': core,
     };
   }
 
-  async function buildDocx(doc, themeKey, JSZip, opts) {
-    const files = buildDocxXml(doc, themeKey, opts);
+  async function buildDocx(doc, themeKey, JSZip, opts) { return zipFiles(buildDocxXml(doc, themeKey, opts), JSZip); }
+
+  // ---------- English résumé (one design: clean, single column; A4) ----------
+  function normalizeEn(d) {
+    d = d || {};
+    return {
+      name: str(d.name), headline: str(d.headline), contact: str(d.contact), summary: str(d.summary),
+      experience: arr(d.experience).map((x) => ({
+        company: str(x.company), location: str(x.location), period: str(x.period), note: str(x.note),
+        roles: arr(x.roles).map((r) => ({ title: str(r.title), period: str(r.period), bullets: arr(r.bullets).map(str).filter(Boolean) })).filter((r) => r.title || r.bullets.length),
+      })).filter((x) => x.company),
+      skills: arr(d.skills).map((k) => (typeof k === 'string' ? { cat: '', items: [str(k)] } : { cat: str(k.cat), items: arr(k.items).map(str).filter(Boolean) })).filter((k) => k.items.length),
+      education: arr(d.education).map((e) => ({ school: str(e.school), degree: str(e.degree), period: str(e.period) })).filter((e) => e.school),
+      certifications: arr(d.certifications).map((q) => (typeof q === 'string' ? { name: str(q), date: '' } : { name: str(q.name), date: str(q.date) })).filter((q) => q.name),
+      languages: arr(d.languages).map((l) => (typeof l === 'string' ? { lang: str(l), level: '' } : { lang: str(l.lang), level: str(l.level) })).filter((l) => l.lang),
+    };
+  }
+  const EN_FALLBACK = { 'latin-r': 'gothic-r', 'latin-i': 'gothic-r', 'latin-b': 'gothic-b' };
+  // A page that holds only a few lines is avoided by laying out tighter (opts.dense 1–2; layoutEnglishFit picks).
+  function layoutEnglishFit(d, meas, opts) {
+    let lay;
+    for (let k = 0; k <= 2; k++) {
+      lay = layoutEnglish(d, meas, Object.assign({}, opts, { dense: k }));
+      if (lay.pageCount === 1 || lay.lastFill >= 0.25) break;
+    }
+    return lay;
+  }
+  function layoutEnglish(dIn, meas, opts) {
+    const d = normalizeEn(dIn);
+    const k = (opts && opts.dense) || 0; const sp = [1, 0.9, 0.82][k]; const dz = [0, 0.2, 0.4][k];
+    const L = (v) => Math.round(v * sp * 100) / 100; const Z = (v) => v - dz;
+    const acc = resolveTheme('premium', opts).accent;
+    const text = '#1b1f24', sub = '#5b6470', grid = '#d3d9e0';
+    // runs of one font: Latin from Source Sans, anything it lacks (Japanese school names…) from the Gothic
+    const segs = (f, s) => {
+      const out = [];
+      for (const ch of s) { const ff = /\s/.test(ch) || meas.has(f, ch) ? f : EN_FALLBACK[f]; const l = out[out.length - 1]; if (l && l.f === ff) l.s += ch; else out.push({ f: ff, s: ch }); }
+      return out;
+    };
+    const W = (f, s, z) => segs(f, s).reduce((w, g) => w + meas.width(g.f, g.s, z), 0);
+    const T = (ops, s, x, yTop, lead, f, z, c, tc) => { let cx = x; segs(f, s).forEach((g) => { textOp(ops, g.s, cx, yTop, lead, g.f, z, c, tc); cx += meas.width(g.f, g.s, z) + (tc || 0) * [...g.s].length; }); };
+    const R = (ops, s, xRight, yTop, lead, f, z, c) => T(ops, s, xRight - W(f, s, z), yTop, lead, f, z, c);
+    // word wrap (a word longer than the line is cut by characters)
+    const wrapEn = (f, z, s, maxW) => {
+      const out = [];
+      String(s || '').split(/\n/).forEach((para) => {
+        let cur = '';
+        const put = (w) => {
+          if (W(f, w, z) <= maxW) { cur = w; return; }
+          let part = '';
+          for (const ch of w) { if (part && W(f, part + ch, z) > maxW) { out.push(part); part = ch; } else part += ch; }
+          cur = part;
+        };
+        para.split(/\s+/).filter(Boolean).forEach((w) => {
+          if (!cur) { put(w); return; }
+          if (W(f, cur + ' ' + w, z) <= maxW) cur += ' ' + w; else { out.push(cur); put(w); }
+        });
+        out.push(cur);
+      });
+      return out;
+    };
+    const B = [];
+    const add = (b) => { B.push(b); return b; };
+    const space = (h) => add({ h, space: true, draw() {} });
+    const lines = (arrL, o) => arrL.forEach((ln, i) => add({
+      h: o.lead, text: true, keepWithNext: o.keep || (arrL.length > 1 && i < arrL.length - 1),
+      draw(ops, X, Y) { if (i === 0 && o.bullet) ops.push({ t: 'circle', x: X + (o.x || 0) + 2.2, y: Y + (o.lead - o.z) / 2 + 0.52 * o.z, r: 1.35, fill: acc }); T(ops, ln, X + (o.x || 0) + (o.hang || 0), Y, o.lead, o.f, o.z, o.c); },
+    }));
+    const heading = (label) => {
+      space(L(15));
+      add({ h: 22, keepWithNext: true, draw(ops, X, Y) { T(ops, label.toUpperCase(), X, Y, 16, 'latin-b', 8.6, acc, 1.1); ops.push({ t: 'rect', x: X, y: Y + 16.5, w: CW, h: 0.6, fill: grid }); } });
+    };
+    // header
+    add({
+      h: 30, draw(ops, X, Y) {
+        let z = 22; while (z > 14 && W('latin-b', d.name, z) > CW) z -= 1;
+        T(ops, d.name || 'Your Name', X, Y, 30, 'latin-b', z, d.name ? text : '#b0b6be', 0.2);
+      },
+    });
+    if (d.headline) lines(wrapEn('latin-r', 10.8, d.headline, CW), { f: 'latin-r', z: 10.8, lead: L(16), c: acc });
+    if (d.contact) lines(wrapEn('latin-r', 8.8, d.contact, CW), { f: 'latin-r', z: 8.8, lead: L(13), c: sub });
+    add({ h: 8, draw(ops, X, Y) { ops.push({ t: 'rect', x: X, y: Y + 5, w: CW, h: 0.6, fill: grid }); ops.push({ t: 'rect', x: X, y: Y + 4.2, w: 40, h: 2.2, fill: acc }); } });
+
+    if (d.summary) { heading('Summary'); lines(wrapEn('latin-r', Z(9.8), d.summary, CW), { f: 'latin-r', z: Z(9.8), lead: L(14.2), c: text }); }
+
+    if (d.experience.length) {
+      heading('Experience');
+      d.experience.forEach((x, xi) => {
+        if (xi) space(L(9));
+        const pw = x.period ? W('latin-r', x.period, 9) + 12 : 0;
+        const head = x.company + (x.location ? '  ·  ' : '');
+        add({ h: 16, keepWithNext: true, draw(ops, X, Y) {
+          T(ops, x.company, X, Y, 16, 'latin-b', 10.6, text);
+          if (x.location) T(ops, '  ·  ' + x.location, X + W('latin-b', x.company, 10.6), Y, 16, 'latin-r', 9.2, sub);
+          if (x.period) R(ops, x.period, X + CW, Y, 16, 'latin-r', 9, sub);
+        } });
+        void head; void pw;
+        if (x.note) lines(wrapEn('latin-i', 8.8, x.note, CW), { f: 'latin-i', z: 8.8, lead: L(12.5), c: sub, keep: true });
+        x.roles.forEach((r) => {
+          const showP = r.period && (x.roles.length > 1 || r.period !== x.period);
+          if (r.title) {
+            space(L(2.5));
+            const tl = wrapEn('latin-b', 9.6, r.title, CW - (showP ? W('latin-r', r.period, 8.6) + 14 : 0));
+            tl.forEach((ln, i) => add({ h: L(14.5), keepWithNext: true, draw(ops, X, Y) {
+              T(ops, ln, X, Y, L(14.5), 'latin-b', 9.6, acc);
+              if (i === 0 && showP) R(ops, r.period, X + CW, Y, L(14.5), 'latin-r', 8.6, sub);
+            } }));
+          }
+          r.bullets.forEach((bt, bi) => {
+            const ls = wrapEn('latin-r', Z(9.4), bt, CW - 12);
+            lines(ls, { f: 'latin-r', z: Z(9.4), lead: L(13.6), c: text, bullet: true, hang: 12, keep: bi === 0 && ls.length === 1 && r.bullets.length > 1 });
+          });
+        });
+      });
+    }
+    if (d.skills.length) {
+      heading('Skills');
+      d.skills.forEach((k) => {
+        const catW = k.cat ? Math.min(118, Math.max(...[k.cat].map((c) => W('latin-b', c, 9.2))) + 12) : 0;
+        const ls = wrapEn('latin-r', Z(9.4), k.items.join(', '), CW - (k.cat ? 118 : 0));
+        ls.forEach((ln, i) => add({ h: L(14), text: true, keepWithNext: i < ls.length - 1, draw(ops, X, Y) {
+          if (i === 0 && k.cat) T(ops, k.cat, X, Y, L(14), 'latin-b', Z(9.2), text);
+          T(ops, ln, X + (k.cat ? 118 : 0), Y, L(14), 'latin-r', Z(9.4), text);
+        } }));
+        void catW;
+      });
+    }
+    if (d.education.length) {
+      heading('Education');
+      d.education.forEach((e, i) => {
+        if (i) space(L(4));
+        add({ h: L(14.5), keepWithNext: !!e.degree, draw(ops, X, Y) { T(ops, e.school, X, Y, L(14.5), 'latin-b', 9.6, text); if (e.period) R(ops, e.period, X + CW, Y, L(14.5), 'latin-r', 8.8, sub); } });
+        if (e.degree) lines(wrapEn('latin-r', Z(9.2), e.degree, CW), { f: 'latin-r', z: Z(9.2), lead: L(13.2), c: sub });
+      });
+    }
+    if (d.certifications.length) {
+      heading('Certifications');
+      d.certifications.forEach((q) => {
+        const ls = wrapEn('latin-r', Z(9.4), q.name, CW - 90);
+        ls.forEach((ln, i) => add({ h: L(14), text: true, keepWithNext: i < ls.length - 1, draw(ops, X, Y) { T(ops, ln, X, Y, L(14), 'latin-r', Z(9.4), text); if (i === 0 && q.date) R(ops, q.date, X + CW, Y, L(14), 'latin-r', 8.8, sub); } }));
+      });
+    }
+    if (d.languages.length) {
+      heading('Languages');
+      lines(wrapEn('latin-r', Z(9.4), d.languages.map((l) => l.lang + (l.level ? ' — ' + l.level : '')).join('   ·   '), CW), { f: 'latin-r', z: Z(9.4), lead: L(14), c: text });
+    }
+    const pages = paginate(B);
+    const N = pages.length;
+    const out = pages.map((pg, pi) => {
+      const ops = [];
+      pg.items.forEach((it) => it.b.draw(ops, M.l, it.y, it.ctx));
+      if (N > 1) { const sx = (d.name ? d.name + ' — ' : '') + `${pi + 1} / ${N}`; T(ops, sx, (PAGE_W - W('latin-r', sx, 8)) / 2, PAGE_H - 36, 12, 'latin-r', 8, sub); }
+      return { ops, used: pg.used };
+    });
+    const ph = PAGE_H - M.t - M.b;
+    return { pages: out, pageCount: N, lastFill: out[N - 1].used / ph, contentHeight: ph, lines: {}, doc: d, theme: 'english', dense: k };
+  }
+
+  function buildDocxEnXml(dIn, opts) {
+    const d = normalizeEn(dIn);
+    const acc = resolveTheme('premium', opts).accent;
+    // Arial is wider than the PDF's Source Sans: a little smaller, and as tight as the PDF chose (opts.dense)
+    const k = (opts && opts.dense) || 0; const L = (v) => v * [0.94, 0.88, 0.82][k]; const Z = (v) => Math.round((v - [0, 0.2, 0.4][k]) * 0.95 * 2) / 2;
+    const hx = (h) => h.replace('#', '').toUpperCase();
+    const F = 'Arial'; // on every Windows, Mac and in Google Docs
+    const run = (t, o = {}) => `<w:r><w:rPr><w:rFonts w:ascii="${F}" w:hAnsi="${F}" w:eastAsia="${F}" w:cs="${F}"/>${o.b ? '<w:b/><w:bCs/>' : ''}${o.i ? '<w:i/><w:iCs/>' : ''}${o.caps ? '<w:caps/>' : ''}<w:color w:val="${hx(o.c || '#1b1f24')}"/>${o.sp ? `<w:spacing w:val="${o.sp}"/>` : ''}<w:sz w:val="${Math.round((o.z || 9.4) * 2)}"/><w:szCs w:val="${Math.round((o.z || 9.4) * 2)}"/></w:rPr><w:t xml:space="preserve">${esc(t)}</w:t></w:r>`;
+    const tab = '<w:r><w:tab/></w:r>';
+    const rt = `<w:tabs><w:tab w:val="right" w:pos="${tw(CW)}"/></w:tabs>`;
+    const p = (runs, o = {}) => `<w:p><w:pPr>${o.keepNext ? '<w:keepNext/>' : ''}<w:keepLines/>${o.bdr ? `<w:pBdr>${o.bdr}</w:pBdr>` : ''}${o.tabs || ''}<w:spacing w:before="${tw(o.before || 0)}" w:after="${tw(o.after || 0)}" w:line="${tw(o.line || 14)}" w:lineRule="exact"/>${o.ind ? `<w:ind w:left="${tw(o.ind)}" w:hanging="${tw(o.ind)}"/>` : ''}<w:jc w:val="left"/></w:pPr>${runs}</w:p>`;
+    const body = [];
+    const heading = (t) => body.push(p(run(t.toUpperCase(), { b: true, z: Z(8.6), c: acc, sp: 22 }), { before: L(15), after: 6, line: L(16), keepNext: true, bdr: `<w:bottom w:val="single" w:sz="4" w:space="2" w:color="D3D9E0"/>` }));
+    body.push(p(run(d.name || 'Your Name', { b: true, z: Z(21) }), { line: L(30) }));
+    if (d.headline) body.push(p(run(d.headline, { z: Z(10.8), c: acc }), { line: L(16) }));
+    if (d.contact) body.push(p(run(d.contact, { z: Z(8.8), c: '#5b6470' }), { line: L(13), after: 2, bdr: `<w:bottom w:val="single" w:sz="4" w:space="6" w:color="D3D9E0"/>` }));
+    if (d.summary) { heading('Summary'); body.push(p(run(d.summary, { z: Z(9.8) }), { line: L(14.2) })); }
+    if (d.experience.length) {
+      heading('Experience');
+      d.experience.forEach((x, xi) => {
+        body.push(p(run(x.company, { b: true, z: Z(10.6) }) + (x.location ? run('  ·  ' + x.location, { z: Z(9.2), c: '#5b6470' }) : '') + (x.period ? tab + run(x.period, { z: Z(9), c: '#5b6470' }) : ''), { line: L(16), before: xi ? L(9) : 0, keepNext: true, tabs: rt }));
+        if (x.note) body.push(p(run(x.note, { i: true, z: Z(8.8), c: '#5b6470' }), { line: L(12.5), keepNext: true }));
+        x.roles.forEach((r) => {
+          const showP = r.period && (x.roles.length > 1 || r.period !== x.period);
+          if (r.title) body.push(p(run(r.title, { b: true, z: Z(9.6), c: acc }) + (showP ? tab + run(r.period, { z: Z(8.6), c: '#5b6470' }) : ''), { line: L(14.5), before: L(2.5), keepNext: true, tabs: rt }));
+          r.bullets.forEach((bt) => body.push(p(run('•', { z: Z(9.4), c: acc }) + tab + run(bt, { z: Z(9.4) }), { line: L(13.6), ind: 12, tabs: `<w:tabs><w:tab w:val="left" w:pos="${tw(12)}"/></w:tabs>` })));
+        });
+      });
+    }
+    if (d.skills.length) {
+      heading('Skills');
+      d.skills.forEach((k) => body.push(p((k.cat ? run(k.cat, { b: true, z: Z(9.2) }) + tab : '') + run(k.items.join(', '), { z: Z(9.4) }), { line: L(14), ind: k.cat ? 118 : 0, tabs: k.cat ? `<w:tabs><w:tab w:val="left" w:pos="${tw(118)}"/></w:tabs>` : '' })));
+    }
+    if (d.education.length) {
+      heading('Education');
+      d.education.forEach((e, i) => {
+        body.push(p(run(e.school, { b: true, z: Z(9.6) }) + (e.period ? tab + run(e.period, { z: Z(8.8), c: '#5b6470' }) : ''), { line: L(14.5), before: i ? L(4) : 0, keepNext: !!e.degree, tabs: rt }));
+        if (e.degree) body.push(p(run(e.degree, { z: Z(9.2), c: '#5b6470' }), { line: L(13.2) }));
+      });
+    }
+    if (d.certifications.length) { heading('Certifications'); d.certifications.forEach((q) => body.push(p(run(q.name, { z: Z(9.4) }) + (q.date ? tab + run(q.date, { z: Z(8.8), c: '#5b6470' }) : ''), { line: L(14), tabs: rt }))); }
+    if (d.languages.length) { heading('Languages'); body.push(p(run(d.languages.map((l) => l.lang + (l.level ? ' — ' + l.level : '')).join('   ·   '), { z: Z(9.4) }), { line: L(14) })); }
+    return docxPackage(body.join(''), { name: d.name, title: 'Resume', fontBody: F, sub: '#5b6470', lang: 'en-US', fonts: [{ name: F, alt: [], fam: 'swiss', charset: '00' }] });
+  }
+  async function zipFiles(files, JSZip) {
     const zip = new JSZip();
     zip.file('[Content_Types].xml', files['[Content_Types].xml'], { createFolders: false });
     for (const k in files) if (k !== '[Content_Types].xml') zip.file(k, files[k], { createFolders: false });
     return zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' });
   }
+  const buildDocxEn = (d, JSZip, opts) => zipFiles(buildDocxEnXml(d, opts), JSZip);
 
   const DOCX_TARGETS = Object.keys(DOCX_FONTS).map((k) => ({ key: k, label: DOCX_FONTS[k].label }));
-  const api = { DOCX_TARGETS, normDate, toEra, layoutRireki, PAGE_W, PAGE_H, M, CW, S, THEMES, ACCENTS, resolveTheme, FONT_FILES, makeMeasurer, wrap, normalizeDoc, layout, fitReport, missingChars, fixChars, subsetTTF, renderPDF, renderCanvas, buildDocxXml, buildDocx };
+  const api = { normalizeEn, layoutEnglish, layoutEnglishFit, buildDocxEnXml, buildDocxEn, PHASES, hasProjects: (d) => hasProjects(normalizeDoc(d)), DOCX_TARGETS, normDate, toEra, layoutRireki, PAGE_W, PAGE_H, M, CW, S, THEMES, ACCENTS, resolveTheme, FONT_FILES, makeMeasurer, wrap, normalizeDoc, layout, fitReport, missingChars, fixChars, subsetTTF, renderPDF, renderCanvas, buildDocxXml, buildDocx };
   global.ResumeEngine = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

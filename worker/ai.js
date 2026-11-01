@@ -17,7 +17,7 @@ import MOCK from './mock.json';
 
 // task -> [prompt, max output tokens (thinking included), needs a 応募先, uses a credit]
 const TASKS = {
-  profile: ['P_PROFILE', 12000, false, false],
+  profile: ['P_PROFILE', 16000, false, false],
   analyze: ['P_ANALYZE', 10000, true, false],
   generate: ['P_GENERATE', 16000, true, true],
   shorten: ['P_SHORTEN', 16000, true, true],
@@ -25,6 +25,7 @@ const TASKS = {
   prep: ['P_PREP', 10000, true, true],
   rk: ['P_RK', 4000, true, true],
   explain: ['P_EXPLAIN', 16000, true, true],
+  english: ['P_ENGLISH', 14000, true, true],
 };
 // the sample job posting of the page ("サンプル求人で試す"): trying it never uses a credit
 const SAMPLE_JOB = MOCK.sampleJobHash || '';
@@ -40,6 +41,7 @@ function cleanCtx(x) {
     today: jpDate(), name: str(x.name, 60), raw: str(x.raw, 20000), answers,
     intent: { reason: str(it.reason, 1500), axis: str(it.axis, 1500), conditions: str(it.conditions, 1000) },
     profile: obj(x.profile, 80000), explainLang: x.explainLang === 'en' ? 'en' : 'zh',
+    nameEn: str(x.nameEn, 80), uiLang: ['en', 'zh'].includes(x.uiLang) ? x.uiLang : 'ja',
   };
 }
 function cleanCompany(c) {
@@ -62,7 +64,7 @@ function missing(task, ctx, c, b) {
   if (task === 'profile') return ctx.raw.trim() ? '' : 'raw';
   if (!ctx.profile) return 'profile';
   if (task === 'analyze') return c.job.trim() ? '' : 'job';
-  if (task === 'generate') return c.analysis ? '' : 'analysis';
+  if (task === 'generate' || task === 'english') return c.analysis ? '' : 'analysis';
   if (['shorten', 'pack', 'rk', 'explain'].includes(task) && !c.doc) return 'doc';
   if (task === 'prep' && !c.stages[b.i]) return 'stage';
   return '';
@@ -118,7 +120,7 @@ async function callClaude(env, prompt, maxTokens) {
 async function mockClaude(task, ctx, c) {
   await new Promise((ok) => setTimeout(ok, 250));
   if (/【モック失敗】/.test(ctx.raw + (c ? c.memo : ''))) throw new AIError('invalid_json', 'mock');
-  const v = JSON.parse(JSON.stringify(MOCK[task]));
+  const v = JSON.parse(JSON.stringify(MOCK[task + '_' + ctx.uiLang] || MOCK[task]));
   if (task === 'analyze' && c && c.name) v.company = c.name;
   return { value: v, usage: {} };
 }

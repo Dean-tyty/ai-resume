@@ -15,6 +15,9 @@
   "license": "ISC",
   "devDependencies": {
     "@clerk/localizations": "^3.37.10",
+    "acorn": "^8.19.0",
+    "acorn-walk": "^8.3.5",
+    "pdfjs-dist": "^4.10.38",
     "wrangler": "^4.156.0"
   },
   "private": true

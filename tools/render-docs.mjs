@@ -16,14 +16,17 @@ const bytes = {}; const fk = {};
 for (const k of Object.keys(E.FONT_FILES)) { bytes[k] = new U8(readFileSync(root + 'public/' + E.FONT_FILES[k])); fk[k] = win.fontkit.create(bytes[k]); }
 const meas = E.makeMeasurer(fk);
 const inCtx = (v) => vm.runInContext('(' + JSON.stringify(v) + ')', ctx);
-const doc = Object.assign(E.normalizeDoc(inCtx(D.doc)), { name: D.name, date: '2026年11月1日現在' });
+// DOC=engineer renders the engineer sample (test/fixtures/engineer.json) instead of the demo person
+const FX = process.env.DOC ? JSON.parse(readFileSync(root + 'test/fixtures/' + process.env.DOC + '.json', 'utf8')) : null;
+const doc = Object.assign(E.normalizeDoc(inCtx(FX ? FX.doc : D.doc)), { name: FX ? FX.name : D.name, date: '2026年11月1日現在' });
 const png = (pdf, base) => { try { execFileSync('pdftoppm', ['-png', '-r', '110', pdf, base]); } catch (e) { /* no pdftoppm */ } };
-const designs = (process.env.DESIGNS || 'standard,modern,premium').split(',');
+const designs = (process.env.DESIGNS || Object.keys(E.THEMES).join(',')).split(',');
 const targets = (process.env.TARGETS || '').split(',').filter(Boolean);
 for (const theme of designs) {
   const lay = E.layout(doc, theme, meas, { accent: 'navy' });
   const pdf = await E.renderPDF(lay, bytes, win.PDFLib, win.fontkit, { title: '職務経歴書', author: D.name }, fk);
   writeFileSync(out + theme + '.pdf', pdf); png(out + theme + '.pdf', out + theme);
+  if (process.env.NO_WORD) { console.log(theme, lay.pageCount + ' pages'); continue; }
   for (const target of targets.length ? targets : ['']) {
     const name = theme + (target ? '-' + target : '') + '.docx';
     writeFileSync(out + name, await E.buildDocx(doc, theme, win.JSZip, { accent: 'navy', target }));
@@ -35,3 +38,14 @@ const rk = inCtx(Object.assign({}, D.rireki, { date: '2026-11-01', name: D.name,
 const rpdf = await E.renderPDF(E.layoutRireki(rk, meas), bytes, win.PDFLib, win.fontkit, { title: '履歴書', author: D.name }, fk);
 writeFileSync(out + 'rireki.pdf', rpdf); png(out + 'rireki.pdf', out + 'rireki');
 console.log('written to', out);
+// the English résumé of the demo person
+{
+  const lay = E.layoutEnglishFit(inCtx(Object.assign({}, D.english, { contact: 'kenta.sato@example.com · 090-0000-0000' })), meas, { accent: 'navy' });
+  const pdf = await E.renderPDF(lay, bytes, win.PDFLib, win.fontkit, { title: 'Resume', author: D.english.name, lang: 'en-US' }, fk);
+  writeFileSync(out + 'english.pdf', pdf); png(out + 'english.pdf', out + 'english');
+  if (!process.env.NO_WORD) {
+    writeFileSync(out + 'english.docx', await E.buildDocxEn(inCtx(Object.assign({}, D.english, { contact: 'kenta.sato@example.com · 090-0000-0000' })), win.JSZip, { accent: 'navy', dense: lay.dense }));
+    try { execFileSync('soffice', ['--headless', '--convert-to', 'pdf', '--outdir', out + 'word', out + 'english.docx'], { stdio: 'ignore' }); png(out + 'word/english.pdf', out + 'word/english'); } catch (e) { /* no LibreOffice */ }
+  }
+  console.log('english', lay.pageCount + ' pages');
+}

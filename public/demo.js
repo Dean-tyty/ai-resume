@@ -210,4 +210,42 @@ window.DEMO = {
     reverse: ['CSチームのKPIは現在どの指標を重視していますか？', '入社後3か月で期待される成果は何ですか？', 'プロダクトチームへの顧客の声は、どのような仕組みで届いていますか？'],
     cautions: ['英語は業務メールのみ。会話力を問われたら事実どおりに答える', '1,000名規模の顧客経験がない点は、複数部門調整の経験で補う'],
   },
+  english: {
+    name: 'Kenta Sato', name_guess: true,
+    headline: 'Customer Success Team Lead | B2B SaaS',
+    summary: 'Customer success leader with six years of B2B software sales and four years in SaaS customer success. Designed a customer health score from login, feature usage and support data, and made it part of the team\'s weekly routine, cutting annual churn in the team\'s accounts from 8.1% to 4.3%. Builds repeatable processes so that results do not depend on any one person.',
+    experience: [
+      { company: 'SampleLink Inc.', location: '', period: 'Apr 2022 – Present', note: 'Cloud time-tracking and HR SaaS for small and medium-sized businesses',
+        roles: [
+          { title: 'Team Lead, Customer Success', period: 'Apr 2024 – Present', bullets: [
+            'Lead a team of 4 managing about 60 accounts with 50–300 employees each',
+            'Designed a customer health score (login rate, feature usage, support tickets) and run it with the team; annual churn in the team\'s accounts fell from 8.1% to 4.3%',
+            'Turned add-on proposals into a standard process, growing upsell revenue to 132% of the previous year',
+            'Standardized onboarding materials, shortening average time to go-live from 45 to 30 days',
+          ] },
+          { title: 'Customer Success Manager', period: 'Apr 2022 – Mar 2024', bullets: [
+            'Onboarded new customers through initial setup support and training sessions',
+            'Kept customer retention at 98% for two consecutive years',
+            'Analyzed recurring questions and wrote 30 help articles, reducing monthly inquiries by about 20%',
+          ] },
+        ] },
+      { company: 'Sample Systems Co., Ltd.', location: '', period: 'Apr 2016 – Mar 2022', note: 'Sales and implementation of business software',
+        roles: [
+          { title: 'Account Executive, Corporate Sales', period: 'Apr 2016 – Mar 2022', bullets: [
+            'Managed about 80 manufacturing and wholesale accounts and developed new business',
+            'Proposed sales management and accounting systems and managed implementations with in-house engineers',
+            'Started post-implementation follow-up on own initiative; add-on orders from existing customers grew 2.4x in three years',
+            'Achieved 118% of target in FY2020, ranking 3rd of 70 sales representatives',
+          ] },
+        ] },
+    ],
+    skills: [
+      { cat: 'Customer Success', items: ['Onboarding', 'Adoption', 'Churn prevention', 'Upselling', 'Health score design'] },
+      { cat: 'Operations', items: ['KPI design', 'Process standardization', 'Team leadership (4 members)'] },
+      { cat: 'Tools', items: ['Salesforce', 'HubSpot', 'Zendesk', 'Slack', 'Notion', 'Google Sheets'] },
+    ],
+    education: [{ school: 'Sample University', degree: 'B.A. in Economics', period: 'Apr 2012 – Mar 2016' }],
+    certifications: [{ name: 'TOEIC Listening & Reading: 780', date: 'Nov 2023' }, { name: 'IT Passport (Japanese national IT certification)', date: 'Jun 2019' }],
+    languages: [{ lang: 'Japanese', level: 'Native' }, { lang: 'English', level: 'Business email with overseas partners (TOEIC 780)' }],
+  },
 };

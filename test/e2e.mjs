@@ -77,6 +77,20 @@ await page.waitForSelector('#rkPreview canvas', { timeout: 15000 });
   await dl.saveAs(OUT + 'rireki.pdf');
   ok(dl.suggestedFilename().startsWith('履歴書_'), '履歴書 PDF downloaded');
 }
+ok(!(await page.isVisible('[data-act=theme][data-v=engineer]')), 'engineer design not offered without projects');
+// English resume: made for the same company (no extra credit), name in Latin letters asked to be checked
+await act('tab', '[data-v=en]');
+await page.click('[data-act=english]');
+await page.waitForSelector('#enPreview canvas', { timeout: 30000 });
+ok(await page.isVisible('#en-name') && (await page.inputValue('#en-name')).length > 0, 'English resume made, with a name in Latin letters');
+await page.fill('#en-name', 'Taro Yamada');
+for (const [a, ext] of [['enPdf', 'pdf'], ['enDocx', 'docx']]) {
+  const [dl] = await Promise.all([page.waitForEvent('download'), page.click(`[data-act=${a}]`).then(() => page.click(`[data-act=${a}]`).catch(() => {}))]);
+  await dl.saveAs(OUT + 'english.' + ext);
+  ok(/^Resume_TaroYamada_.+\.(pdf|docx)$/.test(dl.suggestedFilename()), 'English resume ' + ext + ' downloaded as ' + dl.suggestedFilename());
+}
+ok((await page.innerText('#acct .credit')).includes('1'), 'English resume of the sample used no credit');
+await act('tab', '[data-v=doc]');
 
 // a real company: reading the posting is free, the documents use the free credit
 const addCo = async (name) => {
