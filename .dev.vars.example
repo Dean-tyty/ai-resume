@@ -5,3 +5,10 @@ AI_MOCK=1
 STRIPE_MOCK=1
 # To try the real AI locally instead, remove AI_MOCK and set:
 # ANTHROPIC_API_KEY=sk-ant-...
+# Another vendor through an OpenAI-compatible API (OpenRouter by default):
+# AI_PROVIDER=openai
+# AI_MODEL=google/gemini-3-pro
+# AI_API_KEY=sk-or-...
+# Company research without Anthropic's built-in search:
+# SEARCH_PROVIDER=brave        (or tavily)
+# SEARCH_API_KEY=...

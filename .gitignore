@@ -4,3 +4,4 @@ node_modules/
 test/out/
 preview/dist/
 i18n/review/
+tools/eval/out/

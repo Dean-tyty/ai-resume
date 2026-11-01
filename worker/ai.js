@@ -15,6 +15,8 @@ import { track } from './stats.js';
 import { notify } from './notify.js';
 import MOCK from './mock.json';
 import { keepFound } from './webpage.js';
+import { AIError, callModel, modelFor } from './llm.js';
+import { searchProvider, collectSources } from './research.js';
 
 // task -> [prompt, max output tokens (thinking included), needs a 応募先, uses a credit]
 const TASKS = {
@@ -79,67 +81,6 @@ function missing(task, ctx, c, b) {
   return '';
 }
 
-// the JSON object in the model's text: without code fences, from the first { to the last }
-export function parseJSON(text) {
-  let t = String(text || '').trim().replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '');
-  const a = t.indexOf('{'); const z = t.lastIndexOf('}');
-  if (a < 0 || z <= a) return null;
-  try { const v = JSON.parse(t.slice(a, z + 1)); return v && typeof v === 'object' ? v : null; } catch { return null; }
-}
-
-class AIError extends Error { constructor(code, detail, extra) { super(code); this.code = code; this.detail = detail || ''; this.extra = extra; } }
-
-// tools: server tools (web search) — the answer may then come in several turns (pause_turn), and the pages the
-// search returned are listed in `sources` (so the answer can only cite pages that were really found)
-async function callClaude(env, prompt, maxTokens, tools) {
-  const req = {
-    model: env.AI_MODEL || 'claude-sonnet-5-5', max_tokens: maxTokens,
-    messages: [{ role: 'user', content: prompt }],
-    output_config: { effort: env.AI_EFFORT || 'medium' },
-  };
-  if (tools) req.tools = tools;
-  const blocks = []; const usage = { input_tokens: 0, output_tokens: 0, searches: 0 };
-  for (let attempt = 0, turn = 0; ; ) {
-    let r;
-    try {
-      r = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'x-api-key': env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
-        body: JSON.stringify(req),
-      });
-    } catch (e) {
-      if (attempt++ < 1) { await new Promise((ok) => setTimeout(ok, 2000)); continue; }
-      throw new AIError('ai_unreachable', String(e.message || e));
-    }
-    const text = await r.text();
-    if (r.ok) {
-      let j; try { j = JSON.parse(text); } catch { throw new AIError('ai_error', 'not JSON'); }
-      const u = j.usage || {};
-      usage.input_tokens += u.input_tokens || 0; usage.output_tokens += u.output_tokens || 0;
-      usage.searches += (u.server_tool_use && u.server_tool_use.web_search_requests) || 0;
-      blocks.push(...(j.content || []));
-      // a long turn with server tools is handed back to be continued
-      if (j.stop_reason === 'pause_turn' && turn++ < 3) { req.messages = [req.messages[0], { role: 'assistant', content: blocks.slice() }]; continue; }   // the reply so far (a continuation returns only what is new)
-      if (j.stop_reason === 'refusal') throw new AIError('refused');
-      if (j.stop_reason === 'max_tokens') throw new AIError('too_long');
-      // the answer is the text after the last tool use
-      let last = -1; blocks.forEach((b, i) => { if (b.type !== 'text') last = i; });
-      const out = blocks.slice(last + 1).filter((b) => b.type === 'text').map((b) => b.text).join('');
-      const v = parseJSON(out);
-      if (!v) throw new AIError('invalid_json', 'length ' + out.length);   // never log the text: it holds the user's career
-      const sources = blocks.filter((b) => b.type === 'web_search_tool_result' && Array.isArray(b.content)).flatMap((b) => b.content)
-        .filter((x) => x && x.url).map((x) => ({ url: x.url, title: x.title || '', age: x.page_age || '' }));
-      return { value: v, usage, sources };
-    }
-    // overloaded / server errors: one more try after a pause
-    if ((r.status === 529 || r.status >= 500) && attempt++ < 1) { await new Promise((ok) => setTimeout(ok, 2500)); continue; }
-    if (r.status === 429) throw new AIError('busy', text.slice(0, 200));
-    if (r.status === 529 || r.status >= 500) throw new AIError('busy', r.status + ' ' + text.slice(0, 200));
-    if (r.status === 400 && /prompt is too long|too many tokens|context/i.test(text)) throw new AIError('prompt_too_large');
-    throw new AIError('ai_error', r.status + ' ' + text.slice(0, 300));
-  }
-}
-
 async function mockClaude(task, ctx, c) {
   await new Promise((ok) => setTimeout(ok, 250));
   if (/【モック失敗】/.test(ctx.raw + (c ? c.memo : ''))) throw new AIError('invalid_json', 'mock');
@@ -164,7 +105,10 @@ export async function handleAI(request, env, ctxExec, auth) {
   const i = num(b.i, 0, 9);
   const need = missing(task, ctx, c, { i });
   if (need) return fail(400, 'missing', { need });
-  if (!env.ANTHROPIC_API_KEY && env.AI_MOCK !== '1') return fail(503, 'not_configured');
+  const mdl = modelFor(env, task);
+  if (env.AI_MOCK !== '1' && !(mdl.provider === 'openai' ? env.AI_API_KEY : env.ANTHROPIC_API_KEY)) return fail(503, 'not_configured');
+  const sp = task === 'research' ? searchProvider(env, mdl.provider) : '';
+  if (task === 'research' && !sp && env.AI_MOCK !== '1') return fail(503, 'not_configured');
   if (PAID_ONLY.has(task) && !(await hasPaid(env, auth.id))) return fail(403, 'paid_only');
 
   let slot = null;
@@ -201,7 +145,15 @@ export async function handleAI(request, env, ctxExec, auth) {
   const job = (async () => {
     let out;
     try {
-      const r = env.AI_MOCK === '1' ? await mockClaude(task, ctx, c) : await callClaude(env, prompt, def[1], task === 'research' ? [searchTool(env)] : null);
+      let r;
+      if (env.AI_MOCK === '1') r = await mockClaude(task, ctx, c);
+      else if (task === 'research' && sp !== 'anthropic') {
+        // our own searches and the company's pages, then any model writes the answer from them
+        const got = await collectSources(env, c, sp);
+        if (got.sources.length < 2) throw new AIError('research_empty', 'sources ' + got.sources.length, { reason: '' });
+        r = await callModel(env, task, PROMPTS.P_RESEARCH(ctx, c, got.sources), def[1]);
+        r.sources = got.sources.map((x) => ({ url: x.url, title: x.title, age: x.date })); r.usage.searches = got.searches;
+      } else r = await callModel(env, task, prompt, def[1], task === 'research' ? { tools: [searchTool(env)] } : {});
       if (task === 'research') {
         if (r.sources) r.value = keepFound(r.value, r.sources);
         // nothing usable found (or not sure it is the same company): not counted, the credit is not used
@@ -218,7 +170,7 @@ export async function handleAI(request, env, ctxExec, auth) {
       if (task === 'profile') track(env, 'profile', request);
       if (task === 'generate') track(env, 'doc', request);
       out = { result: r.value, credits: await credits(env, auth.id), slot: slot ? slot.state : '' };
-      console.log(JSON.stringify({ ai: task, in: r.usage.input_tokens || 0, out: r.usage.output_tokens || 0, ...(r.usage.searches ? { searches: r.usage.searches } : {}) }));
+      console.log(JSON.stringify({ ai: task, model: r.model || 'mock', in: r.usage.input_tokens || 0, out: r.usage.output_tokens || 0, ...(r.usage.searches ? { searches: r.usage.searches } : {}), ...(r.usage.retried ? { retried: 1 } : {}), ...(r.fallback ? { fallback: 1 } : {}) }));
     } catch (e) {
       const code = e instanceof AIError ? e.code : 'server';
       console.error('ai', task, code, e instanceof AIError ? e.detail : String(e.message || e));

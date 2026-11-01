@@ -5,6 +5,8 @@ import { verifyToken } from '../worker/auth.js';
 import { verifyStripe } from '../worker/billing.js';
 import { PROMPTS } from '../worker/prompts.js';
 import { checkUrl, robotsAllows, extractJob, keepFound } from '../worker/webpage.js';
+import { parseJSON, callModel, modelFor } from '../worker/llm.js';
+import { researchQueries, pickSources, searchProvider, collectSources } from '../worker/research.js';
 import { readFileSync } from 'node:fs';
 
 let n = 0; const t = async (name, fn) => { await fn(); n++; console.log('ok   ' + name); };
@@ -52,9 +54,7 @@ await t('Stripe signature on changed body refused', async () => assert.equal(awa
 await t('old Stripe signature refused (replay)', async () => assert.equal(await verifyStripe(payload, await stripeSig(payload, now - 3600), secret), false));
 await t('missing Stripe signature refused', async () => assert.equal(await verifyStripe(payload, '', secret), false));
 
-// parseJSON is not exported from ai.js (it imports a .json module); check the same logic via a copy
-const src = readFileSync(new URL('../worker/ai.js', import.meta.url), 'utf8');
-const fn = new Function(src.match(/export function parseJSON[\s\S]*?\n}\n/)[0].replace('export ', '') + 'return parseJSON;')();
+const fn = parseJSON;
 await t('JSON read from fenced / chatty output', async () => {
   assert.deepEqual(fn('```json\n{"a":1}\n```'), { a: 1 });
   assert.deepEqual(fn('はい。\n{"a":{"b":[1,2]}}\n以上です'), { a: { b: [1, 2] } });
@@ -194,5 +194,69 @@ await t('research prompt, and research in the other prompts', async () => {
   assert.ok(PROMPTS.P_PACK(ctx, cr).includes('motivation.used') && !PROMPTS.P_PACK(ctx, c).includes('# 公開情報の使い方'), 'usage rules only with research');
   assert.ok(!PROMPTS.P_PACK(ctx, { ...cr, research: { ...w.DEMO.research, confidence: 'low' } }).includes('## 公開情報の調査'), 'not used when unsure of the company');
   assert.ok(PROMPTS.P_RESEARCH(ctx, { ...c, hosts: ['careers.example.co.jp'] }).includes('careers.example.co.jp'), 'page hosts as a clue');
+});
+// any vendor: the same prompts through Anthropic or an OpenAI-compatible API (OpenRouter)
+await t('model chosen per task and provider', async () => {
+  assert.deepEqual(modelFor({}, 'generate'), { provider: 'anthropic', model: 'claude-sonnet-5-5' });
+  assert.deepEqual(modelFor({ AI_PROVIDER: 'openai', AI_MODEL: 'google/gemini-3-pro' }, 'generate'), { provider: 'openai', model: 'google/gemini-3-pro' });
+  assert.deepEqual(modelFor({ AI_MODEL: 'anthropic:claude-sonnet-5-5', AI_MODELS: '{"explain":"openai:openai/gpt-5.5-mini"}' }, 'explain'), { provider: 'openai', model: 'openai/gpt-5.5-mini' });
+});
+await t('OpenAI-compatible call: data policy, JSON retry, fallback', async () => {
+  const saved = globalThis.fetch; const sent = [];
+  let replies = [];
+  globalThis.fetch = async (url, init) => { sent.push({ url: String(url), body: JSON.parse(init.body) }); const r = replies.shift(); return { ok: r.status === 200, status: r.status, text: async () => JSON.stringify(r.body) }; };
+  try {
+    const env = { AI_PROVIDER: 'openai', AI_MODEL: 'x/model', AI_API_KEY: 'k' };
+    replies = [{ status: 200, body: { model: 'x/model', choices: [{ finish_reason: 'stop', message: { content: 'はい\n{"a":1}' } }], usage: { prompt_tokens: 10, completion_tokens: 5 } } }];
+    const r = await callModel(env, 'analyze', 'P', 100);
+    assert.deepEqual(r.value, { a: 1 }); assert.equal(sent[0].url, 'https://openrouter.ai/api/v1/chat/completions');
+    assert.deepEqual(sent[0].body.provider, { data_collection: 'deny' }, 'providers that keep or train on prompts excluded');
+    sent.length = 0;
+    replies = [{ status: 200, body: { choices: [{ message: { content: 'not json' } }] } }, { status: 200, body: { choices: [{ message: { content: '{"b":2}' } }] } }];
+    const r2 = await callModel(env, 'analyze', 'P', 100);
+    assert.deepEqual(r2.value, { b: 2 }); assert.ok(sent[1].body.messages[0].content.includes('JSON として読めませんでした'), 'retried once, told why');
+    sent.length = 0;
+    replies = [{ status: 503, body: {} }, { status: 503, body: {} }, { status: 200, body: { content: [{ type: 'text', text: '{"c":3}' }], stop_reason: 'end_turn', usage: {} } }];
+    const r3 = await callModel({ ...env, AI_FALLBACK: 'anthropic:claude-sonnet-5-5', ANTHROPIC_API_KEY: 'a' }, 'analyze', 'P', 100);
+    assert.deepEqual(r3.value, { c: 3 }); assert.ok(r3.fallback); assert.equal(sent[2].url, 'https://api.anthropic.com/v1/messages');
+  } finally { globalThis.fetch = saved; }
+});
+await t('research sources: queries, no review sites, own site first', async () => {
+  assert.equal(searchProvider({}, 'anthropic'), 'anthropic'); assert.equal(searchProvider({}, 'openai'), '');
+  assert.equal(searchProvider({ SEARCH_PROVIDER: 'anthropic' }, 'openai'), '', 'built-in search only with its own model');
+  assert.equal(searchProvider({ SEARCH_PROVIDER: 'brave' }, 'openai'), 'brave');
+  const qs = researchQueries('株式会社テスト', 'CSリーダー（正社員）');
+  assert.equal(qs.length, 4); assert.ok(qs[1].q.includes('CSリーダー') && !qs[1].q.includes('正社員')); assert.deepEqual(researchQueries('', ''), []);
+  const s = pickSources([
+    [{ url: 'https://news.example.jp/a', title: 'テスト社が新サービス', snippet: 'n' }, { url: 'https://www.test.co.jp/company/', title: '会社概要｜株式会社テスト', snippet: 'c' }],
+    [{ url: 'https://www.openwork.jp/x', title: '口コミ', snippet: 'r' }, { url: 'https://doda.jp/x', title: '求人', snippet: 'j' }, { url: 'https://www.test.co.jp/recruit/', title: '採用情報', snippet: 'r' }],
+    [{ url: 'https://www.test.co.jp/company', title: 'dup', snippet: '' }],
+  ], '株式会社テスト', []);
+  assert.deepEqual(s.map((x) => x.url), ['https://www.test.co.jp/company/', 'https://www.test.co.jp/recruit/', 'https://news.example.jp/a']);
+  assert.ok(s[0].official && !s[2].official); assert.equal(s[0].id, 'S1');
+  const p = PROMPTS.P_RESEARCH(ctx, c, s);
+  assert.ok(p.includes('[S1]') && p.includes('資料') && !p.includes('web_search は最大5回'), 'prompt from the sources');
+});
+await t('research sources gathered with a search API and the company pages', async () => {
+  const saved = globalThis.fetch; const asked = [];
+  const page = '<html><body><main><h1>会社概要</h1><p>' + '当社はテスト用の会社です。'.repeat(30) + '</p></main></body></html>';
+  globalThis.fetch = async (url, init) => {
+    const u = String(url); asked.push(u);
+    const res = (status, body, ct) => ({ ok: status === 200, status, url: u, headers: { get: () => ct || 'text/html; charset=utf-8' }, json: async () => body, text: async () => JSON.stringify(body),
+      body: { getReader: () => { let done = false; return { read: async () => (done ? { done: true } : (done = true, { done: false, value: new TextEncoder().encode(typeof body === 'string' ? body : '') })) }; } } });
+    if (u.startsWith('https://api.search.brave.com/')) {
+      assert.equal(init.headers['x-subscription-token'], 'key');
+      return res(200, { web: { results: [{ url: 'https://www.test.co.jp/company/', title: '会社概要｜株式会社テスト', description: '<b>テスト</b>の会社概要', page_age: '2026-03-01T00:00:00' }, { url: 'https://www.openwork.jp/t', title: '口コミ', description: 'x' }] } });
+    }
+    if (u.endsWith('/robots.txt')) return res(404, '');
+    if (u.startsWith('https://www.test.co.jp/')) return res(200, page);
+    return res(404, '');
+  };
+  try {
+    const got = await collectSources({ SEARCH_API_KEY: 'key' }, { name: '株式会社テスト', analysis: null, hosts: [] }, 'brave');
+    assert.equal(got.searches, 4); assert.equal(got.sources.length, 1, 'review site left out, duplicates merged');
+    assert.ok(got.sources[0].official && got.sources[0].text.includes('当社はテスト用の会社です'), 'the company page read');
+    assert.equal(got.sources[0].date, '2026-03'); assert.ok(!got.sources[0].text.includes('<b>'));
+  } finally { globalThis.fetch = saved; }
 });
 console.log(`${n} passed in total`);

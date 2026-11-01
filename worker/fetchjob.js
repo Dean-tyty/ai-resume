@@ -6,27 +6,8 @@
 import { hasPaid, countUse } from './db.js';
 import { body, json, fail } from './util.js';
 import MOCK from './mock.json';
-import { checkUrl, robotsAllows, extractJob } from './webpage.js';
-
-const UA = 'Mozilla/5.0 (compatible; ResumeAI/1.0; +https://resume.flatland.co.jp/)';
-const MAX_BYTES = 2 * 1024 * 1024;
-
-function charsetOf(ct, bytes) {
-  // the head read as ASCII (works whatever decoders the runtime has)
-  const head = Array.from(bytes.subarray(0, 4096), (x) => (x < 128 ? String.fromCharCode(x) : ' ')).join('');
-  const m = /charset=([\w-]+)/i.exec(ct || '') || /<meta[^>]+charset=["']?([\w-]+)/i.exec(head);
-  return m ? m[1].toLowerCase() : 'utf-8';
-}
-async function get(url, ms, limit) {
-  const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), ms);
-  try {
-    const r = await fetch(url, { headers: { 'user-agent': UA, accept: 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.5', 'accept-language': 'ja,en;q=0.8' }, redirect: 'follow', signal: ctl.signal });
-    const reader = r.body ? r.body.getReader() : null; const chunks = []; let n = 0;
-    if (reader) for (;;) { const { done, value } = await reader.read(); if (done) break; n += value.length; if (n > limit) { ctl.abort(); break; } chunks.push(value); }
-    const bytes = new Uint8Array(n > limit ? limit : n); let o = 0; for (const c of chunks) { if (o + c.length > bytes.length) { bytes.set(c.subarray(0, bytes.length - o), o); break; } bytes.set(c, o); o += c.length; }
-    return { status: r.status, ct: r.headers.get('content-type') || '', bytes, finalUrl: r.url || url };
-  } finally { clearTimeout(t); }
-}
+import { checkUrl, extractJob } from './webpage.js';
+import { readPage } from './webread.js';
 
 export async function fetchJob(request, env, auth) {
   const b = await body(request, 4096);
@@ -39,16 +20,9 @@ export async function fetchJob(request, env, auth) {
   // local development (AI_MOCK): pages on jobs.example.com are the sample posting
   if (env.AI_MOCK === '1' && u.hostname === 'jobs.example.com') return json({ text: MOCK.sampleJob + '\n【応募方法】Webサイトから応募', title: '', company: '株式会社サンプルクラウド（架空）' });
   try {
-    const rb = await get(new URL('/robots.txt', u).href, 4000, 256 * 1024).catch(() => null);
-    if (rb && rb.status === 200 && !robotsAllows(new TextDecoder().decode(rb.bytes), u.pathname + u.search)) return fail(422, 'robots');
-    const r = await get(u.href, 10000, MAX_BYTES);
-    // a redirect to a site that is not read
-    const again = checkUrl(r.finalUrl); if (again.error) return fail(400, again.error, again.host ? { host: again.host } : {});
-    if (r.status === 401 || r.status === 403) return fail(422, 'login_required');
-    if (r.status >= 400) return fail(422, 'page_error', { status: r.status });
-    if (!/html|xml|text\/plain/i.test(r.ct)) return fail(422, 'not_html');
-    let html;
-    try { html = new TextDecoder(charsetOf(r.ct, r.bytes)).decode(r.bytes); } catch { html = new TextDecoder().decode(r.bytes); }
+    const p = await readPage(u.href);
+    if (p.error) return fail(p.error === 'url' || p.error === 'site_not_allowed' ? 400 : 422, p.error, p.host ? { host: p.host } : p.status ? { status: p.status } : {});
+    const html = p.html;
     const out = extractJob(html);
     if (out.text.replace(/\s+/g, '').length < 200) return fail(422, 'too_little');
     console.log(JSON.stringify({ fetch: u.hostname, chars: out.text.length }));

@@ -53,6 +53,34 @@
 - 英文简历的连络方式（邮箱・电话）只在浏览器里排版，不发给 AI；罗马字姓名由 AI 推测时会提示用户确认。
 - 下载 Word 时按打开它的环境选字体（页面自动判断，可切换）：Windows 用 BIZ UD 字体（与 PDF 相同），Mac 用游明朝・游ゴシック（Mac 版 Office 提供，发到 Windows 也不变样），Google 文档用 BIZ UDPMincho / BIZ UDPGothic。提交建议用 PDF。
 
+## AI 的选用（不绑定某一家）
+
+模型调用都经过 `worker/llm.js`，Worker 和质量评估用的是同一套提示词、同一种调用方式。
+
+- **怎么指定**：变量 `AI_MODEL`，写成「供应商:模型」。`anthropic:claude-sonnet-5-5`（直连 Anthropic，`ANTHROPIC_API_KEY`），或 `openai:google/gemini-3-pro`（OpenAI 兼容接口，默认 OpenRouter；`AI_API_KEY`，换别的兼容接口时设 `AI_BASE_URL`）。按任务换模型：`AI_MODELS='{"explain":"openai:…"}'`。
+- **备用**：`AI_FALLBACK` 设一个模型，主模型过载或连不上时自动换用一次（Worker 日志里记 `fallback`）。
+- **OpenRouter 的数据设置**：请求里固定加 `data_collection: "deny"`（排除会保存提示词或可能拿来训练的服务商）；`AI_ZDR=1` 时只走零保存的服务商。
+- **JSON 读不出来时**：自动再请求一次，并告诉模型原因（Worker 日志里记 `retried`）。较弱的模型常见这种情况。
+- **公司调查**：`SEARCH_PROVIDER=brave` 或 `tavily`（`SEARCH_API_KEY`）时，用我们自己的流程：固定 4 次搜索（公司概要、招聘、经营方针・决算、近一年的新闻）→ 去掉口碑网站和招聘网站 → 读公司自己的页面最多 3 页（遵守 robots.txt）→ 交给任何模型按「资料」写，只能引用这些资料的 URL（`worker/research.js`）。每次调查的搜索费是固定的。不设时，Anthropic 模型用它自带的 web search（原来的方式），其他模型不能调查（返回「未设定」）。Brave／Tavily 的接口是按文档写的，还没用真的 Key 测过。
+- **换供应商之前**（法律上）：隐私政策和同意画面写的是 Anthropic（美国）。换成别家或加备用时，先把它（以及经过 OpenRouter 时的 OpenRouter）的名称和国家写进隐私政策和同意画面，并把 `worker/config.js` 的 `CONSENT_VERSION` 加 1（让所有人重新同意）。
+
+### 质量评估（换模型前必须跑）
+
+`tools/eval/` 用 24 个虚构案例（12 个人 × 合适／勉强的两个职位；含转行，英文和中文输入各 4 例）把整个流程跑一遍：整理经历 → 分析 → 职务经历书 → 压缩到页数内 → 志望动机・面试准备（外国人再加解说）。
+
+```
+node tools/eval/run.mjs --model anthropic:claude-sonnet-5-5                       # 基准
+node tools/eval/run.mjs --model openai:google/gemini-3-pro --judge anthropic:claude-opus-5-5
+node tools/eval/compare.mjs tools/eval/out/<基准> tools/eval/out/<候补>
+node tools/eval/run.mjs --mock                                                     # 不用 API，只检查工具本身
+```
+
+- **代码自动检查**（与页面上的检查一致）：输入里没有的数字、能否压进指定页数、志望动机和回答的字数、简体字、套话、外国人用的译文是否齐全且确实是译文、错误和 JSON 重试次数、token 和耗时。
+- **AI 评审**（`--judge`）：另一个模型按「日本語・最適化・事実の忠実さ・志望動機・総合」打 1〜5 分。所有候选都用同一个评审模型，最好不是被评的那个。
+- **人工**：`report.html` 把输入、求人票和生成的文字并排列出，上线前请至少读 5 例。
+- **模型的合格基准**（`compare.mjs` 按此判断）：合格率 90% 以上、没有编造的数字、没有简体字、页数不合 1 例以内、事实分 4 以上、总合分不低于基准模型 0.3 以上。
+- 费用：每个模型跑一遍约 24 例 ×（5〜7 次调用），按 Sonnet 级别估计几美元（推算）。
+
 ## 本机开发
 
 ```
@@ -106,7 +134,8 @@ E2E 需要官网的品牌套件：默认读取官网仓库本机构建的 `dist/
 
 | 名字 | 值从哪里来 |
 | --- | --- |
-| `ANTHROPIC_API_KEY` | Anthropic Console → API Keys。建议在 Console 里给这个 Key 所在的 Workspace 设每月花费上限。公司调查用到 web search：上线前在 Console 确认组织已允许 web search（没开时调查会失败，并发 Lark 通知）。工具版本默认 `web_search_20250305`，要换时设变量 `AI_SEARCH_TOOL` |
+| `ANTHROPIC_API_KEY` | Anthropic Console → API Keys。建议在 Console 里给这个 Key 所在的 Workspace 设每月花费上限。公司调查用 Anthropic 自带的 web search 时：上线前在 Console 确认组织已允许 web search（没开时调查会失败，并发 Lark 通知）。工具版本默认 `web_search_20250305`，要换时设变量 `AI_SEARCH_TOOL` |
+| （可选）`AI_API_KEY` / `SEARCH_API_KEY` | 用 OpenRouter 等其他模型、用 Brave／Tavily 做公司调查时（见上面「AI 的选用」） |
 | `CLERK_SECRET_KEY` | Clerk Dashboard → API Keys（`sk_live_…`） |
 | `STRIPE_SECRET_KEY` | Stripe → 开发者 → API 密钥（建议用只开放 Checkout Sessions 读写的受限密钥） |
 | `STRIPE_WEBHOOK_SECRET` | 下面 Stripe 第 3 步得到的 `whsec_…` |
@@ -153,12 +182,12 @@ E2E 需要官网的品牌套件：默认读取官网仓库本机构建的 `dist/
 public/            页面（index.html、app.js、app.css、engine.js 排版引擎（4 种设计＋英文简历）、demo.js 示例、demo-i18n.js 示例的英中版、i18n.js 英中页面的翻译、fonts/ 书类字体、lib/）
 public/en/、zh/    英文・中文页面（tools/make-lang-pages.mjs 生成，不要手改）
 public/_headers    CSP 等响应头
-worker/            API（index.js 路由与定时清理、ai.js、prompts.js、auth.js、db.js、billing.js、stats.js、notify.js、config.js、fetchjob.js 从 URL 读求人票、webpage.js 网页处理（可单独测试））
+worker/            API（index.js 路由与定时清理、ai.js、llm.js 调用模型（不限供应商）、research.js 公司调查的搜索流程、webread.js 读网页、prompts.js、auth.js、db.js、billing.js、stats.js、notify.js、config.js、fetchjob.js 从 URL 读求人票、webpage.js 网页处理（可单独测试））
 schema.sql         D1 的表
 site/              交给官网仓库的登记文件（产品、条款、隐私）
 test/              unit.mjs、e2e.mjs
 i18n/             keys.json（界面文字一览）、en.json、zh.json（译文）
-tools/            make-mock.mjs、make-clerk-locales.mjs、render-docs.mjs、make-preview.mjs、vendor-pdfjs.mjs、i18n-extract.mjs、i18n-check.mjs、make-lang-pages.mjs
+tools/            eval/（换模型前的质量评估）、make-mock.mjs、make-clerk-locales.mjs、render-docs.mjs、make-preview.mjs、vendor-pdfjs.mjs、i18n-extract.mjs、i18n-check.mjs、make-lang-pages.mjs
 ```
 
 书类字体：BIZ UDP明朝・BIZ UDPゴシック（SIL Open Font License，`public/fonts/OFL.txt`）；英文简历用 Source Sans 3（SIL Open Font License，`public/fonts/OFL-SourceSans3.txt`，只保留拉丁字母部分）。PDF 读取：pdf.js（Apache-2.0，`public/lib/pdfjs/LICENSE`）。
