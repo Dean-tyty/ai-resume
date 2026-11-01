@@ -439,7 +439,7 @@ function openBuy(reason, kind, c) {
     <div class="packs">${packs.map((p) => `<button class="buy-pack ${p === rec ? 'rec' : ''}" data-act="buy" data-pack="${h(p.id)}">${p === rec && packs.length > 1 ? '<span class="badge">おすすめ</span>' : ''}<span class="pl">${h(p.label)}</span><b>${p.price.toLocaleString('ja-JP')}円</b><small>1社あたり${Math.round(p.price / p.credits).toLocaleString('ja-JP')}円</small></button>`).join('')}</div>
     <p class="hint">1社分 ＝ 1つの応募先。その会社の書類を保存・コピーするとき、または志望動機・面接準備などを作るときに1回だけ使います。そのあとは、その会社の職務経歴書・履歴書・英文レジュメ・志望動機・面接準備を何度作り直しても追加料金はかかりません（1日に使える回数には上限があります）。職務経歴書を作って画面で確認すること、求人票の分析は、使う前に無料でできます。</p>
     <ul class="trust buyer"><li>求人ページの URL から求人票を読み込み</li><li>会社の公開情報の調査（出典付き・1社につき${CFG.research || 3}回まで。その会社の1社分に含まれます）</li></ul>
-    <p class="hint">買い切り（月額・自動更新なし）。表示価格がお支払いの総額です。クレジットカードなどで、Stripe の決済画面からお支払いいただけます。購入から14日以内で、購入した利用枠を1社分も使っていなければ、お問い合わせから全額返金します。</p>
+    <p class="hint">買い切り（月額・自動更新なし）。表示価格がお支払いの総額です。クレジットカードなどで、Stripe の決済画面からお支払いいただけます。購入後のキャンセル・返金はできません。職務経歴書は、利用枠を使う前に画面で確かめられます。</p>
     <p class="hint"><a href="${h(CFG.terms)}" target="_blank" rel="noopener">利用規約</a>　<a href="https://www.flatland.co.jp/legal/tokushoho/" target="_blank" rel="noopener">特定商取引法に基づく表記</a></p>
     <div class="row"><span class="spacer"></span><button class="btn" data-act="closeModal">閉じる</button></div>`);
 }
@@ -456,7 +456,7 @@ async function ensureUnlocked(c) {
     openModal(`<h2 id="modalTitle">${acct.me.paid ? 'この会社で1社分を使います' : 'この会社で無料の1社分を使います'}</h2>
       <p>「${h(cname(c))}」で、次のことができるようになります。</p>
       <ul class="trust buyer"><li>職務経歴書・履歴書・英文レジュメの保存（PDF・Word）とコピー</li><li>志望動機・想定質問と回答例・逆質問</li><li>選考ごとの面接対策</li>${acct.me.paid ? `<li>会社の公開情報の調査（${CFG.research || 3}回まで）</li>` : ''}</ul>
-      <p class="hint">この会社の分は、このあと何度作り直しても追加の利用枠はかかりません。利用枠：あと${n}社分 → ${n - 1}社分</p>
+      <p class="hint">この会社の分は、このあと何度作り直しても追加の利用枠はかかりません。使った1社分は戻せません。利用枠：あと${n}社分 → ${n - 1}社分</p>
       <div class="row"><span class="spacer"></span><button class="btn" data-act="closeModal">やめる</button><button class="btn primary" data-act="unlockOk">1社分を使って続ける</button></div>`);
     modalResolve = done;
   });
@@ -546,11 +546,11 @@ function normProfile(p) {
   return {
     name: Sx(p.name),
     careers: A(p.careers).map((c) => ({ company: Sx(c.company), start: Sx(c.start), end: Sx(c.end), business: Sx(c.business), employees: Sx(c.employees), employment: Sx(c.employment),
-      roles: A(c.roles).map((r) => ({ start: Sx(r.start), end: Sx(r.end), org: Sx(r.org), title: Sx(r.title), team: Sx(r.team), duties: A(r.duties).map(Sx), achievements: A(r.achievements).map(Sx),
+      roles: A(c.roles).map((r) => ({ start: Sx(r.start), end: Sx(r.end), org: Sx(r.org), title: Sx(r.title), team: Sx(r.team), duties: A(r.duties).map(Sx), achievements: A(r.achievements).map(Sx), tr: Sx(r.tr),
         // IT engineers: the projects of this role, kept as the AI structured them (env, phases)
         projects: A(r.projects).filter((x) => x && typeof x === 'object').map((x) => ({ start: Sx(x.start), end: Sx(x.end), name: Sx(x.name), overview: Sx(x.overview), role: Sx(x.role), team: Sx(x.team), phases: A(x.phases).map(Sx), env: x.env && typeof x.env === 'object' ? x.env : A(x.env).map(Sx), duties: A(x.duties).map(Sx), achievements: A(x.achievements).map(Sx) })) })) })),
     education: A(p.education).map((x) => ({ date: Sx(x.date), school: Sx(x.school), detail: Sx(x.detail) })).filter((x) => x.school),
-    episodes: A(p.episodes).map((e, i) => ({ id: Sx(e.id) || 'E' + (i + 1), title: Sx(e.title), career_index: e.career_index, role: Sx(e.role), situation: Sx(e.situation), action: Sx(e.action), result: Sx(e.result), metrics: A(e.metrics).map(Sx).filter(Boolean), strengths: A(e.strengths).map(Sx).filter(Boolean) })),
+    episodes: A(p.episodes).map((e, i) => ({ id: Sx(e.id) || 'E' + (i + 1), title: Sx(e.title), tr: Sx(e.tr), career_index: e.career_index, role: Sx(e.role), situation: Sx(e.situation), action: Sx(e.action), result: Sx(e.result), metrics: A(e.metrics).map(Sx).filter(Boolean), strengths: A(e.strengths).map(Sx).filter(Boolean) })),
     skills: { expertise: A(p.skills && p.skills.expertise).map(Sx), tools: A(p.skills && p.skills.tools).map(Sx), languages: A(p.skills && p.skills.languages).map(Sx),
       tech: A(p.skills && p.skills.tech).filter((x) => x && typeof x === 'object').map((x) => ({ cat: Sx(x.cat), name: Sx(x.name), years: Sx(x.years) })).filter((x) => x.name) },
     qualifications: A(p.qualifications).map((q) => ({ date: Sx(q.date), name: Sx(q.name) })).filter((q) => q.name),
@@ -1226,8 +1226,8 @@ function render1() {
 function ym(s) { const m = /^(\d{4})(?:-(\d{1,2}))?/.exec(s || ''); return m ? (m[1] + '年' + (m[2] ? +m[2] + '月' : '')) : (s || ''); }
 function profileHTML(p) {
   const careers = p.careers.map((c) => `<div class="tl"><div class="co">${h(c.company)}<span class="per">${h(ym(c.start))}～${h(c.end === '現在' ? '現在' : ym(c.end))}</span></div>
-    ${c.roles.map((r) => `<div class="role">${h([r.org, r.title, r.team].filter(Boolean).join('／'))}</div><ul>${r.duties.map((x) => `<li>${h(x)}</li>`).join('')}${r.achievements.map((x) => `<li class="ach">${h(x)}</li>`).join('')}</ul>`).join('')}</div>`).join('');
-  const eps = p.episodes.map((e) => `<div><span class="id">${h(e.id)}${e.role ? '　' + h(e.role) : ''}</span><b>${h(e.title)}</b>${h(e.result || e.action)}<div>${e.strengths.map((s) => `<span class="tag">${h(s)}</span>`).join('')}</div></div>`).join('');
+    ${c.roles.map((r) => `<div class="role">${h([r.org, r.title, r.team].filter(Boolean).join('／'))}</div><ul>${r.duties.map((x) => `<li>${h(x)}</li>`).join('')}${r.achievements.map((x) => `<li class="ach">${h(x)}</li>`).join('')}</ul>${trl(r.tr)}`).join('')}</div>`).join('');
+  const eps = p.episodes.map((e) => `<div><span class="id">${h(e.id)}${e.role ? '　' + h(e.role) : ''}</span><b>${h(e.title)}</b>${h(e.result || e.action)}${trl(e.tr)}<div>${e.strengths.map((s) => `<span class="tag">${h(s)}</span>`).join('')}</div></div>`).join('');
   const sk = [...p.skills.expertise, ...p.skills.tools, ...p.skills.languages].filter(Boolean).map((s) => `<span class="tag gray">${h(s)}</span>`).join('');
   const qs = p.missing.length ? `<h3>あると書類が強くなる情報（任意）</h3>${p.missing.map((m) => `<div class="q"><p>${h(m.q)} <small>${h(m.why)}</small></p><textarea rows="2" data-answer="${h(m.q)}" placeholder="分かる範囲で（空欄のままでもOK）">${h((state.answers || {})[m.q] || '')}</textarea></div>`).join('')}
     <div class="row"><button class="btn" data-act="extract">回答を反映して整理し直す</button></div>` : '';
@@ -1703,6 +1703,7 @@ function demoState() {
   if (X) {
     if (X.analysis) co.analysis = normAnalysis(X.analysis);
     if (X.missing) st.profile.missing = X.missing.map((m) => ({ q: Sx(m.q), why: Sx(m.why) }));
+    if (X.profileTr) { st.profile.careers.forEach((c, i) => c.roles.forEach((r, j) => { r.tr = ((X.profileTr.roles || [])[i] || [])[j] || ''; })); st.profile.episodes.forEach((e) => { e.tr = (X.profileTr.episodes || {})[e.id] || ''; }); }
     if (X.pack) co.pack = normPack(X.pack);
     if (X.prep && nx >= 0) co.stages[nx].prep = normPrep(X.prep);
     if (X.explain) co.explain = Object.assign(normExplain(X.explain), { lang: UI_LANG });

@@ -21,7 +21,13 @@ const LEVEL_RULE = '- 役割・立場を表す言葉は候補者データより�
 const maskRule = (ctx) => (ctx.mask === false ? '' : '\n- 守秘：顧客名・取引先名・社内のプロジェクト名や製品コード名・未公表の数値（売上額・顧客数・単価など）は、本人がそのまま書いてよいと明記していない限り書かない。顧客は「大手通信会社」「従業員約300名の製造業」のように業界と規模（候補者データに規模がある場合だけ）で書き、金額は割合・倍率・前年比などの相対値が候補者データにあればそれを使う。在籍した会社の社名と、公開されている自社製品名はそのまま書く。');
 // gaps of half a year or more between jobs, and jobs left within a year: told plainly, never invented
 const GAP_RULE = '- 職歴の間に半年以上の空白がある場合や、在籍1年未満の会社がある場合は、隠さず弁解もしない。候補者データにその理由（出産・育児、介護、療養、留学、資格の勉強など）とその間にしたことがあれば、職務要約か該当する職歴に1文で事実だけを書き、働ける条件が整ったことがデータにあれば添える。理由がデータになければ書かない（作らない）。';
-function slimProfile(ctx) { const p = Object.assign({}, ctx.profile || {}); delete p.missing; return p; }
+// the profile as the other prompts see it: without the questions and the translations shown on the page
+function slimProfile(ctx) {
+  const p = Object.assign({}, ctx.profile || {}); delete p.missing;
+  if (Array.isArray(p.careers)) p.careers = p.careers.map((c) => (c && Array.isArray(c.roles) ? { ...c, roles: c.roles.map((r) => { const o = { ...r }; delete o.tr; return o; }) } : c));
+  if (Array.isArray(p.episodes)) p.episodes = p.episodes.map((e) => { const o = { ...e }; delete o.tr; return o; });
+  return p;
+}
 function stripDoc(d) { const o = Object.assign({}, d || {}); delete o.name; delete o.date; delete o.title; return o; }
 export function P_PROFILE(ctx) {
   return `あなたは日本の中途採用に精通したキャリアアドバイザー兼編集者です。
@@ -38,9 +44,10 @@ export function P_PROFILE(ctx) {
 8. education：学歴（高校卒業以降）。海外の学校は「英語表記（日本語の読み）」。
 9. ITエンジニア（開発・インフラ・QA・PM・データなど）の経歴で、案件・プロジェクトごとの記述がある場合は roles[].projects に案件ごとに整理する。phases は担当した工程（要件定義・基本設計・詳細設計・実装・テスト・運用・保守）のうち本人の記述から分かるものだけ。env は本人が書いた言語・フレームワーク・DB・インフラ・OS・ツールだけ。エンジニア以外の経歴では projects は空配列。
 10. skills.tech：本人が書いた技術スキル。years は本人が経験年数を書いた場合だけ（計算や推測で埋めない）。
-
+${uiName(ctx) ? `11. 本人は${uiName(ctx)}で読み、AI が正しく理解したかを確かめる。roles の tr に、その役割（部署・役職・主な業務・実績）を${uiName(ctx)}で1〜2文、episodes の tr に、その事例（見出しと結果）を${uiName(ctx)}で1文で書く（数字は原文どおり）。
+` : ''}
 # 出力形式（JSONのみ。説明文は不要）
-{"careers":[{"company":"","start":"YYYY-MM","end":"YYYY-MM または 現在","business":"事業内容（30字以内）","employees":"従業員数（不明なら空）","employment":"雇用形態（不明なら空）","roles":[{"start":"","end":"","org":"部署","title":"役職・立場","team":"チーム規模など","duties":["担当業務（体言止め）"],"achievements":["実績（原文の数字を使う）"],"projects":[{"start":"","end":"","name":"案件名","overview":"","role":"立場（PL・メンバーなど）","team":"規模","phases":[""],"env":{"言語":[""],"FW":[""],"DB":[""],"インフラ":[""],"OS":[""],"ツール":[""]},"duties":[""],"achievements":[""]}]}]}],"episodes":[{"id":"E1","title":"20字以内の見出し","career_index":0,"role":"本人の役割（主導／担当／チームの一員 など。不明なら空）","situation":"","action":"","result":"","metrics":[""],"strengths":["発揮した強み"]}],"education":[{"date":"YYYY-MM","school":"学校名","detail":"学部・学科／卒業・修了"}],"skills":{"expertise":[""],"tools":[""],"languages":["言語と水準"],"tech":[{"cat":"言語|FW|DB|インフラ|ツール など","name":"","years":""}]},"qualifications":[{"date":"YYYY-MM","name":""}],"missing":[{"q":"質問","why":"なぜ必要か（短く）"}]}
+{"careers":[{"company":"","start":"YYYY-MM","end":"YYYY-MM または 現在","business":"事業内容（30字以内）","employees":"従業員数（不明なら空）","employment":"雇用形態（不明なら空）","roles":[{"start":"","end":"","org":"部署","title":"役職・立場","team":"チーム規模など","duties":["担当業務（体言止め）"],"achievements":["実績（原文の数字を使う）"],${uiName(ctx) ? '"tr":"",' : ''}"projects":[{"start":"","end":"","name":"案件名","overview":"","role":"立場（PL・メンバーなど）","team":"規模","phases":[""],"env":{"言語":[""],"FW":[""],"DB":[""],"インフラ":[""],"OS":[""],"ツール":[""]},"duties":[""],"achievements":[""]}]}]}],"episodes":[{"id":"E1","title":"20字以内の見出し",${uiName(ctx) ? '"tr":"",' : ''}"career_index":0,"role":"本人の役割（主導／担当／チームの一員 など。不明なら空）","situation":"","action":"","result":"","metrics":[""],"strengths":["発揮した強み"]}],"education":[{"date":"YYYY-MM","school":"学校名","detail":"学部・学科／卒業・修了"}],"skills":{"expertise":[""],"tools":[""],"languages":["言語と水準"],"tech":[{"cat":"言語|FW|DB|インフラ|ツール など","name":"","years":""}]},"qualifications":[{"date":"YYYY-MM","name":""}],"missing":[{"q":"質問","why":"なぜ必要か（短く）"}]}
 
 # 本人の入力
 氏名：${ctx.name || '（未記入）'}

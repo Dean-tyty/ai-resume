@@ -7,16 +7,18 @@ new Function('window', readFileSync(new URL('../public/demo.js', import.meta.url
 new Function('window', readFileSync(new URL('../public/demo-i18n.js', import.meta.url), 'utf8'))(window);
 const D = window.DEMO; const X = window.DEMO_I18N || {};
 const { missing, ...profile } = D.profile;
+// the translations of the organised career, for the English / Chinese page
+const withTr = (p, t) => (t ? { ...p, careers: p.careers.map((c, i) => ({ ...c, roles: c.roles.map((r, j) => ({ ...r, tr: ((t.roles || [])[i] || [])[j] || '' })) })), episodes: p.episodes.map((e) => ({ ...e, tr: (t.episodes || {})[e.id] || '' })) } : p);
 const mock = {
   profile: { ...profile, name: undefined, missing },
   analyze: D.analysis, generate: D.doc, shorten: D.doc, pack: D.pack, prep: D.prep,
-  rk: { motive: '貴社の「顧客の成果から考える」という価値観に共感し、志望いたしました。【要記入：志望の決め手となった出来事】' },
+  rk: { motive: '貴社の「顧客の成果から考える」という価値観に共感し、志望いたしました。【要記入：志望の決め手となった出来事】', hope: '貴社の規定に従います。' },
   english: D.english, research: D.research, sampleJob: D.job,
   explain: { overview: D.explain.overview, sections: D.explain.sections, naturalness: D.explain.naturalness, conventions: D.explain.conventions },
   // the English / Chinese page (ctx.uiLang): the answers as the AI writes them for that page
   ...Object.fromEntries(['en', 'zh'].flatMap((l) => [
     ['analyze_' + l, X[l] && X[l].analysis], ['research_' + l, X[l] && X[l].research], ['pack_' + l, X[l] && X[l].pack], ['prep_' + l, X[l] && X[l].prep],
-    ['profile_' + l, X[l] && X[l].missing ? { ...profile, name: undefined, missing: X[l].missing } : null],
+    ['profile_' + l, X[l] && X[l].missing ? withTr({ ...profile, name: undefined, missing: X[l].missing }, X[l].profileTr) : null],
     ['explain_' + l, l === 'en' ? X.en && X.en.explain : { overview: D.explain.overview, sections: D.explain.sections, naturalness: D.explain.naturalness, conventions: D.explain.conventions }],
   ]).filter(([, v]) => v)),
   // the sample job posting, so trying it uses no credit (worker/ai.js)

@@ -173,7 +173,8 @@ window.DEMO_I18N = {
             "Close with one sentence that connects to the position"
           ],
           "answer": "佐藤健太と申します。新卒で業務用ソフトの会社に入り、法人営業として6年間、製造業・卸売業のお客様にシステムの提案から導入までを担当しました。2022年からはSaaSのカスタマーサクセスに移り、現在はメンバー4名のチームリーダーとして、顧客ヘルススコアを設計し、チームの運用に定着させています。本日はこの経験を、御社のCSでどう生かせるかをお話しできればと思います。",
-          "answer_tr": "My name is Kenta Sato. I joined a business software company as a new graduate and spent 6 years in corporate sales, handling systems for manufacturing and wholesale customers from proposal to implementation. In 2022 I moved to customer success at a SaaS company, and now, as leader of a team of 4 members, I have designed a customer health score and made it part of how the team works. Today I hope to talk about how I can use this experience in your CS team."
+          "answer_tr": "My name is Kenta Sato. I joined a business software company as a new graduate and spent 6 years in corporate sales, handling systems for manufacturing and wholesale customers from proposal to implementation. In 2022 I moved to customer success at a SaaS company, and now, as leader of a team of 4 members, I have designed a customer health score and made it part of how the team works. Today I hope to talk about how I can use this experience in your CS team.",
+          "answer_easy": "佐藤健太です。最初の会社では、6年間、法人営業をしました。お客様にシステムを提案して、導入まで担当しました。2022年から、SaaSのカスタマーサクセスをしています。今は4人のチームのリーダーです。お客様の状態を点数で見る仕組みを作りました。今日は、この経験を御社でどう生かせるか、お話しします。"
         },
         {
           "q": "転職を考えた理由を教えてください",
@@ -185,7 +186,8 @@ window.DEMO_I18N = {
             "You want to lead a team in building systems"
           ],
           "answer": "現職では従業員50〜300名規模のお客様を中心に担当してきました。ヘルススコアの設計と運用で解約率を下げることはできましたが、部署や関係者が多い大きな組織で、活用をどう広げていくかには挑戦できていません。CSの仕組みづくりをチームでリードしながら、より複雑な組織のお客様の成果に向き合いたいと考え、転職を決めました。",
-          "answer_tr": "In my current job I have mainly handled customers with 50–300 employees. By designing and running a health score I was able to lower the churn rate, but I have not had the chance to work on how to spread adoption in large organizations with many departments and stakeholders. I decided to change jobs because I want to lead a team in building CS systems while working on the outcomes of customers with more complex organizations."
+          "answer_tr": "In my current job I have mainly handled customers with 50–300 employees. By designing and running a health score I was able to lower the churn rate, but I have not had the chance to work on how to spread adoption in large organizations with many departments and stakeholders. I decided to change jobs because I want to lead a team in building CS systems while working on the outcomes of customers with more complex organizations.",
+          "answer_easy": "今の会社では、50〜300人くらいの会社を担当しています。解約を減らす仕組みは作れました。でも、大きくて関係者が多い会社は、まだ担当したことがありません。チームで仕組みを作りながら、もっと大きな会社のお客様を支えたいです。それで、転職を決めました。"
         },
         {
           "q": "なぜ当社を志望されたのですか？",
@@ -197,7 +199,8 @@ window.DEMO_I18N = {
             "How you would use it after joining"
           ],
           "answer": "中堅企業向けにサービスを提供されている点と、2026年4月にオンボーディング専任体制を始められた点に惹かれました。私も営業時代から、導入して終わりではなく定着まで支えることを大切にしてきました。現職では導入資料を標準化して導入期間を45日から30日に短縮し、ヘルススコアをチームで運用してきました。この経験は、御社のオンボーディング設計と解約防止の仕事にそのまま生かせると考えています。",
-          "answer_tr": "I was drawn to the fact that you serve mid-sized companies and that you started 「オンボーディング専任体制」 (a dedicated onboarding team) in April 2026. Since my sales days, I have cared about supporting customers not just until implementation but until they really use the product. In my current job I standardized onboarding materials, shortening the time to go-live from 45 to 30 days, and I have run a health score with my team. I believe this experience will be directly useful in your onboarding design and churn prevention work."
+          "answer_tr": "I was drawn to the fact that you serve mid-sized companies and that you started 「オンボーディング専任体制」 (a dedicated onboarding team) in April 2026. Since my sales days, I have cared about supporting customers not just until implementation but until they really use the product. In my current job I standardized onboarding materials, shortening the time to go-live from 45 to 30 days, and I have run a health score with my team. I believe this experience will be directly useful in your onboarding design and churn prevention work.",
+          "answer_easy": "理由は2つあります。1つ目は、中堅企業のお客様が多いことです。2つ目は、2026年4月にオンボーディングの専任チームを作ったことです。私は、導入の期間を45日から30日に短くしました。この経験を、御社のオンボーディングで生かせると思います。"
         },
         {
           "q": "あなたの強みと弱みを教えてください",
@@ -209,7 +212,8 @@ window.DEMO_I18N = {
             "What you are doing to make up for the weakness"
           ],
           "answer": "強みは、数字で課題を捉えて仕組みで解決することです。ヘルススコアを設計し、担当領域の解約率を年8.1%から4.3%に下げました。弱みは、1,000名規模のお客様を担当した経験がまだないことです。前職で社内SEと連携して導入を進めた経験を土台に、【要記入：大規模組織に向けて学んでいること】に取り組んでいます。",
-          "answer_tr": "My strength is seeing problems in numbers and solving them with systems. I designed a health score and lowered the annual churn rate in my area from 8.1% to 4.3%. My weakness is that I have not yet handled customers with around 1,000 employees. Building on my experience in my previous job of carrying out implementations together with in-house engineers, I am working on 【要記入：大規模組織に向けて学んでいること】 (to fill in: what you are learning to prepare for large organizations)."
+          "answer_tr": "My strength is seeing problems in numbers and solving them with systems. I designed a health score and lowered the annual churn rate in my area from 8.1% to 4.3%. My weakness is that I have not yet handled customers with around 1,000 employees. Building on my experience in my previous job of carrying out implementations together with in-house engineers, I am working on 【要記入：大規模組織に向けて学んでいること】 (to fill in: what you are learning to prepare for large organizations).",
+          "answer_easy": "強みは、数字で問題を見つけて、仕組みで解決することです。担当したお客様の解約率を、8.1%から4.3%に下げました。弱みは、1,000人規模の会社を担当したことがないことです。今は【要記入：大規模組織に向けて学んでいること】に取り組んでいます。"
         },
         {
           "q": "希望年収、入社可能時期、他社の選考状況を教えてください",
@@ -221,7 +225,8 @@ window.DEMO_I18N = {
             "Be honest about other companies, and say how much you want this one"
           ],
           "answer": "希望年収は650万円以上を考えておりますが、職責に応じてご相談させていただければと思います。入社は2027年2月以降で可能です。他社の選考状況は【要記入：現在の選考状況（社数・段階）】です。その中でも、御社は顧客層と考え方の点で第一に志望しております。",
-          "answer_tr": "I am hoping for an annual salary of 6.5 million yen or more, but I would be glad to discuss it in light of the responsibilities of the role. I can start in February 2027 or later. My status with other companies is 【要記入：現在の選考状況（社数・段階）】 (to fill in: where you are with other companies: how many, and at what stage). Among them, your company is my first choice because of your customer base and your way of thinking."
+          "answer_tr": "I am hoping for an annual salary of 6.5 million yen or more, but I would be glad to discuss it in light of the responsibilities of the role. I can start in February 2027 or later. My status with other companies is 【要記入：現在の選考状況（社数・段階）】 (to fill in: where you are with other companies: how many, and at what stage). Among them, your company is my first choice because of your customer base and your way of thinking.",
+          "answer_easy": "年収は650万円以上を希望します。ただ、仕事の内容によって、ご相談させてください。入社は2027年2月から可能です。ほかの会社の選考は【要記入：現在の選考状況（社数・段階）】です。その中でも、御社を一番に考えています。"
         },
         {
           "q": "ヘルススコアはどのように設計しましたか？",
@@ -233,7 +238,8 @@ window.DEMO_I18N = {
             "How you made it stick in the team"
           ],
           "answer": "ログイン率・機能利用率・問い合わせ件数の3つを指標にしました。【要記入：この3つを選んだ理由】。一度決めて終わりにせず、解約した顧客の傾向と照らして毎月見直しています。運用では、スコアが下がった顧客をチームの週次レビューで確認し、誰が担当しても同じ判断ができるようにしました。",
-          "answer_tr": "I used three metrics: login rate, feature usage rate and number of inquiries. 【要記入：この3つを選んだ理由】 (to fill in: why you chose these three). Rather than setting them once and stopping there, I review them every month against the patterns of customers who canceled. In day-to-day operation, we check customers whose scores have dropped in the team's weekly review, so that the same judgment is made no matter who is in charge."
+          "answer_tr": "I used three metrics: login rate, feature usage rate and number of inquiries. 【要記入：この3つを選んだ理由】 (to fill in: why you chose these three). Rather than setting them once and stopping there, I review them every month against the patterns of customers who canceled. In day-to-day operation, we check customers whose scores have dropped in the team's weekly review, so that the same judgment is made no matter who is in charge.",
+          "answer_easy": "指標は3つです。ログイン率、機能の利用率、問い合わせの件数です。【要記入：この3つを選んだ理由】。この指標は、毎月見直しています。点数が下がったお客様は、週に1回、チームで確認します。だれが担当しても、同じ判断ができるようにしました。"
         },
         {
           "q": "中堅企業の顧客を担当した経験はありますか？",
@@ -245,7 +251,8 @@ window.DEMO_I18N = {
             "How you would design onboarding on the assumption that there are more stakeholders"
           ],
           "answer": "現職の担当は50〜300名規模が中心で、1,000名規模の経験はまだありません。前職では販売管理・会計システムの導入を、社内SEと連携して進行管理してきました。【要記入：その際に顧客側で調整した部署や人数】。関係者が増える分、導入初期に推進役と目標を合意しておくことがより重要になると考えています。",
-          "answer_tr": "In my current job my accounts are mainly companies of 50–300 employees, and I do not yet have experience with companies of around 1,000. In my previous job, I managed the implementation of sales management and accounting systems together with in-house engineers. 【要記入：その際に顧客側で調整した部署や人数】 (to fill in: the departments and number of people you coordinated with on the customer side). With more stakeholders, I think it becomes even more important to agree early in the implementation on who will drive it and what the goals are."
+          "answer_tr": "In my current job my accounts are mainly companies of 50–300 employees, and I do not yet have experience with companies of around 1,000. In my previous job, I managed the implementation of sales management and accounting systems together with in-house engineers. 【要記入：その際に顧客側で調整した部署や人数】 (to fill in: the departments and number of people you coordinated with on the customer side). With more stakeholders, I think it becomes even more important to agree early in the implementation on who will drive it and what the goals are.",
+          "answer_easy": "今の担当は、50〜300人くらいの会社です。1,000人規模の経験は、まだありません。前の会社では、社内のSEと一緒に、システムの導入を進めました。【要記入：その際に顧客側で調整した部署や人数】。大きな会社では、最初に担当者と目標を決めることが大切だと思います。"
         }
       ],
       "reverse": [
@@ -502,6 +509,25 @@ window.DEMO_I18N = {
       "caveats": [
         "How the funds will be used is as described in the November 2025 announcement"
       ]
+    },
+    "profileTr": {
+      "roles": [
+        [
+          "Customer Success team lead (4 members): about 60 client companies with 50–300 employees; designed the customer health score. Churn 8.1% → 4.3%, upsell revenue 132% of the previous year, onboarding 45 → 30 days.",
+          "Customer Success member: onboarding new clients, usage proposals and support. Kept retention at 98% two years running; wrote 30 help articles and cut inquiries by about 20% a month."
+        ],
+        [
+          "Corporate sales (2nd Sales Dept.): about 80 manufacturing and wholesale clients plus new business; proposed and implemented sales-management and accounting systems. 118% of target in FY2020 (3rd of 70, company award); repeat orders ×2.4 in 3 years."
+        ]
+      ],
+      "episodes": {
+        "E1": "A health score cut churn: annual churn in the team’s accounts fell from 8.1% to 4.3%.",
+        "E2": "Made add-on proposals a standard process: upsell revenue 132% of the previous year.",
+        "E3": "Shorter onboarding: average time to go-live from 45 to 30 days.",
+        "E4": "Help articles cut inquiries: about 20% fewer inquiries a month.",
+        "E5": "Follow-up after go-live: repeat orders from existing clients ×2.4 in 3 years.",
+        "E6": "Company award for 118% of target: 3rd of 70 salespeople."
+      }
     }
   },
   "zh": {
@@ -677,7 +703,8 @@ window.DEMO_I18N = {
             "用一句与应聘职位相关的话收尾"
           ],
           "answer": "佐藤健太と申します。新卒で業務用ソフトの会社に入り、法人営業として6年間、製造業・卸売業のお客様にシステムの提案から導入までを担当しました。2022年からはSaaSのカスタマーサクセスに移り、現在はメンバー4名のチームリーダーとして、顧客ヘルススコアを設計し、チームの運用に定着させています。本日はこの経験を、御社のCSでどう生かせるかをお話しできればと思います。",
-          "answer_tr": "我叫佐藤健太。毕业后进入一家业务软件公司，做了6年B2B销售，为制造业、批发业的客户负责从系统提案到导入的全过程。2022年起转做SaaS的客户成功，现在作为4名成员的团队负责人，设计了客户健康度评分，并让它在团队运营中固定下来。今天希望能谈谈如何把这些经验用在贵公司的CS工作中。"
+          "answer_tr": "我叫佐藤健太。毕业后进入一家业务软件公司，做了6年B2B销售，为制造业、批发业的客户负责从系统提案到导入的全过程。2022年起转做SaaS的客户成功，现在作为4名成员的团队负责人，设计了客户健康度评分，并让它在团队运营中固定下来。今天希望能谈谈如何把这些经验用在贵公司的CS工作中。",
+          "answer_easy": "佐藤健太です。最初の会社では、6年間、法人営業をしました。お客様にシステムを提案して、導入まで担当しました。2022年から、SaaSのカスタマーサクセスをしています。今は4人のチームのリーダーです。お客様の状態を点数で見る仕組みを作りました。今日は、この経験を御社でどう生かせるか、お話しします。"
         },
         {
           "q": "転職を考えた理由を教えてください",
@@ -689,7 +716,8 @@ window.DEMO_I18N = {
             "希望带领团队搭建机制"
           ],
           "answer": "現職では従業員50〜300名規模のお客様を中心に担当してきました。ヘルススコアの設計と運用で解約率を下げることはできましたが、部署や関係者が多い大きな組織で、活用をどう広げていくかには挑戦できていません。CSの仕組みづくりをチームでリードしながら、より複雑な組織のお客様の成果に向き合いたいと考え、転職を決めました。",
-          "answer_tr": "在现职中，我主要负责员工50～300人规模的客户。通过设计和运营健康度评分，我降低了解约率，但还没有机会挑战如何在部门和相关人员众多的大型组织中推广产品的使用。我希望一边带领团队搭建CS机制，一边为组织更复杂的客户创造成果，因此决定换工作。"
+          "answer_tr": "在现职中，我主要负责员工50～300人规模的客户。通过设计和运营健康度评分，我降低了解约率，但还没有机会挑战如何在部门和相关人员众多的大型组织中推广产品的使用。我希望一边带领团队搭建CS机制，一边为组织更复杂的客户创造成果，因此决定换工作。",
+          "answer_easy": "今の会社では、50〜300人くらいの会社を担当しています。解約を減らす仕組みは作れました。でも、大きくて関係者が多い会社は、まだ担当したことがありません。チームで仕組みを作りながら、もっと大きな会社のお客様を支えたいです。それで、転職を決めました。"
         },
         {
           "q": "なぜ当社を志望されたのですか？",
@@ -701,7 +729,8 @@ window.DEMO_I18N = {
             "入职后如何运用"
           ],
           "answer": "中堅企業向けにサービスを提供されている点と、2026年4月にオンボーディング専任体制を始められた点に惹かれました。私も営業時代から、導入して終わりではなく定着まで支えることを大切にしてきました。現職では導入資料を標準化して導入期間を45日から30日に短縮し、ヘルススコアをチームで運用してきました。この経験は、御社のオンボーディング設計と解約防止の仕事にそのまま生かせると考えています。",
-          "answer_tr": "我被贵公司面向中型企业提供服务，以及 2026 年 4 月启动「オンボーディング専任体制」（客户上线专职团队）这两点所吸引。我从做销售时起，就一直重视不止于上线、而是支持客户直到真正用起来。在现在的公司，我把上线资料标准化，把上线周期从 45 天缩短到 30 天，并和团队一起运营健康度评分。我认为这些经验可以直接用在贵公司的客户上线设计和防止解约的工作中。"
+          "answer_tr": "我被贵公司面向中型企业提供服务，以及 2026 年 4 月启动「オンボーディング専任体制」（客户上线专职团队）这两点所吸引。我从做销售时起，就一直重视不止于上线、而是支持客户直到真正用起来。在现在的公司，我把上线资料标准化，把上线周期从 45 天缩短到 30 天，并和团队一起运营健康度评分。我认为这些经验可以直接用在贵公司的客户上线设计和防止解约的工作中。",
+          "answer_easy": "理由は2つあります。1つ目は、中堅企業のお客様が多いことです。2つ目は、2026年4月にオンボーディングの専任チームを作ったことです。私は、導入の期間を45日から30日に短くしました。この経験を、御社のオンボーディングで生かせると思います。"
         },
         {
           "q": "あなたの強みと弱みを教えてください",
@@ -713,7 +742,8 @@ window.DEMO_I18N = {
             "为弥补不足正在做的努力"
           ],
           "answer": "強みは、数字で課題を捉えて仕組みで解決することです。ヘルススコアを設計し、担当領域の解約率を年8.1%から4.3%に下げました。弱みは、1,000名規模のお客様を担当した経験がまだないことです。前職で社内SEと連携して導入を進めた経験を土台に、【要記入：大規模組織に向けて学んでいること】に取り組んでいます。",
-          "answer_tr": "我的优势是用数字把握问题、用机制解决问题。我设计了健康度评分，把负责领域的年解约率从8.1%降到了4.3%。不足是还没有负责过1,000人规模的客户。我以上一份工作中与公司内部SE合作推进导入的经验为基础，正在做【要記入：大規模組織に向けて学んでいること】。"
+          "answer_tr": "我的优势是用数字把握问题、用机制解决问题。我设计了健康度评分，把负责领域的年解约率从8.1%降到了4.3%。不足是还没有负责过1,000人规模的客户。我以上一份工作中与公司内部SE合作推进导入的经验为基础，正在做【要記入：大規模組織に向けて学んでいること】。",
+          "answer_easy": "強みは、数字で問題を見つけて、仕組みで解決することです。担当したお客様の解約率を、8.1%から4.3%に下げました。弱みは、1,000人規模の会社を担当したことがないことです。今は【要記入：大規模組織に向けて学んでいること】に取り組んでいます。"
         },
         {
           "q": "希望年収、入社可能時期、他社の選考状況を教えてください",
@@ -725,7 +755,8 @@ window.DEMO_I18N = {
             "其他公司的情况如实说，并表明应聘意愿"
           ],
           "answer": "希望年収は650万円以上を考えておりますが、職責に応じてご相談させていただければと思います。入社は2027年2月以降で可能です。他社の選考状況は【要記入：現在の選考状況（社数・段階）】です。その中でも、御社は顧客層と考え方の点で第一に志望しております。",
-          "answer_tr": "期望年薪在650万日元以上，但也希望根据职责与贵公司商量。可以在2027年2月以后入职。其他公司的应聘进展是【要記入：現在の選考状況（社数・段階）】。其中，从客户群和理念来看，贵公司是我的第一志愿。"
+          "answer_tr": "期望年薪在650万日元以上，但也希望根据职责与贵公司商量。可以在2027年2月以后入职。其他公司的应聘进展是【要記入：現在の選考状況（社数・段階）】。其中，从客户群和理念来看，贵公司是我的第一志愿。",
+          "answer_easy": "年収は650万円以上を希望します。ただ、仕事の内容によって、ご相談させてください。入社は2027年2月から可能です。ほかの会社の選考は【要記入：現在の選考状況（社数・段階）】です。その中でも、御社を一番に考えています。"
         },
         {
           "q": "ヘルススコアはどのように設計しましたか？",
@@ -737,7 +768,8 @@ window.DEMO_I18N = {
             "如何让它在团队中固定下来"
           ],
           "answer": "ログイン率・機能利用率・問い合わせ件数の3つを指標にしました。【要記入：この3つを選んだ理由】。一度決めて終わりにせず、解約した顧客の傾向と照らして毎月見直しています。運用では、スコアが下がった顧客をチームの週次レビューで確認し、誰が担当しても同じ判断ができるようにしました。",
-          "answer_tr": "我把登录率、功能使用率和咨询件数这3项作为指标。【要記入：この3つを選んだ理由】。指标不是定了就结束，而是每月对照已解约客户的倾向进行复盘调整。运营上，我们在团队的每周复盘会上查看评分下降的客户，让无论谁负责都能做出相同的判断。"
+          "answer_tr": "我把登录率、功能使用率和咨询件数这3项作为指标。【要記入：この3つを選んだ理由】。指标不是定了就结束，而是每月对照已解约客户的倾向进行复盘调整。运营上，我们在团队的每周复盘会上查看评分下降的客户，让无论谁负责都能做出相同的判断。",
+          "answer_easy": "指標は3つです。ログイン率、機能の利用率、問い合わせの件数です。【要記入：この3つを選んだ理由】。この指標は、毎月見直しています。点数が下がったお客様は、週に1回、チームで確認します。だれが担当しても、同じ判断ができるようにしました。"
         },
         {
           "q": "中堅企業の顧客を担当した経験はありますか？",
@@ -749,7 +781,8 @@ window.DEMO_I18N = {
             "以相关人员增多为前提来设计上线引导的思路"
           ],
           "answer": "現職の担当は50〜300名規模が中心で、1,000名規模の経験はまだありません。前職では販売管理・会計システムの導入を、社内SEと連携して進行管理してきました。【要記入：その際に顧客側で調整した部署や人数】。関係者が増える分、導入初期に推進役と目標を合意しておくことがより重要になると考えています。",
-          "answer_tr": "现职中我负责的客户以50～300人规模为主，还没有1,000人规模的经验。在上一份工作中，我与公司内部SE合作，负责销售管理和会计系统导入的进度管理。【要記入：その際に顧客側で調整した部署や人数】。正因为相关人员更多，我认为在导入初期先就由谁来推进、目标是什么达成一致，会变得更加重要。"
+          "answer_tr": "现职中我负责的客户以50～300人规模为主，还没有1,000人规模的经验。在上一份工作中，我与公司内部SE合作，负责销售管理和会计系统导入的进度管理。【要記入：その際に顧客側で調整した部署や人数】。正因为相关人员更多，我认为在导入初期先就由谁来推进、目标是什么达成一致，会变得更加重要。",
+          "answer_easy": "今の担当は、50〜300人くらいの会社です。1,000人規模の経験は、まだありません。前の会社では、社内のSEと一緒に、システムの導入を進めました。【要記入：その際に顧客側で調整した部署や人数】。大きな会社では、最初に担当者と目標を決めることが大切だと思います。"
         }
       ],
       "reverse": [
@@ -951,6 +984,25 @@ window.DEMO_I18N = {
       "caveats": [
         "融资资金的用途是 2025 年 11 月发布时的说明"
       ]
+    },
+    "profileTr": {
+      "roles": [
+        [
+          "客户成功部 组长（4 名成员）：负责约 60 家员工 50～300 人的客户公司，设计了客户健康分。年流失率 8.1%→4.3%，增购销售额同比 132%，上线周期 45 天→30 天。",
+          "客户成功部 成员：负责新客户上线、使用建议和咨询。连续 2 年保持 98% 的续约率；编写 30 篇帮助文章，每月咨询减少约 20%。"
+        ],
+        [
+          "第二营业部 企业销售：负责制造业、批发业约 80 家老客户并开拓新客户，提案并推进销售管理、会计系统的导入。2020 财年目标达成率 118%（70 人中第 3 名，获公司表彰）；3 年内老客户追加订单增至 2.4 倍。"
+        ]
+      ],
+      "episodes": {
+        "E1": "用健康分降低流失：负责领域的年流失率从 8.1% 降到 4.3%。",
+        "E2": "把增购提案做成固定流程：增购销售额同比 132%。",
+        "E3": "缩短上线周期：平均从 45 天缩短到 30 天。",
+        "E4": "用帮助文章减少咨询：每月咨询量平均减少约 20%。",
+        "E5": "上线后的跟进：3 年内老客户追加订单增至 2.4 倍。",
+        "E6": "目标达成率 118% 获公司表彰：70 人中第 3 名。"
+      }
     }
   }
 };
