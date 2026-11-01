@@ -1,5 +1,5 @@
 // The D1 database (binding DB, tables in schema.sql): accounts, credits, saved data, daily usage.
-import { FREE_CREDITS, LIMITS } from './config.js';
+import { FREE_CREDITS, LIMITS, PREVIEW, FREE_LIFE } from './config.js';
 import { jpDay, sha256 } from './util.js';
 import { clerkEmail } from './auth.js';
 
@@ -35,6 +35,7 @@ export async function account(env, auth, { create = true } = {}) {
         if (email) {
           const give = await firstFree(env, email);
           await env.DB.prepare('UPDATE users SET email = ?, free_pending = 0, credits = credits + ? WHERE id = ? AND free_pending = 1').bind(email, give ? FREE_CREDITS : 0, auth.id).run();
+          if (!give) await noFreePreviews(env, auth.id);
           u = await env.DB.prepare('SELECT * FROM users WHERE id = ?').bind(auth.id).first();
         }
       }
@@ -48,10 +49,16 @@ export async function account(env, auth, { create = true } = {}) {
     if (email) credits = (await firstFree(env, email)) ? FREE_CREDITS : 0;
     else { credits = 0; pending = 1; }
   }
-  await env.DB.prepare('INSERT OR IGNORE INTO users (id, email, credits, free_pending, created_at, seen_at) VALUES (?, ?, ?, ?, ?, ?)').bind(auth.id, email, credits, pending, now, now).run();
+  const m = auth.meta || {};
+  await env.DB.prepare('INSERT OR IGNORE INTO users (id, email, credits, free_pending, src, lang, created_at, seen_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)').bind(auth.id, email, credits, pending, m.src || '', m.lang || '', now, now).run();
+  // an address that has had the free 応募先 before: no free previews either
+  if (!credits && !pending && !auth.dev) await noFreePreviews(env, auth.id);
   u = await env.DB.prepare('SELECT * FROM users WHERE id = ?').bind(auth.id).first();
   return { user: u, created: true };
 }
+
+const noFreePreviews = (env, id) => env.DB.prepare(`INSERT INTO usage (user_id, day, kind, n) VALUES (?, 'life', 'previews', ?)
+  ON CONFLICT (user_id, day, kind) DO UPDATE SET n = MAX(n, excluded.n)`).bind(id, PREVIEW.free).run();
 
 // has bought credits at least once (the features that cost web searches are for them)
 export async function hasPaid(env, id) {
@@ -69,42 +76,97 @@ export async function researchCounts(env, id) {
   return Object.fromEntries((r.results || []).map((x) => [x.company_id, x.research]));
 }
 
+// the account's 応募先 that use AI: open (a credit is used) and preview (not yet)
 export async function slotIds(env, id) {
-  const r = await env.DB.prepare('SELECT company_id FROM slots WHERE user_id = ?').bind(id).all();
-  return (r.results || []).map((x) => x.company_id);
+  const r = await env.DB.prepare('SELECT company_id, unlocked FROM slots WHERE user_id = ?').bind(id).all();
+  const rows = r.results || [];
+  return { open: rows.filter((x) => x.unlocked).map((x) => x.company_id), preview: rows.filter((x) => !x.unlocked).map((x) => x.company_id) };
+}
+// what is left of the free trial for an account that has never bought
+export async function freeLeft(env, id) {
+  const r = await env.DB.prepare(`SELECT kind, n FROM usage WHERE user_id = ? AND day = 'life'`).bind(id).all();
+  const used = Object.fromEntries((r.results || []).map((x) => [x.kind, x.n]));
+  return { previews: Math.max(0, PREVIEW.free - (used.previews || 0)), ...Object.fromEntries(Object.entries(FREE_LIFE).map(([k, v]) => [k, Math.max(0, v - (used[k] || 0))])) };
 }
 
-// Start an AI request for a 応募先: use a credit unless the 応募先 already has one, and count the request as
-// running. { state: 'have'|'new'|'none', n (successes so far), label (the company it is for) }
-// Every claim other than 'none' must be ended with finishSlot.
-export async function claimSlot(env, id, cid) {
-  const have = await env.DB.prepare('UPDATE slots SET busy = busy + 1 WHERE user_id = ? AND company_id = ? RETURNING n, label').bind(id, cid).first();
-  if (have) return { state: 'have', n: have.n, label: have.label };
+const SLOT_COLS = 'n, label, unlocked';
+const slotOf = (x, state) => ({ state, n: x.n, label: x.label, unlocked: !!x.unlocked });
+// Start an AI request for a 応募先 and count it as running. mode 'unlock': the 応募先 needs a credit (one is
+// used now if it has none); 'preview': it may run without one (a preview, within PREVIEW). paid: the account
+// has bought before. { state: 'have'|'new'|'none', n (successes so far), label (the company it is for),
+// unlocked, why ('preview' when no more previews) }. Every claim other than 'none' must be ended with finishSlot.
+export async function claimSlot(env, id, cid, mode, paid) {
+  const have = await env.DB.prepare(`UPDATE slots SET busy = busy + 1 WHERE user_id = ? AND company_id = ? RETURNING ${SLOT_COLS}`).bind(id, cid).first();
+  if (have) return slotOf(have, 'have');
+  if (mode === 'unlock') return creditSlot(env, id, cid);
+  const claim = crypto.randomUUID(); const now = Date.now();
+  const undo = () => env.DB.prepare(`UPDATE usage SET n = MAX(n - 1, 0) WHERE user_id = ? AND day = 'life' AND kind = 'previews'`).bind(id).run();
+  if (!paid) {
+    // one more preview in all; taken back when it is over the free number
+    const r = await bump(env, id, 'life', 'previews').first();
+    if (!r || r.n > PREVIEW.free) { await undo(); return { state: 'none', why: 'preview' }; }
+    await env.DB.prepare(`INSERT OR IGNORE INTO slots (user_id, company_id, claim, unlocked, n, busy, label, created_at) VALUES (?, ?, ?, 0, 0, 1, '', ?)`).bind(id, cid, claim, now).run();
+  } else {
+    // buyers: as many locked 応募先 at once as credits left + PREVIEW.open
+    await env.DB.prepare(`INSERT INTO slots (user_id, company_id, claim, unlocked, n, busy, label, created_at)
+      SELECT ?1, ?2, ?3, 0, 0, 1, '', ?4 WHERE (SELECT COUNT(*) FROM slots WHERE user_id = ?1 AND unlocked = 0) < (SELECT credits FROM users WHERE id = ?1) + ?5
+      AND NOT EXISTS (SELECT 1 FROM slots WHERE user_id = ?1 AND company_id = ?2)`).bind(id, cid, claim, now, PREVIEW.open).run();
+  }
+  const s = await env.DB.prepare('SELECT claim FROM slots WHERE user_id = ? AND company_id = ?').bind(id, cid).first();
+  if (s && s.claim === claim) return { state: 'new', n: 0, label: '', unlocked: false };
+  if (!paid) await undo();
+  // another request added it a moment ago: run as part of that one
+  return s ? claimSlot(env, id, cid, mode, paid) : { state: 'none', why: 'preview' };
+}
+// a 応募先 that has no slot yet, made with a credit
+async function creditSlot(env, id, cid) {
   const claim = crypto.randomUUID();
   // one transaction: add the slot only if a credit is left and the slot is not there yet, then take the
   // credit only if the slot just added is this request's
   await env.DB.batch([
-    env.DB.prepare(`INSERT INTO slots (user_id, company_id, claim, n, busy, label, created_at)
-      SELECT ?1, ?2, ?3, 0, 1, '', ?4 WHERE (SELECT credits FROM users WHERE id = ?1) > 0
+    env.DB.prepare(`INSERT INTO slots (user_id, company_id, claim, unlocked, n, busy, label, created_at)
+      SELECT ?1, ?2, ?3, 1, 0, 1, '', ?4 WHERE (SELECT credits FROM users WHERE id = ?1) > 0
       AND NOT EXISTS (SELECT 1 FROM slots WHERE user_id = ?1 AND company_id = ?2)`).bind(id, cid, claim, Date.now()),
     env.DB.prepare(`UPDATE users SET credits = credits - 1 WHERE id = ?1
       AND EXISTS (SELECT 1 FROM slots WHERE user_id = ?1 AND company_id = ?2 AND claim = ?3)`).bind(id, cid, claim),
   ]);
-  const s = await env.DB.prepare('SELECT n, claim, label FROM slots WHERE user_id = ? AND company_id = ?').bind(id, cid).first();
+  const s = await env.DB.prepare('SELECT claim FROM slots WHERE user_id = ? AND company_id = ?').bind(id, cid).first();
   if (!s) return { state: 'none' };
-  if (s.claim === claim) return { state: 'new', n: 0, label: '' };
-  // another request added it a moment ago: run as part of that one
-  return claimSlot(env, id, cid);
+  if (s.claim === claim) return { state: 'new', n: 0, label: '', unlocked: true };
+  return claimSlot(env, id, cid, 'unlock');
+}
+// Use a credit for a 応募先 (its documents leave the page, or a task that needs one runs). { ok, used: a credit was
+// used by this call (false: it had one already) }
+export async function unlockSlot(env, id, cid) {
+  const s = await env.DB.prepare('SELECT unlocked FROM slots WHERE user_id = ? AND company_id = ?').bind(id, cid).first();
+  if (s && s.unlocked) return { ok: true, used: false };
+  if (!s) {
+    // documents made before previews existed, or brought in from a file
+    const r = await creditSlot(env, id, cid);
+    if (r.state === 'none') return { ok: false };
+    await env.DB.prepare('UPDATE slots SET n = MAX(n, 1), busy = MAX(busy - 1, 0) WHERE user_id = ? AND company_id = ?').bind(id, cid).run();
+    return { ok: true, used: r.state === 'new' };
+  }
+  const t = crypto.randomUUID();
+  await env.DB.batch([
+    env.DB.prepare(`UPDATE slots SET unlocked = 1, claim = ?3 WHERE user_id = ?1 AND company_id = ?2 AND unlocked = 0
+      AND (SELECT credits FROM users WHERE id = ?1) > 0`).bind(id, cid, t),
+    env.DB.prepare(`UPDATE users SET credits = credits - 1 WHERE id = ?1
+      AND EXISTS (SELECT 1 FROM slots WHERE user_id = ?1 AND company_id = ?2 AND claim = ?3)`).bind(id, cid, t),
+  ]);
+  const a = await env.DB.prepare('SELECT unlocked, claim FROM slots WHERE user_id = ? AND company_id = ?').bind(id, cid).first();
+  return a && a.unlocked ? { ok: true, used: a.claim === t } : { ok: false };
 }
 
-// An AI request for a 応募先 that already has a credit, counted as running ({state: 'have', …}); null if it has none.
+// An AI request for a 応募先 that already has a slot, counted as running ({state: 'have', …}); null if it has none.
 export async function holdSlot(env, id, cid) {
-  const have = await env.DB.prepare('UPDATE slots SET busy = busy + 1 WHERE user_id = ? AND company_id = ? RETURNING n, label').bind(id, cid).first();
-  return have ? { state: 'have', n: have.n, label: have.label } : null;
+  const have = await env.DB.prepare(`UPDATE slots SET busy = busy + 1 WHERE user_id = ? AND company_id = ? RETURNING ${SLOT_COLS}`).bind(id, cid).first();
+  return have ? slotOf(have, 'have') : null;
 }
 
 // End an AI request for a 応募先. ok: one more success, and the company's name is kept the first time.
-// Failed: when nothing has ever succeeded for the 応募先 and no other request is running, the credit goes back.
+// Failed: when nothing has ever succeeded for the 応募先 and no other request is running, the slot goes, and
+// with it the credit (or, for a preview, the count of free previews).
 // Returns false when ok but the slot is gone (should not happen: a running request keeps it).
 export async function finishSlot(env, id, cid, ok, label) {
   if (ok) {
@@ -112,9 +174,10 @@ export async function finishSlot(env, id, cid, ok, label) {
       WHERE user_id = ?1 AND company_id = ?2`).bind(id, cid, String(label || '').slice(0, 120)).run();
     return r.meta.changes > 0;
   }
+  const first = 'EXISTS (SELECT 1 FROM slots WHERE user_id = ?1 AND company_id = ?2 AND n = 0 AND busy <= 1 AND unlocked = ';
   await env.DB.batch([
-    env.DB.prepare(`UPDATE users SET credits = credits + 1 WHERE id = ?1
-      AND EXISTS (SELECT 1 FROM slots WHERE user_id = ?1 AND company_id = ?2 AND n = 0 AND busy <= 1)`).bind(id, cid),
+    env.DB.prepare(`UPDATE users SET credits = credits + 1 WHERE id = ?1 AND ${first}1)`).bind(id, cid),
+    env.DB.prepare(`UPDATE usage SET n = MAX(n - 1, 0) WHERE user_id = ?1 AND day = 'life' AND kind = 'previews' AND ${first}0)`).bind(id, cid),
     env.DB.prepare('DELETE FROM slots WHERE user_id = ? AND company_id = ? AND n = 0 AND busy <= 1').bind(id, cid),
     env.DB.prepare('UPDATE slots SET busy = MAX(busy - 1, 0) WHERE user_id = ? AND company_id = ?').bind(id, cid),
   ]);
@@ -130,15 +193,17 @@ export async function credits(env, id) {
 // requests within the user's own limits, so one user cannot use up everyone's day.
 const bump = (env, u, day, k) => env.DB.prepare(`INSERT INTO usage (user_id, day, kind, n) VALUES (?, ?, ?, 1)
   ON CONFLICT (user_id, day, kind) DO UPDATE SET n = n + 1 RETURNING n`).bind(u, day, k);
-export async function countUse(env, id, task, cid) {
+// paid false: the account has never bought, and FREE_LIFE limits the task in all (usage day 'life').
+export async function countUse(env, id, task, cid, paid = true) {
   const day = jpDay();
-  const mine = [['all', LIMITS.day], [task, LIMITS[task] || LIMITS.day]];
-  if (cid) mine.push(['c:' + cid, LIMITS.company]);
-  const res = await env.DB.batch(mine.map(([k]) => bump(env, id, day, k)));
+  const mine = [['all', LIMITS.day, day], [task, LIMITS[task] || LIMITS.day, day]];
+  if (cid) mine.push(['c:' + cid, LIMITS.company, day]);
+  if (!paid && FREE_LIFE[task]) mine.push([task, FREE_LIFE[task], 'life']);
+  const res = await env.DB.batch(mine.map(([k, , d]) => bump(env, id, d, k)));
   const serviceMax = Number(env.AI_DAILY_LIMIT) || 3000;
   for (let i = 0; i < mine.length; i++) {
     const n = res[i].results && res[i].results[0] ? res[i].results[0].n : 0;
-    if (n > mine[i][1]) return { over: mine[i][0].startsWith('c:') ? 'company' : mine[i][0], service: 0, serviceMax };
+    if (n > mine[i][1]) return { over: mine[i][2] === 'life' ? 'life' : mine[i][0].startsWith('c:') ? 'company' : mine[i][0], service: 0, serviceMax };
   }
   const g = await bump(env, '*', day, 'all').first();
   const service = g ? g.n : 0;

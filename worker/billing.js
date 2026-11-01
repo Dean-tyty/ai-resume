@@ -68,7 +68,8 @@ async function apply(env, s, request, ctx) {
   }
   const r = await creditPurchase(env, { session: s.id, user, pack, credits: PACKS[pack].credits, amount: s.amount_total || 0 });
   if (r.added) {
-    track(env, 'buy', request);
+    const who = await env.DB.prepare('SELECT src, lang FROM users WHERE id = ?').bind(user).first().catch(() => null);
+    track(env, 'buy', request, who);
     ctx.waitUntil(notify(env, `ご購入：${PACKS[pack].label}（${yen(s.amount_total || 0)}）`));
   } else if (!r.ok) {
     ctx.waitUntil(notify(env, `支払いを受けましたが、利用枠を追加できませんでした（アカウントが見つかりません）。Stripe の Checkout Session ${s.id} を確認し、返金などを対応してください。`));

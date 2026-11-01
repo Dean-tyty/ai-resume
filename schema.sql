@@ -1,6 +1,10 @@
 -- D1 schema for 職務経歴書AI. Apply with: npx wrangler d1 execute resume --remote --file=schema.sql
 -- (local development: the same with --local). Every statement can be run again safely.
 -- A database made before slots.research existed: ALTER TABLE slots ADD COLUMN research INTEGER NOT NULL DEFAULT 0;
+-- A database made before 2026-11-02 (previews, first-touch source), run once:
+--   ALTER TABLE slots ADD COLUMN unlocked INTEGER NOT NULL DEFAULT 1;
+--   ALTER TABLE users ADD COLUMN src TEXT NOT NULL DEFAULT '';
+--   ALTER TABLE users ADD COLUMN lang TEXT NOT NULL DEFAULT '';
 CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY,                -- Clerk user id (sub)
   email TEXT NOT NULL DEFAULT '',     -- for the Stripe checkout form; cleared when the data expires
@@ -8,6 +12,8 @@ CREATE TABLE IF NOT EXISTS users (
   consent TEXT NOT NULL DEFAULT '',   -- the consent version agreed to (worker/config.js CONSENT_VERSION)
   consented_at INTEGER NOT NULL DEFAULT 0,
   free_pending INTEGER NOT NULL DEFAULT 0, -- 1: the email could not be read at sign-up; the free credit is decided later
+  src TEXT NOT NULL DEFAULT '',       -- where the first visit came from (utm_source or the referring site's host), for the weekly report
+  lang TEXT NOT NULL DEFAULT '',      -- the page the account was made on: ja / en / zh
   created_at INTEGER NOT NULL,
   seen_at INTEGER NOT NULL
 );
@@ -17,10 +23,11 @@ CREATE TABLE IF NOT EXISTS workspace (
   version INTEGER NOT NULL DEFAULT 0, -- raised on every save; a save based on an older version is refused
   updated_at INTEGER NOT NULL
 );
-CREATE TABLE IF NOT EXISTS slots (    -- 応募先 that have used a credit
+CREATE TABLE IF NOT EXISTS slots (    -- 応募先 that use AI: previews (unlocked 0) and those that have used a credit
   user_id TEXT NOT NULL,
   company_id TEXT NOT NULL,           -- the 応募先's id in the page's state
   claim TEXT NOT NULL,                -- the request that used the credit (to give it back if that request fails)
+  unlocked INTEGER NOT NULL DEFAULT 1, -- 0: a preview (no credit used yet), 1: a credit is used for it
   n INTEGER NOT NULL DEFAULT 0,       -- AI requests that succeeded for this 応募先
   busy INTEGER NOT NULL DEFAULT 0,    -- AI requests running now (the credit goes back only when none is)
   label TEXT NOT NULL DEFAULT '',     -- the company's name, set by the first success (a credit is for one company)

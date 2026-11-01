@@ -602,3 +602,37 @@ html:not([lang=ja]) .ctrl .tpl span:not(.rec){-webkit-line-clamp:3}
   .vh>.btn{flex:1 1 100%}.vh>.spacer{display:none}
   .hint,.hint.tiny,.box p,.val .d,.req,.plan .it,.intent,.flow>div,.ex-tr ul,.cc{font-size:13.5px}
 }
+/* price cards: the recommended pack */
+.pc.rec{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink);position:relative}
+.pc .badge{position:absolute;top:-10px;right:12px;background:var(--ink);color:#fff;font-size:12px;border-radius:999px;padding:1px 9px}
+/* phones: the 職務経歴書 as text (A4 is shown on demand) */
+.readseg{display:none;margin:0 0 8px}
+@media (max-width:719px){.readseg{display:flex}}
+.desk.reading{display:block;padding:12px 10px}
+.readv{background:#fff;border-radius:6px;padding:18px 16px;font-size:15px;line-height:1.75;color:var(--ink);box-shadow:0 1px 2px rgba(60,40,10,.10)}
+.readv.nocopy{-webkit-user-select:none;user-select:none}
+.readv .rd-title{font-size:19px;font-weight:700;text-align:center;letter-spacing:.2em}
+.readv .rd-meta{font-size:13px;color:var(--ink2);text-align:right;margin-bottom:6px}
+.readv h4{font-size:15px;margin:18px 0 6px;padding-bottom:3px;border-bottom:1px solid var(--line)}
+.readv p{margin:0 0 6px}
+.readv ul{margin:2px 0 8px;padding-left:1.2em}
+.readv li{margin:2px 0}
+.readv .rd-hl{list-style:none;padding:0;display:grid;gap:4px}
+.readv .rd-hl b{font-size:16px;margin-right:6px}
+.readv .rd-co{margin:10px 0 14px}
+.readv .rd-co-h{display:flex;flex-wrap:wrap;justify-content:space-between;gap:2px 10px}
+.readv .rd-co-h span{font-size:13px;color:var(--ink2)}
+.readv .rd-bl{margin:8px 0 0;padding-left:10px;border-left:2px solid var(--line)}
+.readv .rd-h{font-weight:600;font-size:14px}
+.readv .rd-l{font-size:13px;color:var(--ink2);margin-top:4px}
+.readv .rd-pr{margin:8px 0}
+.readv mark{background:#FFE58A}
+/* the documents option: clients' names left out */
+.maskopt{display:flex;gap:8px;align-items:flex-start;margin:10px 0 2px;font-size:13px;line-height:1.5;cursor:pointer}
+.maskopt input{margin-top:3px;flex:none}
+.maskopt small{display:block;color:var(--ink3);font-size:12px}
+.lock-note{color:var(--ink2)}
+/* the easy-Japanese version of an interview answer */
+details.easy{margin:6px 0 0;border:0;padding:0}
+details.easy summary{font-size:13px;color:var(--ink2);cursor:pointer}
+details.easy div{margin-top:4px;padding:8px 10px;background:var(--paper);border-radius:8px;font-size:14px;line-height:1.7}

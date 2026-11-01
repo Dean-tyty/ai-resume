@@ -1,15 +1,17 @@
 // POST /api/ai {task, ctx, c, rep, i}: one AI step. The prompts live here on the server (prompts.js);
 // the browser sends only the user's own data.
-// Credits: reading a job posting (analyze) is free; making documents for a 応募先 uses one credit the first
-// time (given back if nothing ever succeeds for it). A credit is for one company: once its name is known,
-// requests for another company under the same 応募先 are refused. The sample job posting costs nothing.
-// Every request counts towards the daily limits.
+// Credits: reading a job posting (analyze) is free. The 職務経歴書 of a 応募先 can be made and read on the
+// screen without a credit (a preview, within PREVIEW in config.js); the credit is used when its documents leave
+// the page (POST /api/unlock) or a task below marked 'unlock' runs (given back if nothing ever succeeds for it).
+// A credit is for one company: once its name is known, requests for another company under the same 応募先 are
+// refused. The sample job posting costs nothing. Every request counts towards the daily limits (and, for an
+// account that has never bought, towards FREE_LIFE).
 //
 // The answer can take a minute or more, so the response starts at once and sends a space every
 // 15 seconds until the JSON arrives (spaces before JSON are allowed).
 import { PROMPTS } from './prompts.js';
-import { MAX_PAYLOAD, CONSENT_VERSION, SLOT_MAX, RESEARCH_PER_COMPANY, REVIEW_SITES } from './config.js';
-import { account, claimSlot, holdSlot, finishSlot, credits, countUse, hasPaid, takeResearch, giveBackResearch } from './db.js';
+import { MAX_PAYLOAD, CONSENT_VERSION, SLOT_MAX, FREE_SLOT_MAX, PREVIEW, RESEARCH_PER_COMPANY, REVIEW_SITES } from './config.js';
+import { account, claimSlot, holdSlot, finishSlot, unlockSlot, credits, countUse, hasPaid, takeResearch, giveBackResearch } from './db.js';
 import { body, fail, str, sizeOf, jpDate, NO_STORE, sameCompany, sha256 } from './util.js';
 import { track } from './stats.js';
 import { notify } from './notify.js';
@@ -18,18 +20,19 @@ import { keepFound } from './webpage.js';
 import { AIError, callModel, modelFor } from './llm.js';
 import { searchProvider, collectSources } from './research.js';
 
-// task -> [prompt, max output tokens (thinking included), needs a 応募先, uses a credit]
+// task -> [prompt, max output tokens (thinking included), needs a 応募先, credit: '' none (analyze runs under
+// the slot if there is one) | 'preview' may run before the credit is used | 'unlock' uses the credit]
 const TASKS = {
-  profile: ['P_PROFILE', 16000, false, false],
-  analyze: ['P_ANALYZE', 10000, true, false],
-  generate: ['P_GENERATE', 16000, true, true],
-  shorten: ['P_SHORTEN', 16000, true, true],
-  pack: ['P_PACK', 14000, true, true],
-  prep: ['P_PREP', 10000, true, true],
-  rk: ['P_RK', 4000, true, true],
-  explain: ['P_EXPLAIN', 16000, true, true],
-  english: ['P_ENGLISH', 14000, true, true],
-  research: ['P_RESEARCH', 12000, true, true],
+  profile: ['P_PROFILE', 16000, false, ''],
+  analyze: ['P_ANALYZE', 10000, true, ''],
+  generate: ['P_GENERATE', 16000, true, 'preview'],
+  shorten: ['P_SHORTEN', 16000, true, 'preview'],
+  explain: ['P_EXPLAIN', 16000, true, 'preview'],
+  pack: ['P_PACK', 14000, true, 'unlock'],
+  prep: ['P_PREP', 10000, true, 'unlock'],
+  rk: ['P_RK', 4000, true, 'unlock'],
+  english: ['P_ENGLISH', 14000, true, 'unlock'],
+  research: ['P_RESEARCH', 12000, true, 'unlock'],
 };
 // for users who have bought credits only, and at most RESEARCH_PER_COMPANY times per 応募先: web searches cost
 const PAID_ONLY = new Set(['research']);
@@ -50,6 +53,7 @@ function cleanCtx(x) {
     intent: { reason: str(it.reason, 1500), axis: str(it.axis, 1500), conditions: str(it.conditions, 1000) },
     profile: obj(x.profile, 80000), explainLang: x.explainLang === 'en' ? 'en' : 'zh',
     nameEn: str(x.nameEn, 80), uiLang: ['en', 'zh'].includes(x.uiLang) ? x.uiLang : 'ja',
+    mask: x.mask !== false,   // clients' names and internal numbers left out of the documents (the default)
   };
 }
 function cleanCompany(c) {
@@ -109,23 +113,32 @@ export async function handleAI(request, env, ctxExec, auth) {
   if (env.AI_MOCK !== '1' && !(mdl.provider === 'openai' ? env.AI_API_KEY : env.ANTHROPIC_API_KEY)) return fail(503, 'not_configured');
   const sp = task === 'research' ? searchProvider(env, mdl.provider) : '';
   if (task === 'research' && !sp && env.AI_MOCK !== '1') return fail(503, 'not_configured');
-  if (PAID_ONLY.has(task) && !(await hasPaid(env, auth.id))) return fail(403, 'paid_only');
+  const paid = await hasPaid(env, auth.id);
+  if (PAID_ONLY.has(task) && !paid) return fail(403, 'paid_only');
 
   let slot = null;
   const named = c ? (c.analysis && c.analysis.company) || c.name : '';
   const free = c ? await isSample(c) : true;
   if (task === 'research' && free) return fail(400, 'sample');   // the sample company does not exist
   if (c && !free) {
-    // documents: the 応募先 takes a credit unless it has one; reading the posting: only if it already has one
-    slot = def[3] ? await claimSlot(env, auth.id, c.id) : await holdSlot(env, auth.id, c.id);
+    // documents: under the 応募先's slot (made now if it has none); reading the posting: only if it already has one
+    slot = def[3] ? await claimSlot(env, auth.id, c.id, def[3], paid) : await holdSlot(env, auth.id, c.id);
   }
   if (slot) {
-    if (slot.state === 'none') return fail(402, 'no_credit', { credits: 0 });
-    if (slot.n >= SLOT_MAX) { await finishSlot(env, auth.id, c.id, false); return fail(429, 'limit', { scope: 'slot' }); }
+    if (slot.state === 'none') return fail(402, slot.why === 'preview' ? 'preview_limit' : 'no_credit', { credits: await credits(env, auth.id) });
+    if (def[3] === 'unlock' && !slot.unlocked) {
+      // a preview that now needs its credit (the page asks before sending)
+      const u = await unlockSlot(env, auth.id, c.id);
+      if (!u.ok) { await finishSlot(env, auth.id, c.id, false); return fail(402, 'no_credit', { credits: 0 }); }
+      slot.unlocked = true;
+      if (u.used) track(env, 'unlock', request);
+    }
+    const max = !slot.unlocked ? PREVIEW.requests : paid ? SLOT_MAX : FREE_SLOT_MAX;
+    if (slot.n >= max) { await finishSlot(env, auth.id, c.id, false); return fail(429, 'limit', { scope: slot.unlocked ? 'slot' : 'preview' }); }
     if (slot.label && !sameCompany(slot.label, named)) { await finishSlot(env, auth.id, c.id, false); return fail(409, 'company_changed', { label: slot.label }); }
     if (task === 'research' && !(await takeResearch(env, auth.id, c.id, RESEARCH_PER_COMPANY))) { await finishSlot(env, auth.id, c.id, false); return fail(429, 'limit', { scope: 'research' }); }
   }
-  const use = await countUse(env, auth.id, task, c && c.id);
+  const use = await countUse(env, auth.id, task, c && c.id, paid);
   if (use.over) {
     if (slot) { if (task === 'research') await giveBackResearch(env, auth.id, c.id); await finishSlot(env, auth.id, c.id, false); }
     if (use.over === 'service' && use.service === use.serviceMax + 1) ctxExec.waitUntil(notify(env, `本日の AI 利用がサービス全体の上限（${use.serviceMax}回）に達しました。AI_DAILY_LIMIT を確認してください。`));
@@ -169,7 +182,7 @@ export async function handleAI(request, env, ctxExec, auth) {
       }
       if (task === 'profile') track(env, 'profile', request);
       if (task === 'generate') track(env, 'doc', request);
-      out = { result: r.value, credits: await credits(env, auth.id), slot: slot ? slot.state : '' };
+      out = { result: r.value, credits: await credits(env, auth.id), slot: slot ? slot.state : '', unlocked: !!(slot && slot.unlocked) };
       console.log(JSON.stringify({ ai: task, model: r.model || 'mock', in: r.usage.input_tokens || 0, out: r.usage.output_tokens || 0, ...(r.usage.searches ? { searches: r.usage.searches } : {}), ...(r.usage.retried ? { retried: 1 } : {}), ...(r.fallback ? { fallback: 1 } : {}) }));
     } catch (e) {
       const code = e instanceof AIError ? e.code : 'server';

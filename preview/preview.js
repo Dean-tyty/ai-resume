@@ -13,8 +13,8 @@
     }
   });
   window.APP_CONFIG = {
-    clerkKey: '', dev: true, preview: true, free: 1, consent: 'preview', retention: 365, research: 3,
-    packs: [{ id: 'p5', credits: 5, price: 2480, label: '5社パック' }, { id: 'p10', credits: 10, price: 3980, label: '10社パック' }],
+    clerkKey: '', dev: true, preview: { free: 2, open: 3, requests: 20 }, free: 1, consent: 'preview', retention: 365, research: 3, freeLife: { profile: 6, analyze: 10 },
+    packs: [{ id: 'p5', credits: 5, price: 2480, label: '5社パック', rec: true }, { id: 'p10', credits: 10, price: 3980, label: '10社パック' }],
     terms: 'https://www.flatland.co.jp/legal/terms/resume/', privacy: 'https://www.flatland.co.jp/privacy/',
   };
   const MOCK = __MOCK__;
@@ -36,11 +36,15 @@
     if (!name) return res(401, { error: { code: 'login' } });
     const id = 'dev_' + name;
     const created = !S.users[id];
-    const u = S.users[id] || (S.users[id] = { credits: 1, slots: [], consent: false, data: null, version: 0 });
+    const u = S.users[id] || (S.users[id] = { credits: 1, slots: [], previews: [], used: 0, consent: false, data: null, version: 0 });
+    u.previews = u.previews || []; u.used = u.used || 0;
+    const FREE = 2;
+    const unlock = (cid) => { if (u.slots.includes(cid)) return true; if (u.credits <= 0) return false; u.credits -= 1; u.slots.push(cid); u.previews = u.previews.filter((x) => x !== cid); return true; };
     const body = init.body ? JSON.parse(init.body) : {};
     const key = method + ' ' + url.pathname;
     try {
-      if (key === 'GET /api/me') return res(200, { id, credits: u.credits, slots: u.slots, consent: u.consent, paid: !!u.paid, research: u.research || {}, created });
+      if (key === 'GET /api/me') return res(200, { id, credits: u.credits, slots: u.slots, previews: u.previews, free: u.paid ? null : { previews: Math.max(0, FREE - u.used), profile: 6, analyze: 10 }, consent: u.consent, paid: !!u.paid, research: u.research || {}, created });
+      if (key === 'POST /api/unlock') return unlock(body.id) ? res(200, { ok: true, credits: u.credits }) : res(402, { error: { code: 'no_credit', credits: u.credits } });
       if (key === 'POST /api/consent') { u.consent = true; return res(200, { ok: true }); }
       if (key === 'GET /api/workspace') return res(200, { data: u.data, version: u.version });
       if (key === 'PUT /api/workspace') {
@@ -68,16 +72,22 @@
           if (sample) return res(400, { error: { code: 'sample' } });
           if ((u.research[c.id] || 0) >= 3) return res(429, { error: { code: 'limit', scope: 'research' } });
         }
+        // as on the server: the 職務経歴書 may be made before the credit is used (a preview); the rest uses it
+        const PREVIEW_TASKS = ['generate', 'shorten', 'explain'];
         if (c && body.task !== 'analyze' && !sample && !u.slots.includes(c.id)) {
-          if (u.credits <= 0) return res(402, { error: { code: 'no_credit', credits: 0 } });
-          u.credits -= 1; u.slots.push(c.id);
+          if (PREVIEW_TASKS.includes(body.task)) {
+            if (!u.previews.includes(c.id)) {
+              if (!u.paid && u.used >= FREE) return res(402, { error: { code: 'preview_limit', credits: u.credits } });
+              u.previews.push(c.id); if (!u.paid) u.used += 1;
+            }
+          } else if (!unlock(c.id)) return res(402, { error: { code: 'no_credit', credits: 0 } });
         }
         if (body.task === 'research') u.research[c.id] = (u.research[c.id] || 0) + 1;
         await wait(body.task === 'generate' || body.task === 'pack' ? 2600 : 1500);
         const ul = body.ctx && body.ctx.uiLang;
         const v = JSON.parse(JSON.stringify(MOCK[body.task + '_' + ul] || MOCK[body.task] || {}));
         if (body.task === 'analyze' && c && c.name) v.company = c.name;
-        return res(200, { result: v, credits: u.credits, slot: c && u.slots.includes(c.id) ? 'have' : '' });
+        return res(200, { result: v, credits: u.credits, slot: c && (u.slots.includes(c.id) || u.previews.includes(c.id)) ? 'have' : '', unlocked: !!(c && u.slots.includes(c.id)) });
       }
       return res(404, { error: { code: 'not_found' } });
     } finally { keep(); }

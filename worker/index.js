@@ -1,7 +1,8 @@
 // 職務経歴書AI (resume.flatland.co.jp): the page (public/, served as static files) and its API.
 //
 //   GET    /config.js              settings the page needs (Clerk's publishable key, packs, consent version)
-//   GET    /api/me                 the account: credits, 応募先 that have a credit, consent
+//   GET    /api/me                 the account: credits, 応募先 that have a credit (slots) or are previews, consent
+//   POST   /api/unlock {id}        use a credit for a 応募先 whose documents are about to leave the page
 //   POST   /api/consent {version}  agreement to the terms and to sending data to the AI service
 //   GET    /api/workspace          the saved data          PUT /api/workspace {data, base}  save it
 //   POST   /api/ai                 one AI step (ai.js)
@@ -10,13 +11,13 @@
 //   DELETE /api/account            delete the account and everything saved
 //   POST   /api/event              steps counted for the weekly report (stats.js)
 // A daily cron deletes data not used for RETENTION_DAYS.
-import { PRODUCT, PACKS, FREE_CREDITS, CONSENT_VERSION, MAX_WORKSPACE, RETENTION_DAYS, RESEARCH_PER_COMPANY } from './config.js';
+import { PRODUCT, PACKS, FREE_CREDITS, CONSENT_VERSION, MAX_WORKSPACE, RETENTION_DAYS, RESEARCH_PER_COMPANY, PREVIEW, FREE_LIFE } from './config.js';
 import { authenticate, clerkDelete } from './auth.js';
-import { account, slotIds, getWorkspace, putWorkspace, deleteUser, hasPaid, researchCounts } from './db.js';
+import { account, slotIds, getWorkspace, putWorkspace, deleteUser, hasPaid, researchCounts, freeLeft, unlockSlot, credits } from './db.js';
 import { fetchJob } from './fetchjob.js';
 import { handleAI } from './ai.js';
 import { checkout, confirm, webhook, devPay, devPayPost } from './billing.js';
-import { beacon, track } from './stats.js';
+import { beacon, track, pageOf } from './stats.js';
 import { notify } from './notify.js';
 import { body, json, fail, NO_STORE } from './util.js';
 
@@ -25,6 +26,7 @@ function configJS(env) {
     clerkKey: env.CLERK_PUBLISHABLE_KEY || '', dev: env.DEV_AUTH === '1',
     packs: Object.entries(PACKS).map(([id, p]) => ({ id, ...p })), free: FREE_CREDITS, consent: CONSENT_VERSION,
     terms: PRODUCT.terms, privacy: PRODUCT.privacy, retention: RETENTION_DAYS, research: RESEARCH_PER_COMPANY,
+    preview: PREVIEW, freeLife: FREE_LIFE,
   };
   return new Response('window.APP_CONFIG = ' + JSON.stringify(cfg) + ';\n', { headers: { 'content-type': 'text/javascript; charset=utf-8', ...NO_STORE } });
 }
@@ -32,9 +34,24 @@ function configJS(env) {
 async function me(request, env, auth) {
   const { user, created } = await account(env, auth);
   if (created) track(env, 'signup', request);
-  // paid: has bought credits (URL reading and company research); research: researches used per 応募先
+  // paid: has bought credits (URL reading and company research); research: researches used per 応募先;
+  // free: what is left of the free trial (accounts that have never bought)
   const [slots, paid, research] = await Promise.all([slotIds(env, auth.id), hasPaid(env, auth.id), researchCounts(env, auth.id)]);
-  return json({ id: auth.id, credits: user.credits, slots, paid, research, consent: user.consent === CONSENT_VERSION, created });
+  const free = paid ? null : await freeLeft(env, auth.id);
+  return json({ id: auth.id, credits: user.credits, slots: slots.open, previews: slots.preview, free, paid, research, consent: user.consent === CONSENT_VERSION, created });
+}
+
+// the documents of a 応募先 are about to be saved or copied: its credit is used now (once)
+async function unlock(request, env, auth) {
+  const b = await body(request, 1024);
+  const id = b && typeof b.id === 'string' && /^[a-z0-9]{4,16}$/.test(b.id) ? b.id : '';
+  if (!id) return fail(400, 'company');
+  await account(env, auth);
+  const u = await unlockSlot(env, auth.id, id);
+  const n = await credits(env, auth.id);
+  if (!u.ok) return fail(402, 'no_credit', { credits: n });
+  if (u.used) track(env, 'unlock', request);
+  return json({ ok: true, used: u.used, credits: n });
 }
 
 async function consent(request, env, auth) {
@@ -95,7 +112,7 @@ async function cleanup(env) {
   }
   if (clerkFailed.length) await notify(env, `保存期間を過ぎたユーザーのログイン情報を Clerk から削除できませんでした（${clerkFailed.length}件）。Clerk の管理画面で削除してください：${clerkFailed.slice(0, 20).join(', ')}`);
   const day = new Date(Date.now() - 40 * 864e5 + 9 * 3600e3).toISOString().slice(0, 10);
-  await env.DB.prepare('DELETE FROM usage WHERE day < ?').bind(day).run();
+  await env.DB.prepare("DELETE FROM usage WHERE day < ? AND day <> 'life'").bind(day).run();   // 'life': the free trial's counts
   if (old.length) console.log('cleanup', old.length);
 }
 
@@ -105,6 +122,7 @@ const API_AUTH = {
   'GET /api/workspace': (r, env, ctx, a) => workspace(r, env, a),
   'PUT /api/workspace': (r, env, ctx, a) => workspace(r, env, a),
   'POST /api/ai': (r, env, ctx, a) => handleAI(r, env, ctx, a),
+  'POST /api/unlock': (r, env, ctx, a) => unlock(r, env, a),
   'POST /api/fetch-job': (r, env, ctx, a) => fetchJob(r, env, a),
   'POST /api/checkout': (r, env, ctx, a) => checkout(r, env, a),
   'POST /api/checkout/confirm': (r, env, ctx, a) => confirm(r, env, ctx, a),
@@ -125,6 +143,7 @@ async function api(request, env, ctx) {
   if (request.method !== 'GET' && origin && origin !== url.origin) return fail(403, 'origin');
   const auth = await authenticate(request, env);
   if (!auth) return fail(401, 'login');
+  auth.meta = pageOf(request);   // kept on the account when it is made (the weekly report: which page and source sell)
   return h(request, env, ctx, auth);
 }
 

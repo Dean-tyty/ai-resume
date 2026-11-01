@@ -68,7 +68,7 @@ ok((await page.innerText('#acct .credit')).includes('1'), 'sample used no credit
 for (const kind of ['pdf', 'docx']) {
   const [dl] = await Promise.all([page.waitForEvent('download'), page.click(`[data-act=${kind}]`).then(() => page.click(`[data-act=${kind}]`).catch(() => {}))]);
   const p = OUT + 'out.' + kind; await dl.saveAs(p);
-  ok(/職務経歴書_山田太郎_.+_\d{8}\.(pdf|docx)/.test(dl.suggestedFilename()), kind + ' downloaded as ' + dl.suggestedFilename());
+  ok(/^職務経歴書_山田太郎_\d{8}\.(pdf|docx)$/.test(dl.suggestedFilename()), kind + ' downloaded as ' + dl.suggestedFilename());
 }
 await act('tab', '[data-v=rireki]');
 await page.waitForSelector('#rkPreview canvas', { timeout: 15000 });
@@ -119,26 +119,50 @@ const api = async (path, b) => JSON.parse((await (await fetch(BASE + path, { met
 const C2c = { id: C2.match(/"(.+)"/)[1], name: '株式会社テスト二号', job: '【募集職種】営業マネージャー\n【必須】法人営業経験3年以上' };
 ok((await api('/api/fetch-job', { url: 'https://jobs.example.com/1' })).error.code === 'paid_only', 'server: URL import refused before a purchase');
 ok((await api('/api/ai', { task: 'research', ctx: {}, c: C2c })).error.code === 'paid_only', 'server: research refused before a purchase');
+// the 職務経歴書 is made and read before any credit is used (a preview); saving it uses the free credit
+ok((await page.innerText(C2 + ' .credit-note')).includes('利用枠は使いません'), 'note: making the 職務経歴書 uses no credit');
 await page.click(C2 + ' [data-act=generate]');
-await page.waitForFunction(() => /あと\s*0/.test(document.querySelector('#acct .credit').textContent), null, { timeout: 30000 });
-ok(true, 'documents used the free credit');
+await page.waitForSelector('.lock-note', { timeout: 30000 });
 await page.waitForFunction(() => !document.querySelector('.pill.run'), null, { timeout: 30000 });
+ok(/あと\s*1/.test(await page.innerText('#acct .credit')), 'making the 職務経歴書 used no credit (a preview)');
+// saving: asked first, then the free credit is used and the file saved
+const save = async (sel) => { await page.click(sel); await page.waitForTimeout(200); if ((await page.innerText(sel).catch(() => '')).includes('もう一度')) await page.click(sel); };
+{
+  const dl = page.waitForEvent('download', { timeout: 20000 });
+  await save('[data-act=pdf]');
+  await page.waitForSelector('[data-act=unlockOk]');
+  ok((await page.innerText('#modal')).includes('無料の1社分を使います'), 'asked before the free credit is used');
+  await page.click('[data-act=unlockOk]');
+  await dl;
+  ok(/あと\s*0/.test(await page.innerText('#acct .credit')) && !(await page.isVisible('.lock-note')), 'saving used the free credit (1 → 0)');
+}
 
-// a third: out of credits -> purchase -> the documents get made on return
+// a third: made as the second free preview; saving it -> purchase -> asked again on return -> saved
 const C3 = await addCo('株式会社テスト三号');
 await page.click(C3 + ' [data-act=analyze]');
 await page.waitForSelector(C3 + ' .an', { timeout: 15000 });
-ok((await page.innerText(C3 + ' .credit-note')).includes('利用枠が必要'), 'no-credit note shown before making documents');
 await page.click(C3 + ' [data-act=generate]');
+await page.waitForSelector('.lock-note', { timeout: 30000 });
+await page.waitForFunction(() => !document.querySelector('.pill.run'), null, { timeout: 30000 });
+ok(/あと\s*0/.test(await page.innerText('#acct .credit')), 'second company made as a free preview (still 0)');
+await save('[data-act=pdf]');
 await page.waitForSelector('.packs');
-ok(true, 'purchase dialog opens when out of credits');
+ok((await page.innerText('#modal')).includes('画面で確認できています'), 'out of credits: purchase dialog says what this company needs');
 await shot('buy');
+// a fourth company cannot be made before buying (2 free previews)
+ok((await api('/api/ai', { task: 'generate', ctx: { profile: { careers: [] } }, c: { id: 'zzzz9', name: '株式会社テスト九号', job: 'x', analysis: { company: '株式会社テスト九号' } } })).error.code === 'preview_limit', 'server: no third free preview');
 await page.click('[data-act=buy][data-pack=p5]');
 await page.waitForURL(/\/api\/dev\/pay/);
 await page.click('#b');
 await page.waitForURL((u) => !u.search.includes('paid') && u.pathname === '/', { timeout: 15000 });
-await page.waitForFunction(() => /あと\s*4/.test((document.querySelector('#acct .credit') || {}).textContent || ''), null, { timeout: 30000 });
-ok(true, 'paid pack added and the waiting document made at once (5 → 4)');
+await page.waitForSelector('[data-act=unlockOk]', { timeout: 30000 });
+ok(/あと\s*5/.test(await page.innerText('#acct .credit')), 'paid pack added; the waiting save asks before using one');
+{
+  const dl = page.waitForEvent('download', { timeout: 20000 });
+  await page.click('[data-act=unlockOk]');
+  await dl;
+  ok(/あと\s*4/.test(await page.innerText('#acct .credit')), 'saved after the purchase (5 → 4)');
+}
 ok((await page.locator('[data-cid], .co-it').count()) >= 3, 'data still there after the payment round trip');
 await page.waitForFunction(() => !document.querySelector('.pill.run'), null, { timeout: 30000 });
 await page.waitForFunction(() => document.querySelector('#sync').textContent === '保存済み', null, { timeout: 8000 });
@@ -162,8 +186,9 @@ await page.click(C4 + ' [data-act=analyze]');
 await page.waitForSelector(C4 + ' .an', { timeout: 15000 });
 const researched = async () => { await page.waitForFunction((S) => document.querySelector(S + ' .rs-facts') && !document.querySelector(S + ' .research .status'), C4, { timeout: 15000 }); };
 await page.click(C4 + ' [data-act=research]');
-ok((await page.innerText(C4 + ' [data-act=research]')).includes('もう一度押す'), 'asked before research uses a credit');
-await page.click(C4 + ' [data-act=research]');
+await page.waitForSelector('[data-act=unlockOk]');
+ok((await page.innerText('#modal')).includes('1社分を使います'), 'asked before research uses a credit');
+await page.click('[data-act=unlockOk]');
 await researched();
 await shot('research');
 ok(/あと\s*3/.test(await page.innerText('#acct .credit')), 'research uses the company\'s credit (4 → 3)');

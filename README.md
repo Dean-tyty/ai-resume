@@ -15,17 +15,23 @@
 | AI | Anthropic Claude API（提示词只在服务器上） | `worker/ai.js`、`worker/prompts.js` |
 | 支付 | Stripe Checkout + Webhook | `worker/billing.js` |
 | 通知 | 官网同一个 Lark 机器人（只发购买和异常） | `worker/notify.js` |
-| 统计 | 官网同一个 Analytics Engine（`flatland_events`） | `worker/stats.js` |
+| 统计 | 官网同一个 Analytics Engine（`flatland_events`）。blob3 = 页面语言（ja/en/zh），blob4 = 路径，blob5 = 首次来访的来源（utm_source 或来源网站的域名，空 = 直接访问）；账号记下首次来源和语言（`users.src`、`users.lang`），购买事件用它 | `worker/stats.js` |
 | 外观 | 官网品牌套件 v1（`<fl-header>`、`<fl-footer>`），加载失败时显示页面自带的页眉页脚 | `public/index.html` |
 | 多语言 | `/en/`、`/zh/` 两个页面由日文页面生成；之后 app 画出的日文界面文字由 `public/i18n.js` 按词典替换 | `i18n/`、`tools/make-lang-pages.mjs` |
 
 ### 利用枠（收费方式）
 
-- 1 社分 = 1 个应募先。分析求人票免费；第一次为某个应募先生成书类（职务经历书、英文简历、面试准备、履历书志望动机、解说等）时扣 1 社分。只要这个应募先还没有任何一次成功、也没有别的请求在进行，失败就自动退回。之后这个应募先的书类可以反复重做，不再扣。
+- 1 社分 = 1 个应募先。**什么时候扣（2026-11-02 起）：** 分析求人票免费；生成职务经历书并在页面上看（含「詰める」和中英文解说）也不扣，这叫「预览」（`slots.unlocked = 0`）。以下任一件事第一次发生时扣 1 社分（`unlocked = 1`），扣之前页面先弹出确认：
+  - 保存（PDF・Word）或复制这个应募先的书类（`POST /api/unlock`）；
+  - 生成志望動機・面接準備（pack）、各轮面试准备（prep）、履历书的志望動機（rk）、英文简历、公司调查（`worker/ai.js` 的 `TASKS` 里标 `unlock` 的任务；服务器会在需要时自动扣）。
+  只要这个应募先还没有任何一次成功、也没有别的请求在进行，失败就自动退回。之后这个应募先的书类可以反复重做，不再扣。
+- 预览的上限（`worker/config.js` 的 `PREVIEW`，因为预览也花 AI 费）：没买过的账号累计最多开 2 个应募先（包括免费的那一家）；买过的账号同时最多有「剩余枠数＋3」个还没扣枠的应募先；每个没扣枠的应募先最多 20 次 AI 请求。
+- 没买过的账号的累计上限（`FREE_LIFE`，不是每天）：整理经历 6 次、分析求人票 10 次；免费那一家扣枠后累计 40 次（`FREE_SLOT_MAX`）。计数记在 `usage` 表的 `day = 'life'` 行，每天的清理不会删。同一个邮箱删号重注册：不送免费枠，也不给免费预览。
 - 页面上的「サンプル求人で試す」：用示例求人分析和生成都不扣枠（服务器按求人票内容判断，`worker/mock.json` 的 `sampleJobHash`）。
 - 1 社分只能用于一家公司：第一次成功时记住公司名，之后同一个应募先换成别的公司会被拒绝（去掉「株式会社」、括号、空格后比较，一方包含另一方就算同一家）。
 - 新账号送 1 社分（同一个邮箱只送一次：删除账号再注册不会再送；保存的是邮箱的不可逆哈希）。注册时读不到邮箱的账号先不送，等之后能读到邮箱时再判断。
-- 价格：5 社 2,480 円、10 社 3,980 円（含税）。改价格时，`worker/config.js` 的 `PACKS` 和 Stripe 的 Price 要一起改：支付金额和 `PACKS` 不一致时不加枠，并发 Lark 通知。
+- 价格：5 社 2,480 円（推荐，`PACKS` 里的 `rec`）、10 社 3,980 円。株式会社フラットランド是消费税免税事业者：页面上不写「税込」，写「表示価格がお支払いの総額です」，不发适格请求书（インボイス）。将来登记为适格请求书发行事业者时，这些文字和条款要一起改。
+- 退款（条款草稿第 4 条）：购买 14 天内、买的枠一个都没用，可以全额退款（只在 Stripe 后台手动处理，见下面「退款」）。改价格时，`worker/config.js` 的 `PACKS` 和 Stripe 的 Price 要一起改：支付金额和 `PACKS` 不一致时不加枠，并发 Lark 通知。
 - 成本保护（`worker/config.js` 的 `LIMITS`、变量 `AI_DAILY_LIMIT`）：每人每天 AI 150 次、整理经历 15 次、分析 40 次、每个应募先每天 40 次、每个应募先累计 150 次；全站每天 3000 次（到 80% 和 100% 时 Lark 通知）。
 
 ### 只给购买过的用户（成本控制）
@@ -111,7 +117,7 @@ LANG=C.UTF-8 node test/e2e.mjs                  # 先 npm run dev；浏览器里
 LANG=C.UTF-8 node test/i18n.mjs                 # 英文・中文页面的每个画面里有没有剩下的日文界面文字
 ```
 
-E2E 需要官网的品牌套件：默认读取官网仓库本机构建的 `dist/`（`FL_OFFLINE=1 python3 tools/build.py`），路径用 `FLATLAND_DIST` 指定。E2E 覆盖：首页 → 示例 → 自己的数据 → 登录 → 同意 → 整理经历 → 应募先（扣免费枠）→ 生成书类 → 下载 PDF・Word・履历书 → 英文简历（PDF・Word，不另扣枠）→ 枠用完时购买（购买前 URL 读入和调查不开放）→ 购买后从 URL 读入（转职网站被拒）→ 调查（扣枠、每社 3 次上限）→ 换设备读入 → 两台设备冲突 → 退出登录 → 删除账号，以及页面没有报错（含 CSP）。
+E2E 需要官网的品牌套件：默认读取官网仓库本机构建的 `dist/`（`FL_OFFLINE=1 python3 tools/build.py`），路径用 `FLATLAND_DIST` 指定。E2E 覆盖：首页 → 示例 → 自己的数据 → 登录 → 同意 → 整理经历 → 应募先（生成不扣枠，保存时确认后扣免费枠）→ 下载 PDF・Word・履历书 → 英文简历（PDF・Word，不另扣枠）→ 第二家免费预览、第三家被拒 → 保存时枠不够 → 购买后再确认、保存（购买前 URL 读入和调查不开放）→ 购买后从 URL 读入（转职网站被拒）→ 调查（扣枠、每社 3 次上限）→ 换设备读入 → 两台设备冲突 → 退出登录 → 删除账号，以及页面没有报错（含 CSP）。
 
 ## 画面预览（不需要任何账号）
 
@@ -127,7 +133,7 @@ E2E 需要官网的品牌套件：默认读取官网仓库本机构建的 `dist/
 
 1. D1：「存储和数据库」→「D1」→「创建」，名字 `resume`。把 Database ID 填进 `wrangler.jsonc` 的 `database_id`。然后建表：
    `npx wrangler d1 execute resume --remote --file=schema.sql`
-   （已经建过表的数据库，再执行一次：`npx wrangler d1 execute resume --remote --command "ALTER TABLE slots ADD COLUMN research INTEGER NOT NULL DEFAULT 0"`）
+   （已经建过表的数据库，再执行一次：`npx wrangler d1 execute resume --remote --command "ALTER TABLE slots ADD COLUMN research INTEGER NOT NULL DEFAULT 0"`；2026-11-02 之前建的库，还要执行 `schema.sql` 开头注释里的 3 条 ALTER：`slots.unlocked`、`users.src`、`users.lang`）
 2. Worker：「Workers 和 Pages」→「创建」→「导入 Git 存储库」→ 选上面的仓库。部署命令 `npx wrangler deploy`。
 3. 子域名：Worker →「设置」→「域和路由」→「添加」→「自定义域」→ `resume.flatland.co.jp`。
 4. 「变量和机密」里加下面的机密（类型选「密钥」）。

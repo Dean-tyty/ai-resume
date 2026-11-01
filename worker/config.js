@@ -2,9 +2,19 @@
 // Stripe Prices named in the secrets STRIPE_PRICE_P5 / STRIPE_PRICE_P10 — keep the two in step.
 export const PRODUCT = { id: 'resume', name: '職務経歴書AI', terms: 'https://www.flatland.co.jp/legal/terms/resume/', privacy: 'https://www.flatland.co.jp/privacy/' };
 export const CONSENT_VERSION = '2026-11-01';          // bump when the consent text changes: everyone is asked again
-export const FREE_CREDITS = 1;                         // 応募先 a new account can make documents for, free
+export const FREE_CREDITS = 1;                         // 応募先 a new account can take documents out for, free
+// A 応募先's 職務経歴書 can be made and read on the screen before a credit is used ("preview"). The credit is
+// used the first time its documents leave the page (PDF / Word / copy) or its 志望動機・面接準備・履歴書・
+// 英文レジュメ・公開情報の調査 is made (UNLOCK tasks in ai.js). Previews cost AI calls, so they are capped:
+//   free: 応募先 an account that has never bought may start in all (the free one included)
+//   open: locked 応募先 a buyer may hold at once, on top of the credits left
+//   requests: AI requests one locked 応募先 may use
+export const PREVIEW = { free: 2, open: 3, requests: 20 };
+// accounts that have never bought: AI requests in all (not per day), by task
+export const FREE_LIFE = { profile: 6, analyze: 10 };
+export const FREE_SLOT_MAX = 40;                       // AI requests the free 応募先 may use in all (buyers: SLOT_MAX)
 export const PACKS = {
-  p5: { credits: 5, price: 2480, label: '5社パック' },
+  p5: { credits: 5, price: 2480, label: '5社パック', rec: true },
   p10: { credits: 10, price: 3980, label: '10社パック' },
 };
 // cost guards: AI calls per user per day (all tasks / by task), and per 応募先 per day

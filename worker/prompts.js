@@ -16,6 +16,11 @@ const UI = { en: '英語', zh: '中国語（簡体字）' };
 const uiName = (ctx) => UI[ctx.uiLang] || '';
 // how the translations shown under the Japanese are written
 const trRule = (ctx) => `${uiName(ctx)}訳では、【要記入：…】の印は【要記入】のまま残し、コロンの後の説明だけを訳す（例：【要記入：the reason you chose this company】）。${ctx.uiLang === 'zh' ? '中国語は中国大陸で自然な表現にし、日本語の漢語をそのまま使わない（例：中堅企業→中型企业、活用→使用・推广使用、法人営業→企业客户销售）。中国語の文中の引用は “” を使う。' : ''}`;
+// rules shared by the documents: no role inflation, qualifiers kept, clients' names hidden unless the user says not to
+const LEVEL_RULE = '- 役割・立場を表す言葉は候補者データより上げない（「参加」を「主導」、「担当」を「責任者」、「まとめた」を「率いた」、「サポート」を「推進」にしない）。「約」「以上」「前年比」「延べ」「月平均」など数値の限定語と、期間・人数・単位は候補者データのまま残す。';
+const maskRule = (ctx) => (ctx.mask === false ? '' : '\n- 守秘：顧客名・取引先名・社内のプロジェクト名や製品コード名・未公表の数値（売上額・顧客数・単価など）は、本人がそのまま書いてよいと明記していない限り書かない。顧客は「大手通信会社」「従業員約300名の製造業」のように業界と規模（候補者データに規模がある場合だけ）で書き、金額は割合・倍率・前年比などの相対値が候補者データにあればそれを使う。在籍した会社の社名と、公開されている自社製品名はそのまま書く。');
+// gaps of half a year or more between jobs, and jobs left within a year: told plainly, never invented
+const GAP_RULE = '- 職歴の間に半年以上の空白がある場合や、在籍1年未満の会社がある場合は、隠さず弁解もしない。候補者データにその理由（出産・育児、介護、療養、留学、資格の勉強など）とその間にしたことがあれば、職務要約か該当する職歴に1文で事実だけを書き、働ける条件が整ったことがデータにあれば添える。理由がデータになければ書かない（作らない）。';
 function slimProfile(ctx) { const p = Object.assign({}, ctx.profile || {}); delete p.missing; return p; }
 function stripDoc(d) { const o = Object.assign({}, d || {}); delete o.name; delete o.date; delete o.title; return o; }
 export function P_PROFILE(ctx) {
@@ -104,13 +109,16 @@ export function P_GENERATE(ctx, c) {
 - 候補者データにない事実・数値・役職・期間・人数・社名・業務・顧客の規模や属性を一切作らない（例：データにない「育成」「マネジメント」「中堅企業担当」を推測で書かない）。できるのは、選ぶ・並べ替える・言い換える・強調することだけ。
 - 数値は候補者データの表記どおりに書く（丸めたり盛ったりしない）。
 - 実績は、本人の役割（主導／担当／チームとして）が候補者データで分かる場合だけ明記する。分からない場合は役割を盛らない。
+${LEVEL_RULE}${maskRule(ctx)}
 - 方針の values のうち source が「公開情報」のものは、見せ方を決めるためだけに使う。会社のニュース・数字・日付・スローガンは職務経歴書に書かない。
+- 職務経歴書には応募先の社名・「貴社」「御社」・応募先のスローガンやバリューの名前を書かない（転職エージェント経由で他社にも出されたり、本人が使い回したりするため）。応募先に合わせるのは、事例の選び方・順番・言葉の選び方で行う。志望動機は履歴書と面接で伝える。
+${GAP_RULE}
 
 # 最適化のルール
 - 方針（plan / summary_angle / pr_themes / keywords）に沿って、応募先に効く経歴・実績を前に出し、関係の薄い業務は短くする。
 - keywords は自然に入る範囲で使う（不自然な詰め込みはしない）。
 - 同じ数値は書類全体（highlights を含む）で2回まで。
-- 自己PRは職務経歴の言い換えにしない。課題をどう捉え、どう工夫したか、なぜ応募先でも再現できるかを書く。最後に応募先でどう生かすかへ一言つなげてよい（事実を足さない範囲で）。
+- 自己PRは職務経歴の言い換えにしない。課題をどう捉え、どう工夫したか、なぜ次の職場でも再現できるかを書く。最後に、応募職種でどう生かすかへ一言つなげてよい（事実を足さない範囲で。社名は書かない）。
 - 定型句を避け、具体的な言葉で書く（避ける例：「〜することで」の多用、「伴走」「一貫した姿勢」「幅広い」「様々な」「貢献したいと考えています」）。
 
 # 文体と分量（レイアウトに収めるための制約）
@@ -153,6 +161,7 @@ export function P_SHORTEN(ctx, c, rep) {
 5. 箇条書きを1行（全角38字以内）に収める言い換え
 # 守ること
 - 応募先の方針で重要な実績と数値は残す。highlights は変えない。事実は変えない。新しい内容を足さない。
+- 「約」「以上」「前年比」「延べ」などの限定語、期間・人数・単位は削らない（削ると数字の意味が変わる）。役割の言葉を強くしない。
 - 資格は削らない。プロジェクトの role・team・phases・env と skillTable はそのまま残す（減らすのは overview・duties・achievements）。
 - 同じ JSON 構造で全体を返す（JSONのみ）。
 
@@ -169,9 +178,13 @@ export function P_PACK(ctx, c) {
 - 回答例・志望動機は、提出する職務経歴書・候補者データ・本人の転職の軸に矛盾させない。そこにない具体的な手順・数字・エピソード・動機は足さない。足りない部分は【要記入：何を書くか】と書き、本人が埋められるようにする。
 - 選考フローは、企業固有の公開情報が与えられていない限り「一般的な想定」であり、flow.note にそう書く。
 - 回答例は丸暗記用の原稿にしない。話し言葉の「です・ます」で、話して30〜40秒（150〜220字）。要点は3つまで。
+- 応募先の呼び方：話す回答例と逆質問では「御社」、書く志望動機（motivation）では「貴社」。
+- 本人の優先度が「併願」の場合、「第一志望」「御社だけ」など他社を受けていないと受け取られる言い方をしない。
+${LEVEL_RULE}
+- 職歴に半年以上の空白か在籍1年未満の会社がある場合、その理由を聞かれる質問を1問含め、事実を短く述べてから「今は働ける状態であること・その間に得たこと」へつなぐ答え方を示す。理由が候補者データになければ【要記入：その期間の理由と、していたこと】とする。
 - 方針の gaps（経歴の弱い点）を突かれる質問を2問以上含め、盛らずに答える方法を示す。
 - 逆質問：求人票・企業情報・公開情報の調査で答えが分かることは聞かない。形は「前提（調べた事実、1文）＋自分の経験とのつながり＋公開情報では分からない問い」。条件だけの質問（年収・残業・休日）、口コミやネガティブな報道を前提にした質問、相手を試す質問、「はい／いいえ」で終わる質問はしない。調査の question_seeds は使ってよいが、本人の経験とのつながりを足す。
-- 質問は9問：自己紹介、転職理由、志望動機、強み・弱み、希望年収・入社可能時期・他社の選考状況（1問にまとめる）、この求人ならではの質問。候補者データの入力が日本語以外と読み取れる場合は、日本で働く理由や日本語での業務経験を問う質問を1問含める。
+- 質問は9問：自己紹介、転職理由、志望動機、強み・弱み、希望年収・入社可能時期・他社の選考状況（1問にまとめる）、この求人ならではの質問。候補者データの入力が日本語以外と読み取れる場合は、日本で働く理由や日本語での業務経験を問う質問と、在留資格・日本で長く働く予定を確かめる質問（答え方は事実だけを短く。在留期限などがデータになければ【要記入】）を含める。
 
 ${c.research && c.research.facts && c.research.facts.length && c.research.confidence !== 'low' ? `# 公開情報の使い方（下に調査がある）
 - 「なぜこの会社か」には調査の事実を1つ（多くても2つ）だけ使う。本人の転職の軸か職務経歴書の事例と直接つながる事実に限る。つながる事実がなければ使わず【要記入：この会社を選ぶ理由】を残す。
@@ -182,9 +195,10 @@ ${c.research && c.research.facts && c.research.facts.length && c.research.confid
 - 使った事実の id を motivation.used に入れる（例 ["F2"]）。使わなければ空配列。
 ` : ''}
 # 出力形式（JSONのみ）
-${uiName(ctx) ? `{"motivation":{"long":"","short":"","long_tr":"long の${uiName(ctx)}訳","short_tr":"","used":["使った公開情報の id"]},"flow":{"note":"","steps":[{"name":"","who":"","focus":""}]},"questions":[{"q":"日本語の質問","q_tr":"q の${uiName(ctx)}訳","intent":"","points":[""],"answer":"日本語の回答例","answer_tr":"answer の${uiName(ctx)}訳"}],"reverse":["日本語の逆質問"],"reverse_tr":["reverse の${uiName(ctx)}訳"],"cautions":[""]}
+${uiName(ctx) ? `{"motivation":{"long":"","short":"","long_tr":"long の${uiName(ctx)}訳","short_tr":"","used":["使った公開情報の id"]},"flow":{"note":"","steps":[{"name":"","who":"","focus":""}]},"questions":[{"q":"日本語の質問","q_tr":"q の${uiName(ctx)}訳","intent":"","points":[""],"answer":"日本語の回答例","answer_easy":"同じ内容のやさしい日本語版","answer_tr":"answer の${uiName(ctx)}訳"}],"reverse":["日本語の逆質問"],"reverse_tr":["reverse の${uiName(ctx)}訳"],"cautions":[""]}
 件数：flow.steps 3〜5、questions 9、reverse 3、cautions 2〜4。
-言語：面接は日本語なので、motivation の long と short、questions の q と answer、reverse は日本語で書く。本人は${uiName(ctx)}で読むので、*_tr にその忠実な訳を、flow（note・name・who・focus）、intent、points、cautions は${uiName(ctx)}で書く。${trRule(ctx)}`
+言語：面接は日本語なので、motivation の long と short、questions の q と answer と answer_easy、reverse は日本語で書く。本人は${uiName(ctx)}で読むので、*_tr にその忠実な訳を、flow（note・name・who・focus）、intent、points、cautions は${uiName(ctx)}で書く。${trRule(ctx)}
+answer_easy：日本語が母語でない人が自分の言葉で話せるように、answer と同じ要点を、短い文（1文40字以内）・よく使う語彙（日本語能力試験 N3〜N2 程度）・敬語は「です・ます」と基本の謙譲語だけで書く（100〜160字）。`
   : `{"motivation":{"long":"志望動機（280〜320字。転職の軸が未入力なら【要記入】を含める）","short":"志望動機（130〜160字）","used":["使った公開情報の id"]},"flow":{"note":"","steps":[{"name":"","who":"","focus":""}]},"questions":[{"q":"","intent":"質問の意図","points":["回答の要点"],"answer":"回答例"}],"reverse":["逆質問"],"cautions":["注意点と対策"]}
 件数：flow.steps 3〜5、questions 9、reverse 3、cautions 2〜4。`}
 
@@ -208,11 +222,12 @@ ${J(slimProfile(ctx))}${intentBlock(ctx, false)}`;
 export function P_PREP(ctx, c, i) {
   const a = c.analysis || {}; const st = c.stages[i];
   const past = c.stages.slice(0, i).map((s) => ({ step: s.name, status: s.status, date: s.date, format: s.format, interviewer: s.who, record: s.log }));
-  return `あなたは日本の中途採用の面接対策コーチです。応募先「${a.company || c.name}」の選考で、本人がこれまでに受けた選考の記録をもとに、次の「${st.name}」の対策を作ってください。今日の日付は${ctx.today}です。
+  return `あなたは日本の中途採用の面接対策コーチです（本人の優先度：${c.priority}）。応募先「${a.company || c.name}」の選考で、本人がこれまでに受けた選考の記録をもとに、次の「${st.name}」の対策を作ってください。今日の日付は${ctx.today}です。
 
 # 厳守
 - 根拠は、下の選考記録・提出した職務経歴書・候補者データ・方針だけ。面接官の意図や評価は推測であることがわかる書き方にする。
 - 前回うまく答えられなかった点は、事実を盛らずに答え直す方法を示す。候補者データや記録にない具体例は足さず、必要なら【要記入：何を書くか】とする。
+- 話す言葉（答え直し方・逆質問）では応募先を「御社」と呼ぶ。本人の優先度が「併願」なら「第一志望」と言わせない。
 - 前回の質問と応募先の方針から、次の面接で深掘りされそうな点を予測する。記録がなければ方針と書類から予測する。
 - 「${st.name}」で一般的に会う相手${st.who ? '（本人のメモ：' + st.who + '）' : ''}が気にすることに合わせる。
 - 公開情報の調査がある場合、この面接の相手に合う事実を1〜2個だけ使う（現場・マネージャー → 職種・部署・プロダクト・社員インタビュー、部門長 → 部門の方針・募集背景、役員・社長 → 中期経営計画・トップメッセージ・直近の決算で会社が説明した重点）。使う場合は checklist に「使う事実のリンク先を開き、日付と内容が今も正しいか確かめる」を入れる。
@@ -242,13 +257,15 @@ export function P_RK(ctx, c) {
 - 候補者データ・本人の転職の軸・提出する職務経歴書にない事実や動機を作らない。足りない部分は【要記入：何を書くか】とする。
 - です・ます調で200〜260字。職務経歴書の自己PRの繰り返しにせず、志望動機を中心に、生かせる経験を1つ添える。
 - 公開情報の調査がある場合、使うのは事業・顧客・職種に関する変わりにくい事実を1つまで。ニュース・数字・日付・スローガンの引用は入れない（履歴書は提出後も残り、面接で読み返されるため）。面接用の志望動機の文をそのまま使わない（骨子は同じでよい）。
+- 書き言葉なので応募先は「貴社」と呼ぶ。本人の優先度が「併願」なら「第一志望」と書かない。
+- hope（本人希望記入欄）：本人の希望条件のうち、勤務地・勤務時間・勤務形態・職種・入社可能時期など、譲れない条件だけを「勤務地：東京都内を希望いたします。」のように1〜3文で書く。年収・待遇の希望は書かず「給与・待遇は貴社の規定に従います。」とする。希望条件が未入力か譲れない条件がなければ「貴社の規定に従います。」だけにする。
 - 中国語の簡体字は日本の字体にする。
 
 # 出力形式（JSONのみ）
-${uiName(ctx) ? `{"motive":"","motive_tr":"motive の${uiName(ctx)}訳"}
-本人は${uiName(ctx)}で読むので motive_tr に忠実な訳を書く（motive は日本語）。${trRule(ctx)}` : '{"motive":""}'}
+${uiName(ctx) ? `{"motive":"","motive_tr":"motive の${uiName(ctx)}訳","hope":"","hope_tr":"hope の${uiName(ctx)}訳"}
+本人は${uiName(ctx)}で読むので motive_tr・hope_tr に忠実な訳を書く（motive・hope は日本語）。${trRule(ctx)}` : '{"motive":"","hope":""}'}
 
-# 応募先：${a.company || c.name}（${a.position || ''}）
+# 応募先：${a.company || c.name}（${a.position || ''}）（本人の優先度：${c.priority}）
 ${J({ summary: a.summary, values: a.values })}
 ${c.pack && c.pack.motivation.long ? '# 面接用に作成済みの志望動機（参考）\n' + c.pack.motivation.long : ''}
 ${researchBlock(c)}# 提出する職務経歴書（要約と自己PR）
@@ -267,7 +284,7 @@ export function P_EXPLAIN(ctx, c) {
 3. conventions：この書類に即した、日本の職務経歴書の書き方の要点を3〜6点（解説の言語）。例：体言止め、です・ます、「貴社」と「御社」、「以上」、数字や社名の書き方。
 
 # 厳守
-- 事実を足さない。翻訳は意訳しすぎない。naturalness の suggestion で事実を変えない。
+- 事実を足さない。翻訳は意訳しすぎない。naturalness の suggestion で事実を変えない。役割の言葉を強くしない（「まとめた」→「率いた」、「担当」→「主導」などにしない）。数値の限定語（約・以上・前年比など）を消さない。
 
 # 出力形式（JSONのみ）
 {"overview":"書類の全体像と、日本の採用担当者にどう読まれるか（解説の言語、120字程度）","sections":[{"title":"","ja":"","tr":"","notes":[""]}],"naturalness":[{"ja":"","issue":"","suggestion":""}],"conventions":[""]}
@@ -283,7 +300,7 @@ export function P_ENGLISH(ctx, c) {
 # 事実のルール（最重要）
 - 候補者データと日本語の職務経歴書にない事実・数値・役職・期間・人数・社名・業務・顧客の規模や属性・成果を一切作らない。できるのは、選ぶ・並べ替える・英語で言い換えることだけ。
 - 数値は元の表記どおり（丸めない）。意味を変えずに訳す（例：「前年比132%」→ "132% of the previous year"、「解約率 8.1%→4.3%」→ "from 8.1% to 4.3%"）。
-- 成果に対する本人の役割（led / owned / as part of a team）は、データで分かる場合だけ書く。
+- 成果に対する本人の役割（led / owned / as part of a team）は、データで分かる場合だけ書く。役職名を英語にするときに格上げしない（「リーダー」を Manager、「担当」を Head にしない）。"about"・"over"・"year over year" など数値の限定語は残す。${maskRule(ctx).replace('\n- 守秘：', '\n- Confidentiality（守秘）：')}
 - 学校名・社名の英語表記は、正式な英語名を知っている場合だけ使う。分からなければヘボン式で書き、株式会社は "Co., Ltd." または "Inc." にする（英語名を作らない）。
 
 # 書き方

@@ -99,6 +99,23 @@ await t('phases and environment are normalized', async () => {
   assert.deepEqual(c2.phases, [], 'no phase is made up from 提案/企画');
   assert.ok(ER.hasProjects(FX.doc)); assert.ok(!ER.hasProjects(D.doc));
 });
+await t('document rules: no company name, no role inflation, clients hidden unless turned off', async () => {
+  const g = PROMPTS.P_GENERATE(ctx, c);
+  assert.ok(g.includes('「貴社」「御社」') && g.includes('「まとめた」を「率いた」') && g.includes('守秘') && g.includes('半年以上の空白'));
+  assert.ok(!PROMPTS.P_GENERATE({ ...ctx, mask: false }, c).includes('守秘'), 'mask off: no confidentiality rule');
+  const pk = PROMPTS.P_PACK(ctx, { ...c, priority: '併願' });
+  assert.ok(pk.includes('「御社」') && pk.includes('「併願」'));
+  assert.ok(PROMPTS.P_PACK({ ...ctx, uiLang: 'zh' }, c).includes('answer_easy'), 'easy Japanese answers on the Chinese page');
+  assert.ok(!PROMPTS.P_PACK(ctx, c).includes('answer_easy'));
+  const rk = PROMPTS.P_RK(ctx, c);
+  assert.ok(rk.includes('"hope"') && rk.includes('貴社の規定に従います'));
+  assert.ok(PROMPTS.P_SHORTEN(ctx, c, { reason: '', pages: 3, overLines: 12, overChars: 400 }).includes('限定語'));
+});
+await t('the sample 職務経歴書 names no company, its spoken answers say 御社', async () => {
+  const txt = JSON.stringify(D.doc);
+  assert.ok(!/貴社|御社/.test(txt) && !txt.includes('サンプルクラウド'));
+  D.pack.questions.forEach((q) => assert.ok(!q.answer.includes('貴社'), q.q));
+});
 await t('engineer prompt only for engineer data', async () => {
   const eng = PROMPTS.P_GENERATE({ ...ctx, profile: { careers: [{ roles: [{ projects: [{ name: 'x' }] }] }] } }, c);
   assert.ok(eng.includes('エンジニア形式') && eng.includes('skillTable'));

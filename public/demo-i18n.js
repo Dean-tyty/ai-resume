@@ -172,7 +172,7 @@ window.DEMO_I18N = {
             "Designing the health score and running it with the team in your current job",
             "Close with one sentence that connects to the position"
           ],
-          "answer": "佐藤健太と申します。新卒で業務用ソフトの会社に入り、法人営業として6年間、製造業・卸売業のお客様にシステムの提案から導入までを担当しました。2022年からはSaaSのカスタマーサクセスに移り、現在はメンバー4名のチームリーダーとして、顧客ヘルススコアを設計し、チームの運用に定着させています。本日はこの経験を、貴社のCSでどう生かせるかをお話しできればと思います。",
+          "answer": "佐藤健太と申します。新卒で業務用ソフトの会社に入り、法人営業として6年間、製造業・卸売業のお客様にシステムの提案から導入までを担当しました。2022年からはSaaSのカスタマーサクセスに移り、現在はメンバー4名のチームリーダーとして、顧客ヘルススコアを設計し、チームの運用に定着させています。本日はこの経験を、御社のCSでどう生かせるかをお話しできればと思います。",
           "answer_tr": "My name is Kenta Sato. I joined a business software company as a new graduate and spent 6 years in corporate sales, handling systems for manufacturing and wholesale customers from proposal to implementation. In 2022 I moved to customer success at a SaaS company, and now, as leader of a team of 4 members, I have designed a customer health score and made it part of how the team works. Today I hope to talk about how I can use this experience in your CS team."
         },
         {
@@ -196,7 +196,7 @@ window.DEMO_I18N = {
             "Where 「オンボーディング専任体制」 (April 2026, public information) meets your experience",
             "How you would use it after joining"
           ],
-          "answer": "中堅企業向けにサービスを提供されている点と、2026年4月にオンボーディング専任体制を始められた点に惹かれました。私も営業時代から、導入して終わりではなく定着まで支えることを大切にしてきました。現職では導入資料を標準化して導入期間を45日から30日に短縮し、ヘルススコアをチームで運用してきました。この経験は、貴社のオンボーディング設計と解約防止の仕事にそのまま生かせると考えています。",
+          "answer": "中堅企業向けにサービスを提供されている点と、2026年4月にオンボーディング専任体制を始められた点に惹かれました。私も営業時代から、導入して終わりではなく定着まで支えることを大切にしてきました。現職では導入資料を標準化して導入期間を45日から30日に短縮し、ヘルススコアをチームで運用してきました。この経験は、御社のオンボーディング設計と解約防止の仕事にそのまま生かせると考えています。",
           "answer_tr": "I was drawn to the fact that you serve mid-sized companies and that you started 「オンボーディング専任体制」 (a dedicated onboarding team) in April 2026. Since my sales days, I have cared about supporting customers not just until implementation but until they really use the product. In my current job I standardized onboarding materials, shortening the time to go-live from 45 to 30 days, and I have run a health score with my team. I believe this experience will be directly useful in your onboarding design and churn prevention work."
         },
         {
@@ -220,7 +220,7 @@ window.DEMO_I18N = {
             "Give your actual start date",
             "Be honest about other companies, and say how much you want this one"
           ],
-          "answer": "希望年収は650万円以上を考えておりますが、職責に応じてご相談させていただければと思います。入社は2027年2月以降で可能です。他社の選考状況は【要記入：現在の選考状況（社数・段階）】です。その中でも、貴社は顧客層と考え方の点で第一に志望しております。",
+          "answer": "希望年収は650万円以上を考えておりますが、職責に応じてご相談させていただければと思います。入社は2027年2月以降で可能です。他社の選考状況は【要記入：現在の選考状況（社数・段階）】です。その中でも、御社は顧客層と考え方の点で第一に志望しております。",
           "answer_tr": "I am hoping for an annual salary of 6.5 million yen or more, but I would be glad to discuss it in light of the responsibilities of the role. I can start in February 2027 or later. My status with other companies is 【要記入：現在の選考状況（社数・段階）】 (to fill in: where you are with other companies: how many, and at what stage). Among them, your company is my first choice because of your customer base and your way of thinking."
         },
         {
@@ -676,7 +676,7 @@ window.DEMO_I18N = {
             "在现职设计健康度评分并在团队中运营",
             "用一句与应聘职位相关的话收尾"
           ],
-          "answer": "佐藤健太と申します。新卒で業務用ソフトの会社に入り、法人営業として6年間、製造業・卸売業のお客様にシステムの提案から導入までを担当しました。2022年からはSaaSのカスタマーサクセスに移り、現在はメンバー4名のチームリーダーとして、顧客ヘルススコアを設計し、チームの運用に定着させています。本日はこの経験を、貴社のCSでどう生かせるかをお話しできればと思います。",
+          "answer": "佐藤健太と申します。新卒で業務用ソフトの会社に入り、法人営業として6年間、製造業・卸売業のお客様にシステムの提案から導入までを担当しました。2022年からはSaaSのカスタマーサクセスに移り、現在はメンバー4名のチームリーダーとして、顧客ヘルススコアを設計し、チームの運用に定着させています。本日はこの経験を、御社のCSでどう生かせるかをお話しできればと思います。",
           "answer_tr": "我叫佐藤健太。毕业后进入一家业务软件公司，做了6年B2B销售，为制造业、批发业的客户负责从系统提案到导入的全过程。2022年起转做SaaS的客户成功，现在作为4名成员的团队负责人，设计了客户健康度评分，并让它在团队运营中固定下来。今天希望能谈谈如何把这些经验用在贵公司的CS工作中。"
         },
         {
@@ -700,7 +700,7 @@ window.DEMO_I18N = {
             "「オンボーディング専任体制」（2026 年 4 月，公开信息）与自己经验的交集",
             "入职后如何运用"
           ],
-          "answer": "中堅企業向けにサービスを提供されている点と、2026年4月にオンボーディング専任体制を始められた点に惹かれました。私も営業時代から、導入して終わりではなく定着まで支えることを大切にしてきました。現職では導入資料を標準化して導入期間を45日から30日に短縮し、ヘルススコアをチームで運用してきました。この経験は、貴社のオンボーディング設計と解約防止の仕事にそのまま生かせると考えています。",
+          "answer": "中堅企業向けにサービスを提供されている点と、2026年4月にオンボーディング専任体制を始められた点に惹かれました。私も営業時代から、導入して終わりではなく定着まで支えることを大切にしてきました。現職では導入資料を標準化して導入期間を45日から30日に短縮し、ヘルススコアをチームで運用してきました。この経験は、御社のオンボーディング設計と解約防止の仕事にそのまま生かせると考えています。",
           "answer_tr": "我被贵公司面向中型企业提供服务，以及 2026 年 4 月启动「オンボーディング専任体制」（客户上线专职团队）这两点所吸引。我从做销售时起，就一直重视不止于上线、而是支持客户直到真正用起来。在现在的公司，我把上线资料标准化，把上线周期从 45 天缩短到 30 天，并和团队一起运营健康度评分。我认为这些经验可以直接用在贵公司的客户上线设计和防止解约的工作中。"
         },
         {
@@ -724,7 +724,7 @@ window.DEMO_I18N = {
             "可入职时间按事实说",
             "其他公司的情况如实说，并表明应聘意愿"
           ],
-          "answer": "希望年収は650万円以上を考えておりますが、職責に応じてご相談させていただければと思います。入社は2027年2月以降で可能です。他社の選考状況は【要記入：現在の選考状況（社数・段階）】です。その中でも、貴社は顧客層と考え方の点で第一に志望しております。",
+          "answer": "希望年収は650万円以上を考えておりますが、職責に応じてご相談させていただければと思います。入社は2027年2月以降で可能です。他社の選考状況は【要記入：現在の選考状況（社数・段階）】です。その中でも、御社は顧客層と考え方の点で第一に志望しております。",
           "answer_tr": "期望年薪在650万日元以上，但也希望根据职责与贵公司商量。可以在2027年2月以后入职。其他公司的应聘进展是【要記入：現在の選考状況（社数・段階）】。其中，从客户群和理念来看，贵公司是我的第一志愿。"
         },
         {

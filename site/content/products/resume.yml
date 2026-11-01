@@ -10,19 +10,20 @@ steps:                # the steps the weekly report counts: [key, name in the re
   - [signup, 登録]
   - [profile, 経歴整理]
   - [doc, 書類作成]
+  - [unlock, 1社分の使用]
   - [download, ダウンロード]
   - [buy, 購入]
 ja:
   name: 職務経歴書AI
   tagline: 応募先ごとに、そのまま出せる職務経歴書を。
   summary: 経歴を一度登録して求人票を貼るだけで、その会社が重視することに合わせた職務経歴書を、A4 に整ったレイアウトの PDF・Word で作ります。履歴書、英文レジュメ、志望動機と面接準備、選考の管理まで。英語・中国語の画面と入力にも対応しています。
-  price: 最初の1社無料／5社パック 2,480円・10社パック 3,980円（税込）
+  price: 最初の1社無料／5社パック 2,480円・10社パック 3,980円
   sale:
-    price: 5社パック 2,480円、10社パック 3,980円（いずれも税込。1社分＝1つの応募先）
+    price: 5社パック 2,480円、10社パック 3,980円（表示価格がお支払いの総額です。当社は消費税の免税事業者のため、適格請求書は発行しません。1社分＝1つの応募先）
     payment: クレジットカードなど、Stripe の決済画面で選べる方法
     timing: ご購入手続きの完了時
     delivery: お支払いの完了後、すぐに利用枠がアカウントに追加されます
-    cancel: デジタルサービスの性質上、購入後のキャンセル・返金はお受けしておりません。当社の責めによる不具合で利用できなかった場合は、お問い合わせください。
+    cancel: 購入から14日以内で、購入した利用枠を1社分も使っていない場合は、お問い合わせいただければ全額を返金します。それ以外は、デジタルサービスの性質上、購入後のキャンセル・返金はお受けしておりません（当社の責めによる不具合で利用できなかった場合は、お問い合わせください）。
     environment: 最新版の Google Chrome、Safari、Microsoft Edge、Firefox（JavaScript を有効にしてください）
   privacy: |
     「職務経歴書AI」（https://resume.flatland.co.jp/）では、次のとおり個人情報を取り扱います。
@@ -37,13 +38,13 @@ en:
   name: Japanese Résumé AI (Shokumu Keirekisho)
   tagline: A Japanese résumé (shokumu keirekisho) tailored to each employer, ready to submit.
   summary: Enter your career once and paste a job posting. It writes a 職務経歴書 matched to what that employer values, laid out neatly on A4 as PDF and Word, plus a 履歴書, an English resume, motivation statement, interview preparation and application tracking. The app has English and Chinese pages, and you can write your input in English or Chinese (https://resume.flatland.co.jp/en/).
-  price: First company free; 5 companies ¥2,480, 10 companies ¥3,980 (tax incl.)
+  price: First company free; 5 companies ¥2,480, 10 companies ¥3,980
   sale:
-    price: 5 companies ¥2,480, 10 companies ¥3,980 (tax included; one company = one application)
+    price: 5 companies ¥2,480, 10 companies ¥3,980 (the price shown is the total you pay; we are exempt from consumption tax and do not issue qualified invoices; one company = one application)
 zh:
   name: 职务经历书 AI
   tagline: 为每一家公司，生成可以直接提交的日文职务经历书。
   summary: 只需登记一次经历、贴上招聘信息，就能按照该公司重视的方向，生成排版整齐的 A4 职务经历书（PDF、Word），以及履历书、英文简历、应聘动机、面试准备和选考管理。有中文界面，可以用中文或英文填写（https://resume.flatland.co.jp/zh/）。
-  price: 第一家公司免费；5 家 2,480 日元、10 家 3,980 日元（含税）
+  price: 第一家公司免费；5 家 2,480 日元、10 家 3,980 日元
   sale:
-    price: 5 家 2,480 日元、10 家 3,980 日元（含税；1 家 = 1 个应聘公司）
+    price: 5 家 2,480 日元、10 家 3,980 日元（标价即支付总额；本公司为消费税免税事业者，不开具合格请求书；1 家 = 1 个应聘公司）
