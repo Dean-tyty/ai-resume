@@ -161,6 +161,8 @@ async function refreshMe() {
 const hasSlot = (c) => !!(acct.me && acct.me.slots.has(c.id));
 // a 応募先 whose documents can be read here but not yet saved or copied (no credit used for it)
 const locked = (c) => !!c && !c.sample && !state.demo && !hasSlot(c);
+// a new company that cannot be made before buying (the free previews are used up)
+const overPreview = (c) => !!(acct.me && locked(c) && !c.doc && !acct.me.previews.has(c.id) && previewsLeft() <= 0);
 const previewsLeft = () => (acct.me && acct.me.free ? acct.me.free.previews : Infinity);
 const isPaid = () => !!(acct.me && acct.me.paid);
 const researchLeft = (c) => (CFG.research || 3) - ((acct.me && acct.me.research[c.id]) || 0);
@@ -399,8 +401,8 @@ document.addEventListener('keydown', (e) => {
 // open / closed sections are remembered across re-renders (the posting, the research result)
 document.addEventListener('toggle', (e) => {
   const d = e.target; if (!d || !d.dataset) return;
-  const k = d.dataset.jobd ? 'jobOpen' : d.dataset.rs ? 'rsOpen' : ''; if (!k) return;
-  const c = company(d.dataset.jobd || d.dataset.rs); if (c) c[k] = d.open;
+  const k = d.dataset.jobd ? 'jobOpen' : d.dataset.rs ? 'rsOpen' : d.dataset.an ? 'anOpen' : ''; if (!k) return;
+  const c = company(d.dataset.jobd || d.dataset.rs || d.dataset.an); if (c) c[k] = d.open;
 }, true);
 function askConsent() {
   return new Promise((ok) => {
@@ -419,6 +421,26 @@ function askConsent() {
       <p class="hint" style="text-align:right;margin-top:8px"><a href="${h(CFG.terms)}" target="_blank" rel="noopener">利用規約</a>　<a href="${h(CFG.privacy)}" target="_blank" rel="noopener">プライバシーポリシー</a></p>`, { lock: true });
   });
 }
+// the cheapest pack, for "利用枠の購入が必要です（5社 2,480円〜）"
+const fromPrice = () => { const p = (CFG.packs || []).slice().sort((a, b) => a.price - b.price)[0]; return p ? `${p.credits}社 ${p.price.toLocaleString('ja-JP')}円〜` : ''; };
+// a company whose credit is not used yet: what saving and the other tabs will do
+function lockNoteHTML(c) {
+  if (!locked(c) || !acct.user || !acct.me) return '';
+  return acct.me.credits > 0
+    ? `<p class="hint tiny lock-note">保存・コピーするか、志望動機・面接準備・履歴書・英文レジュメを作ると、この会社で1社分を使います（あと${acct.me.credits}社分）。それまでは何度でも画面で確認・修正できます。</p>`
+    : `<p class="hint tiny lock-note warn">保存・コピーと、志望動機・面接準備・履歴書・英文レジュメには、利用枠の購入が必要です（${fromPrice()}）。画面での確認・修正は無料です。<button class="linkbtn" data-act="openBuy" data-why="unlock">利用枠を追加する</button></p>`;
+}
+// what was made for this company, shown where the user decides to pay for it
+function tailoredHTML(c) {
+  const a = c.analysis || {}; const d = c.doc || {};
+  const rows = [
+    a.values && a.values.length ? ['この会社が重視していること', a.values.slice(0, 3).map((v) => v.label).join('・')] : null,
+    a.summary_angle ? ['職務要約の打ち出し方', a.summary_angle] : null,
+    d.pr && d.pr.length ? ['自己PRの見出し', d.pr.map((p) => '「' + p.heading + '」').join('　')] : null,
+  ].filter(Boolean);
+  if (!rows.length) return '';
+  return `<div class="tailored"><b>この会社向けに作ったところ</b>${rows.map(([k, v]) => `<div><span>${h(k)}</span><span>${h(v)}</span></div>`).join('')}<p class="hint tiny" style="margin:6px 0 0">1社分を使うと、この内容に合わせた志望動機（300字・150字）、想定質問9問と回答例、逆質問、選考ごとの面接対策も作れます。</p></div>`;
+}
 // kind: 'buyer' (a feature for buyers), 'unlock' (this 応募先's documents need its 1社分), 'preview' (no more
 // free previews), '' (adding credits)
 function openBuy(reason, kind, c) {
@@ -427,8 +449,9 @@ function openBuy(reason, kind, c) {
   if (reason || kind) savePending();
   const rec = packs.find((p) => p.rec) || null;
   const buyer = kind === 'buyer';
+  if (kind === 'unlock' && !c) kind = '';
   const title = buyer ? '利用枠を購入する' : kind === 'unlock' ? 'この会社の書類を保存する・面接準備をする' : kind === 'preview' ? '次の応募先の書類を作る' : '利用枠を追加する';
-  const lead = kind === 'unlock' && c ? `<p>「${h(cname(c))}」の職務経歴書は、画面で確認できています。<b>保存（PDF・Word）・コピーと、志望動機・面接準備・履歴書・英文レジュメ</b>には、この会社の1社分が必要です。</p>`
+  const lead = kind === 'unlock' && c ? `<p>「${h(cname(c))}」の職務経歴書は、画面で確認できています。<b>保存（PDF・Word）・コピーと、志望動機・面接準備・履歴書・英文レジュメ</b>には、この会社の1社分が必要です。</p>${tailoredHTML(c)}`
     : kind === 'preview' ? (acct.me && acct.me.paid
       ? `<p class="status warn">まだ1社分を使っていない応募先が多いため、新しい応募先の書類を作れません（残りの利用枠＋${(CFG.preview && CFG.preview.open) || 3}社まで）。作った会社の書類を保存して1社分を使うか、利用枠を追加してください。</p>`
       : `<p class="status warn">購入前に無料で作成・確認できる応募先は${(CFG.preview && CFG.preview.free) || 2}社までです。</p>`) : '';
@@ -436,8 +459,10 @@ function openBuy(reason, kind, c) {
     ${reason ? `<p class="status warn">${h(reason)}</p>` : ''}${lead}
     ${buyer ? '<p class="hint" style="margin:0 0 8px">無料の1社分では使えません。購入すると、すでに登録した会社にも使えます。</p>' : ''}
     ${left != null ? `<p>いまの利用枠：<b>あと${left}社分</b></p>` : ''}
-    <div class="packs">${packs.map((p) => `<button class="buy-pack ${p === rec ? 'rec' : ''}" data-act="buy" data-pack="${h(p.id)}">${p === rec && packs.length > 1 ? '<span class="badge">おすすめ</span>' : ''}<span class="pl">${h(p.label)}</span><b>${p.price.toLocaleString('ja-JP')}円</b><small>1社あたり${Math.round(p.price / p.credits).toLocaleString('ja-JP')}円</small></button>`).join('')}</div>
-    <p class="hint">1社分 ＝ 1つの応募先。その会社の書類を保存・コピーするとき、または志望動機・面接準備などを作るときに1回だけ使います。そのあとは、その会社の職務経歴書・履歴書・英文レジュメ・志望動機・面接準備を何度作り直しても追加料金はかかりません（1日に使える回数には上限があります）。職務経歴書を作って画面で確認すること、求人票の分析は、使う前に無料でできます。</p>
+    <div class="packs">${packs.map((p) => `<button class="buy-pack ${p === rec ? 'rec' : ''}" data-act="buy" data-pack="${h(p.id)}">${p === rec && packs.length > 1 ? '<span class="badge">おすすめ</span>' : ''}<span class="pl">${h(p.label)}</span><b>${p.price.toLocaleString('ja-JP')}円</b><small>1社あたり${Math.round(p.price / p.credits).toLocaleString('ja-JP')}円</small><span class="go">購入へ進む →</span></button>`).join('')}</div>
+    ${kind === 'unlock' && c ? `<p class="hint after-pay">お支払いのあと、この画面に戻ります。続けて「${h(cname(c))}」の保存を確認します（1社分を使います）。</p>` : ''}
+    ${kind === 'preview' ? '<p class="hint">購入すると、作成済みで保存していない応募先の書類も、そのまま保存できます。新しい応募先の書類も作れます。</p>'
+      : '<p class="hint">1社分 ＝ 1つの応募先。その会社の書類を保存・コピーするとき、または志望動機・面接準備などを作るときに1回だけ使います。そのあとは、その会社の職務経歴書・履歴書・英文レジュメ・志望動機・面接準備を何度作り直しても追加料金はかかりません（1日に使える回数には上限があります）。</p>'}
     <ul class="trust buyer"><li>求人ページの URL から求人票を読み込み</li><li>会社の公開情報の調査（出典付き・1社につき${CFG.research || 3}回まで。その会社の1社分に含まれます）</li></ul>
     <p class="hint">買い切り（月額・自動更新なし）。表示価格がお支払いの総額です。クレジットカードなどで、Stripe の決済画面からお支払いいただけます。購入後のキャンセル・返金はできません。職務経歴書は、利用枠を使う前に画面で確かめられます。</p>
     <p class="hint"><a href="${h(CFG.terms)}" target="_blank" rel="noopener">利用規約</a>　<a href="https://www.flatland.co.jp/legal/tokushoho/" target="_blank" rel="noopener">特定商取引法に基づく表記</a></p>
@@ -457,6 +482,7 @@ async function ensureUnlocked(c) {
       <p>「${h(cname(c))}」で、次のことができるようになります。</p>
       <ul class="trust buyer"><li>職務経歴書・履歴書・英文レジュメの保存（PDF・Word）とコピー</li><li>志望動機・想定質問と回答例・逆質問</li><li>選考ごとの面接対策</li>${acct.me.paid ? `<li>会社の公開情報の調査（${CFG.research || 3}回まで）</li>` : ''}</ul>
       <p class="hint">この会社の分は、このあと何度作り直しても追加の利用枠はかかりません。使った1社分は戻せません。利用枠：あと${n}社分 → ${n - 1}社分</p>
+      ${acct.me.paid ? '' : '<p class="hint">無料の1社分はこれだけです。2社目からの保存には利用枠の購入が必要です。応募するつもりの会社に使ってください。</p>'}
       <div class="row"><span class="spacer"></span><button class="btn" data-act="closeModal">やめる</button><button class="btn primary" data-act="unlockOk">1社分を使って続ける</button></div>`);
     modalResolve = done;
   });
@@ -887,7 +913,7 @@ function englishHTML(c) {
   return `<div class="rk">
     <div class="stack">
       <div class="card"><h2>英文レジュメ</h2>
-        <p class="hint">外資系企業や、英文での提出を求められた応募先に。日本語の職務経歴書と同じ方針・同じ事実で、英語圏の書き方（実績を動詞から書く・1〜2枚）に合わせて作ります。この応募先の利用枠の範囲で作れます。</p>
+        <p class="hint">外資系企業や、英文での提出を求められた応募先に。日本語の職務経歴書と同じ方針・同じ事実で、英語圏の書き方（実績を動詞から書く・1〜2枚）に合わせて作ります。作り直しても、この応募先の1社分のほかに利用枠はかかりません。</p>
         <div class="row"><button class="btn ${en ? '' : 'primary'}" data-act="english" ${run ? 'disabled' : ''}>${en ? 'AI で作り直す' : '英文レジュメを作る'}</button>${run ? `<span class="status" style="margin:0">${spin}${stage('english', c.enSince)} ${elapsed(c.enSince, '1〜2分')} ${abortBtn('en-' + c.id)}</span>` : ''}</div>
         ${c.enError ? `<div class="status err">${h(c.enError)}</div>` : ''}
         ${en ? `<label for="en-name">氏名（ローマ字）</label><input type="text" id="en-name" data-enshared="nameEn" value="${h(d.name)}" placeholder="Kenta Sato">
@@ -1113,7 +1139,7 @@ const PILL = { idle: ['未分析', ''], queued: ['待機中', 'wait'], analyzing
 const BUSY = ['queued', 'analyzing', 'generating', 'fitting'];
 const anyBusy = () => state.companies.some((c) => BUSY.includes(c.status));
 const elapsed = (since, est) => (since ? `<span class="elapsed" data-since="${since}" data-est="${est}"></span>` : '');
-const pill = (c) => { const p = PILL[c.status] || ['', '']; return `<span class="pill ${p[1]}">${p[1] === 'run' ? spin : ''}${p[0]}</span>`; };
+const pill = (c) => { const p = c.status === 'done' && c.doc && locked(c) && acct.user ? ['確認中（未保存）', 'wait'] : (PILL[c.status] || ['', '']); return `<span class="pill ${p[1]}">${p[1] === 'run' ? spin : ''}${p[0]}</span>`; };
 const abortBtn = (key) => `<button class="btn small" data-act="abort" data-key="${key}">中止</button>`;
 const cname = (c) => (c.analysis && c.analysis.company) || c.name || '（会社名未入力）';
 const STAGES = {
@@ -1145,7 +1171,8 @@ function creditNote(c) {
   if (!acct.user) return '<p class="hint credit-note">AI を使うにはログインが必要です。書類の作成と画面での確認は無料で、保存・面接準備は最初の1社分が無料です。</p>';
   if (!acct.me || !c.analysis) return '';
   if (!acct.me.previews.has(c.id) && previewsLeft() <= 0) return `<p class="hint credit-note warn">購入前に無料で作成・確認できる応募先は${(CFG.preview && CFG.preview.free) || 2}社までです。<button class="linkbtn" data-act="openBuy" data-why="preview">利用枠を追加する</button></p>`;
-  return '<p class="hint credit-note">書類を作って画面で確認するまでは、利用枠は使いません。保存（PDF・Word）・コピーするか、志望動機・面接準備を作るときに、この会社で1社分を使います。</p>';
+  return acct.me.credits > 0 ? '<p class="hint credit-note">書類を作って画面で確認するまでは、利用枠は使いません。保存（PDF・Word）・コピーするか、志望動機・面接準備を作るときに、この会社で1社分を使います。</p>'
+    : `<p class="hint credit-note">書類を作って画面で確認するのは無料です。保存・コピーと志望動機・面接準備には、利用枠の購入が必要です（${fromPrice()}）。</p>`;
 }
 function viewHead(title, desc, right) { return `${demoBar()}<div class="vh"><div><div class="eyebrow">STEP ${state.step} / 4</div><h1>${title}</h1><p>${desc}</p></div><span class="spacer"></span>${right || ''}</div>`; }
 function demoBar() {
@@ -1224,6 +1251,31 @@ function render1() {
   </div>`;
 }
 function ym(s) { const m = /^(\d{4})(?:-(\d{1,2}))?/.exec(s || ''); return m ? (m[1] + '年' + (m[2] ? +m[2] + '月' : '')) : (s || ''); }
+// What screeners look at before reading the words: the number of job changes, short stays, gaps and being out
+// of work now. Worked out from the organised career (no AI, free); the documents' prompts know how to handle each.
+const monthOf = (s, end) => { const m = /^(\d{4})(?:-(\d{1,2}))?/.exec(s || ''); return m ? +m[1] * 12 + (m[2] ? +m[2] : end ? 12 : 1) - 1 : null; };
+const ymText = (n) => (UI_LANG === 'en' ? `${'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ')[n % 12]} ${Math.floor(n / 12)}` : `${Math.floor(n / 12)}年${(n % 12) + 1}月`);
+function screenCheck(p) {
+  const now = new Date(); const cur = now.getFullYear() * 12 + now.getMonth();
+  const cs = (p.careers || []).map((c) => ({ name: c.company, s: monthOf(c.start), e: c.end === '現在' ? cur : monthOf(c.end, true), now: c.end === '現在' })).filter((c) => c.s != null && c.e != null).sort((a, b) => a.s - b.s);
+  const out = [];
+  if (!cs.length) return out;
+  const born = monthOf(state.rireki && state.rireki.birth); const age = born != null ? Math.floor((cur - born) / 12) : null;
+  const changes = cs.length - 1;
+  if (changes >= (age == null ? 4 : age < 30 ? 3 : age < 40 ? 4 : 5)) out.push({ t: `転職${changes}回`, d: '回数だけで判断する企業もあります。職務要約で、経験に共通する軸（職種・顧客・身につけた力）を1文で示し、面接では理由を短く前向きに話せるようにします。' });
+  cs.filter((c) => !c.now && c.e - c.s + 1 < 12).forEach((c) => out.push({ t: `在籍1年未満：${c.name}（${c.e - c.s + 1}か月）`, d: '理由を聞かれる前提で、事実を1文で答えられるようにします。書類では弁解せず、その期間にしたことを書きます。' }));
+  for (let i = 1; i < cs.length; i++) { const g = cs[i].s - cs[i - 1].e - 1; if (g >= 6) out.push({ t: `職歴の空白：${ymText(cs[i - 1].e + 1)}〜${ymText(cs[i].s - 1)}（${g}か月）`, d: 'その期間の理由としていたこと（育児・介護・療養・学習・資格など）を経歴に書き足すと、書類と面接の答え方に生かせます。書かなければ、AI は理由を作りません。' }); }
+  const last = cs[cs.length - 1];
+  if (!cs.some((c) => c.now) && cur - last.e >= 3) out.push({ t: `現在、離職して${cur - last.e}か月`, d: '離職後にしていること（学習・資格・家庭の事情など）と、いつから・どんな条件で働けるかを経歴に書き足すと、履歴書の本人希望記入欄と面接の答えに生かせます。' });
+  return out;
+}
+function screenHTML(p) {
+  const x = screenCheck(p);
+  if (!(p.careers || []).length) return '';
+  return `<div class="screen"><h3>書類選考で最初に見られやすい点</h3>${x.length
+    ? `<p class="hint" style="margin:0 0 8px">多くの企業は、文章を読む前に年数・転職回数・空白期間を見ます。あなたの経歴では次の点が見られやすいので、書類と面接の準備で扱い方を決めておきます。</p>${x.map((i) => `<div class="sc-it"><b>${h(i.t)}</b><span>${h(i.d)}</span></div>`).join('')}`
+    : '<p class="hint" style="margin:0">転職回数・在籍期間・空白期間で、目立って気にされる点はありません。</p>'}</div>`;
+}
 function profileHTML(p) {
   const careers = p.careers.map((c) => `<div class="tl"><div class="co">${h(c.company)}<span class="per">${h(ym(c.start))}～${h(c.end === '現在' ? '現在' : ym(c.end))}</span></div>
     ${c.roles.map((r) => `<div class="role">${h([r.org, r.title, r.team].filter(Boolean).join('／'))}</div><ul>${r.duties.map((x) => `<li>${h(x)}</li>`).join('')}${r.achievements.map((x) => `<li class="ach">${h(x)}</li>`).join('')}</ul>${trl(r.tr)}`).join('')}</div>`).join('');
@@ -1236,6 +1288,7 @@ function profileHTML(p) {
     ${sk ? `<h3>スキル・ツール・語学</h3><div>${sk}</div>` : ''}
     ${(p.education || []).length ? `<h3>学歴</h3>${p.education.map((x) => `<div class="dl2"><span>${h(ym(x.date))}</span><span>${h(x.school + (x.detail ? '　' + x.detail : ''))}</span></div>`).join('')}` : ''}
     ${p.qualifications.length ? `<h3>資格</h3>${p.qualifications.map((q) => `<div class="dl2"><span>${h(ym(q.date))}</span><span>${h(q.name)}</span></div>`).join('')}` : ''}
+    ${screenHTML(p)}
     ${qs}
     <div class="row"><span class="spacer"></span><button class="btn primary" data-act="step" data-step="2">次へ：応募先を追加 →</button></div>`;
 }
@@ -1290,7 +1343,7 @@ function companyHTML(c) {
       <label>企業情報（任意・あると精度が上がります）</label>
       <textarea rows="4" data-cf="info" placeholder="企業理念・バリュー・トップメッセージ・中期経営計画の要点など">${h(c.info)}</textarea>
     </details>
-    ${a ? analysisHTML(a) : ''}
+    ${a ? (c.doc ? `<details class="anwrap" data-an="${c.id}" ${c.anOpen ? 'open' : ''}><summary>求人の読み解き（書類作成済み）</summary>${analysisHTML(a)}</details>` : analysisHTML(a)) : ''}
     ${a || c.research || (c.job.trim() && !c.sample) ? researchHTML(c) : ''}
     <label>見せ方への追加指示（任意）</label>
     <input type="text" data-cf="memo" value="${h(c.memo)}" placeholder="例：マネジメント経験をもっと前に出したい／英語力は控えめに">
@@ -1301,6 +1354,7 @@ function companyHTML(c) {
       ${!a ? `<button class="btn primary" data-act="analyze" data-id="${c.id}" ${busy ? 'disabled' : ''}>求人票を分析する（無料）</button>`
         : `<button class="btn ghost" data-act="analyze" data-id="${c.id}" ${busy ? 'disabled' : ''}>分析し直す</button><span class="spacer"></span>
            ${c.doc ? `<button class="btn" data-act="generate" data-id="${c.id}" ${busy ? 'disabled' : ''}>この見せ方で作り直す</button><button class="btn primary" data-act="open" data-id="${c.id}">書類を見る →</button>`
+             : overPreview(c) ? '<button class="btn primary" data-act="openBuy" data-why="preview">利用枠を追加して作る →</button>'
              : `<button class="btn primary" data-act="generate" data-id="${c.id}" ${busy ? 'disabled' : ''}>この見せ方で書類を作る →</button>`}`}
     </div>
     ${creditNote(c)}
@@ -1349,6 +1403,7 @@ function docPaneHTML(c) {
   if (!c.doc) {
     return `<div class="card"><h2>${h(cname(c))}</h2><div class="hint" style="margin:0">${h(a.position || '')}</div>
       ${c.status === 'generating' ? `<div class="empty">${spin}${stage('generate', c.since)} ${elapsed(c.since, '1〜2分')}<br><br>${abortBtn('gen-' + c.id)}</div>` : c.status === 'queued' ? '<div class="empty">待機中です。前の応募先が終わると自動で始まります。</div>'
+      : overPreview(c) ? `<div class="empty">見せ方は決まっています。<br>購入前に無料で作成・確認できる応募先は${(CFG.preview && CFG.preview.free) || 2}社までです。<br><br><button class="btn primary" data-act="openBuy" data-why="preview">利用枠を追加して作る</button></div>`
       : `<div class="empty">見せ方は決まっています。<br><br><button class="btn primary" data-act="generate" data-id="${c.id}">この見せ方で書類を作る</button></div>`}
       ${c.error ? `<div class="fb err">${h(c.error)}</div>` : ''}</div>`;
   }
@@ -1360,9 +1415,9 @@ function docPaneHTML(c) {
   const head = `<div class="row" style="margin:0;align-items:flex-start">
         <div style="min-width:0"><h2>${h(cname(c))}</h2><div class="hint" style="margin:0">${h(a.position || '')}</div></div>
         <span class="spacer"></span>${tabs}</div>`;
-  if (c.tab === 'pack') return `<div class="card">${head}</div>${packHTML(c)}`;
-  if (c.tab === 'rireki') return `<div class="card">${head}</div>${rirekiHTML(c)}`;
-  if (c.tab === 'en') return `<div class="card">${head}</div>${englishHTML(c)}`;
+  if (c.tab === 'pack') return `<div class="card">${head}${lockNoteHTML(c)}</div>${packHTML(c)}`;
+  if (c.tab === 'rireki') return `<div class="card">${head}${lockNoteHTML(c)}</div>${rirekiHTML(c)}`;
+  if (c.tab === 'en') return `<div class="card">${head}${lockNoteHTML(c)}</div>${englishHTML(c)}`;
   const exOpen = inputLang() !== 'ja' || UI_LANG !== 'ja' || c.exStatus === 'run' || ui.exOpen;
   // the check in one's own language: right under the document on the English / Chinese page, where it matters most
   const exBlock = `<details class="exwrap" ${exOpen ? 'open' : ''}><summary data-act="exToggle">${UI_LANG === 'ja' ? '日本語が母語でない方へ：中文・English で内容と書き方を確認する（任意）' : '提出前に、内容と日本語の書き方を母語で確認する（おすすめ）'}</summary>${explainHTML(c)}</details>`;
@@ -1370,7 +1425,7 @@ function docPaneHTML(c) {
   return `<div class="card dochead">${head}</div>
     <div class="docgrid ${c.edit ? 'edit' : ''}">
       ${c.edit ? `<div class="card editor" id="editor">${editorHTML(c.doc, c.theme)}</div>` : ''}
-      <div class="seg readseg"><button data-act="readMode" data-v="read" class="${readOn() ? 'on' : ''}">文字で読む</button><button data-act="readMode" data-v="a4" class="${readOn() ? '' : 'on'}">A4 で見る</button></div>
+      <div class="readbar"><div class="seg"><button data-act="readMode" data-v="read" class="${readOn() ? 'on' : ''}">文字で読む</button><button data-act="readMode" data-v="a4" class="${readOn() ? '' : 'on'}">A4 で見る</button></div><button class="btn primary small" data-act="toSave">保存・デザイン ↓</button></div>
       <div class="desk" id="preview">${F.ready ? '' : (F.err ? '<div class="empty">書体の読み込みに失敗しました。ページを再読み込みしてください。</div>' : `<div class="empty">${spin}書体を読み込んでいます…</div>`)}</div>
       <aside class="card ctrl">
         <div class="fitbar" id="fitbar">${fitbarHTML(c)}</div>
@@ -1378,7 +1433,7 @@ function docPaneHTML(c) {
           <button class="btn primary" data-act="pdf">PDF をダウンロード</button>
           <span class="wordpick"><button class="btn" data-act="docx">Word</button><select data-wt aria-label="Word を開く環境" title="Word を開く環境に入っている書体を使います">${E.DOCX_TARGETS.map((t) => `<option value="${t.key}" ${wordTarget() === t.key ? 'selected' : ''}>${t.key === 'google' ? 'Google ドキュメント用' : t.key === 'mac' ? 'Mac 用' : 'Windows 用'}</option>`).join('')}</select></span>
         </div>
-        ${locked(c) && acct.user ? `<p class="hint tiny lock-note">保存・コピーすると、この会社で1社分を使います（${acct.me ? `あと${acct.me.credits}社分` : ''}）。それまでは何度でも画面で確認・修正できます。</p>` : ''}
+        ${lockNoteHTML(c)}
         <p class="hint tiny">提出は PDF がおすすめです（どのパソコンでも同じ見た目）。Word は自分で書き直したいときや、企業から Word を求められたときに。</p>
         <div class="ctrl-row"><button class="btn" data-act="edit">${c.edit ? '編集を閉じる' : '文章を直す'}</button><div class="seg">${[2, 3].map((n) => `<button data-act="pages" data-v="${n}" class="${c.maxPages === n ? 'on' : ''}">A4 ${n}枚</button>`).join('')}</div></div>
         <label class="maskopt"><input type="checkbox" data-act="mask" ${state.mask !== false ? 'checked' : ''}><span>顧客名・社外秘の数字を伏せて書く（おすすめ）<small>取引先の名前や売上額などを「大手通信会社」「前年比」のように書きます。変えたら「AI で作り直す」で反映されます。</small></span></label>
@@ -1642,10 +1697,18 @@ function render4() {
   </div>
   <div class="card" style="margin-top:16px">${stagesHTML(c)}</div>`;
 }
+// a step was passed and the next one has no preparation yet: the moment to prepare (and, for a preview, to use the 1社分)
+function nextPrepHTML(c, ci) {
+  const st = c.stages || []; const s = st[ci];
+  if (!s || ci < 1 || s.prep || s.prepStatus === 'run' || c.result !== '選考中' && c.result) return '';
+  if (['不通過', '辞退'].includes(s.status)) return '';
+  return `<div class="fb note nextprep"><span><b>「${h(st[ci - 1].name)}」を通過しました。</b>次の「${h(s.name)}」の対策を作りましょう。これまでの記録と提出した書類から、聞かれそうな質問と答え直し方をまとめます。${locked(c) ? '（この会社で1社分を使います）' : ''}</span><button class="btn primary small" data-act="prep" data-sid="${s.id}">対策を作る</button></div>`;
+}
 function stagesHTML(c) {
   const ci = curStage(c);
   return `<div class="row" style="margin:0"><div><h2>${h(cname(c))} の選考</h2>${c.analysis && c.analysis.position ? `<div class="cc">${h(c.analysis.position)}</div>` : ''}<p class="hint" style="margin:2px 0 0">面接が終わったら、聞かれたことと詰まったことを残してください。次のステップの対策に使います。</p></div><span class="spacer"></span>
     <label style="margin:0">結果</label><select data-c4="result" style="width:auto">${['選考中', '内定', '見送り', '辞退'].map((o) => `<option value="${o}" ${c.result === o ? 'selected' : ''}>${o}</option>`).join('')}</select></div>
+  ${nextPrepHTML(c, ci)}
   <div class="stages">${c.stages.map((s, i) => {
     const prevLogged = c.stages.slice(0, i).some(hasLog);
     const canPrep = i > 0 && (prevLogged || c.doc) && s.status !== '通過' && s.status !== '不通過' && s.status !== '辞退';
@@ -1819,6 +1882,7 @@ document.addEventListener('click', (e) => {
     case 'unlockOk': closeModal(true); break;
     case 'mask': state.mask = state.mask === false; save(); render(); toast(state.mask ? '顧客名などを伏せて作ります（「AI で作り直す」で反映）' : '顧客名などをそのまま書きます（「AI で作り直す」で反映）'); break;
     case 'readMode': ui.read = b.dataset.v === 'read'; render(); break;
+    case 'toSave': { const el = $('.ctrl'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); break; }
     case 'abort': { const ctl = controllers[b.dataset.key]; if (ctl) ctl.abort(); break; }
     case 'sel4': state.active4 = b.dataset.id; save(); render(); break;
     case 'addStage': { const x = company(state.active4); x.stages.push(newStage({ name: (UI_LANG === 'en' ? 'Step ' : UI_LANG === 'zh' ? '步骤 ' : 'ステップ') + (x.stages.length + 1) })); save(); render(); break; }

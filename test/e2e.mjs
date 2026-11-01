@@ -45,6 +45,7 @@ ok(await page.evaluate(() => document.querySelector('#sync').textContent !== '�
 await act('consentOk');
 await page.waitForSelector('.eps', { timeout: 15000 });
 ok(true, '経歴 organised (mock AI) without a second click');
+ok((await page.innerText('.screen')).includes('書類選考で最初に見られやすい点'), 'free screening check shown with the organised career');
 await page.waitForFunction(() => document.querySelector('#sync').textContent === '保存済み', null, { timeout: 8000 });
 ok(true, 'saved to the server after consent');
 
