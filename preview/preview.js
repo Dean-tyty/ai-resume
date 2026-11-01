@@ -13,7 +13,7 @@
     }
   });
   window.APP_CONFIG = {
-    clerkKey: '', dev: true, preview: true, free: 1, consent: 'preview', retention: 365,
+    clerkKey: '', dev: true, preview: true, free: 1, consent: 'preview', retention: 365, research: 3,
     packs: [{ id: 'p5', credits: 5, price: 2480, label: '5社パック' }, { id: 'p10', credits: 10, price: 3980, label: '10社パック' }],
     terms: 'https://www.flatland.co.jp/legal/terms/resume/', privacy: 'https://www.flatland.co.jp/privacy/',
   };
@@ -40,24 +40,39 @@
     const body = init.body ? JSON.parse(init.body) : {};
     const key = method + ' ' + url.pathname;
     try {
-      if (key === 'GET /api/me') return res(200, { id, credits: u.credits, slots: u.slots, consent: u.consent, created });
+      if (key === 'GET /api/me') return res(200, { id, credits: u.credits, slots: u.slots, consent: u.consent, paid: !!u.paid, research: u.research || {}, created });
       if (key === 'POST /api/consent') { u.consent = true; return res(200, { ok: true }); }
       if (key === 'GET /api/workspace') return res(200, { data: u.data, version: u.version });
       if (key === 'PUT /api/workspace') {
         if ((Number(body.base) || 0) !== u.version) return res(409, { error: { code: 'conflict' }, version: u.version });
         u.data = body.data; u.version += 1; return res(200, { version: u.version });
       }
-      if (key === 'POST /api/checkout') { u.credits += PACKS[body.pack] || 0; await wait(600); return res(200, { credited: true }); }
+      if (key === 'POST /api/checkout') { u.paid = true; u.credits += PACKS[body.pack] || 0; await wait(600); return res(200, { credited: true }); }
       if (key === 'DELETE /api/account') { delete S.users[id]; return res(200, { ok: true }); }
+      // a posting from its URL (buyers): the sample posting stands in for any page
+      if (key === 'POST /api/fetch-job') {
+        if (!u.paid) return res(403, { error: { code: 'paid_only' } });
+        if (!/^https?:\/\/[^/]+\.[^/]+/.test(body.url || '')) return res(400, { error: { code: 'url' } });
+        await wait(900);
+        return res(200, { text: MOCK.sampleJob + '\n【応募方法】Webサイトから応募', title: '', company: '株式会社サンプルクラウド（架空）' });
+      }
       if (key === 'POST /api/ai') {
         if (!u.consent) return res(403, { error: { code: 'consent' } });
         const c = body.c;
-        // as on the server: reading a posting is free, documents use a credit, the sample posting never does
+        // as on the server: reading a posting is free, documents use a credit, the sample posting never does;
+        // company research: buyers only, not the (fictional) sample, 3 times per company
         const sample = c && window.DEMO && c.job.replace(/\s+/g, '') === window.DEMO.job.replace(/\s+/g, '');
+        u.research = u.research || {};
+        if (body.task === 'research') {
+          if (!u.paid) return res(403, { error: { code: 'paid_only' } });
+          if (sample) return res(400, { error: { code: 'sample' } });
+          if ((u.research[c.id] || 0) >= 3) return res(429, { error: { code: 'limit', scope: 'research' } });
+        }
         if (c && body.task !== 'analyze' && !sample && !u.slots.includes(c.id)) {
           if (u.credits <= 0) return res(402, { error: { code: 'no_credit', credits: 0 } });
           u.credits -= 1; u.slots.push(c.id);
         }
+        if (body.task === 'research') u.research[c.id] = (u.research[c.id] || 0) + 1;
         await wait(body.task === 'generate' || body.task === 'pack' ? 2600 : 1500);
         const ul = body.ctx && body.ctx.uiLang;
         const v = JSON.parse(JSON.stringify(MOCK[body.task + '_' + ul] || MOCK[body.task] || {}));

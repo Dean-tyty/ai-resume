@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { verifyToken } from '../worker/auth.js';
 import { verifyStripe } from '../worker/billing.js';
 import { PROMPTS } from '../worker/prompts.js';
+import { checkUrl, robotsAllows, extractJob, keepFound } from '../worker/webpage.js';
 import { readFileSync } from 'node:fs';
 
 let n = 0; const t = async (name, fn) => { await fn(); n++; console.log('ok   ' + name); };
@@ -135,5 +136,53 @@ await t('English resume layout fits and builds', async () => {
   const files = ER.buildDocxEnXml(d, { dense: 1 });
   assert.ok(files['word/document.xml'].includes('EXPERIENCE') || files['word/document.xml'].includes('Experience'));
   assert.ok(files['word/styles.xml'].includes('en-US'));
+});
+// buyers' features: reading a posting from its URL, and company research
+await t('URLs that may be read', async () => {
+  assert.ok(checkUrl('https://careers.example.co.jp/jobs/123?x=1').url);
+  for (const u of ['ftp://example.com/a', 'http://localhost/', 'http://127.0.0.1/', 'http://[::1]/', 'http://intranet/', 'https://a.b.internal/x', 'https://u:p@example.com/', 'https://example.com:8080/', 'javascript:alert(1)', '']) assert.equal(checkUrl(u).error, 'url', u);
+  for (const u of ['https://doda.jp/DodaFront/View/JobSearchDetail/j_jid__1/', 'https://www.openwork.jp/company.php', 'https://jp.indeed.com/viewjob?jk=1', 'https://www.linkedin.com/jobs/view/1']) assert.equal(checkUrl(u).error, 'site_not_allowed', u);
+  assert.ok(checkUrl('https://notdoda.jp/').url, 'only the site itself and its subdomains');
+});
+await t('robots.txt is respected', async () => {
+  const r = 'User-agent: *\nDisallow: /recruit/\nAllow: /recruit/open/\n\nUser-agent: BadBot\nDisallow: /';
+  assert.equal(robotsAllows(r, '/recruit/123'), false);
+  assert.equal(robotsAllows(r, '/recruit/open/1'), true, 'longer Allow wins');
+  assert.equal(robotsAllows(r, '/company/'), true);
+  assert.equal(robotsAllows('User-agent: *\nDisallow: /\n\nUser-agent: ResumeAI\nAllow: /jobs/', '/jobs/1'), true, 'our own group');
+  assert.equal(robotsAllows('User-agent: *\nDisallow: /\n\nUser-agent: ResumeAI\nAllow: /jobs/', '/blog'), true, 'our group has no rule for it');
+  assert.equal(robotsAllows('User-agent: *\nDisallow:', '/x'), true, 'empty Disallow');
+  assert.equal(robotsAllows('User-agent: *\nDisallow: /*.pdf$', '/a/b.pdf'), false);
+  assert.equal(robotsAllows('', '/x'), true);
+});
+await t('a posting page as plain text', async () => {
+  const ld = { '@context': 'https://schema.org', '@type': 'JobPosting', title: 'バックエンドエンジニア', hiringOrganization: { '@type': 'Organization', name: '株式会社テスト' },
+    description: '<p>決済基盤の開発を担当します。</p><ul><li>Go / Kotlin</li><li>AWS</li></ul>' + 'あ'.repeat(120), employmentType: 'FULL_TIME' };
+  const page = `<html><head><title>求人 | テスト</title><script type="application/ld+json">${JSON.stringify(ld)}</script></head><body><nav>メニュー</nav><main>本文</main></body></html>`;
+  const j = extractJob(page);
+  assert.ok(j.text.includes('【職種】\nバックエンドエンジニア') && j.text.includes('・Go / Kotlin') && j.text.includes('【会社】'), 'JobPosting data');
+  assert.equal(j.company, '株式会社テスト');
+  const plain = `<html><body><header>ロゴ</header><script>var x="秘密";</script><main><h1>募集職種</h1><p>営業&amp;企画</p><ul><li>法人営業</li><li>提案</li></ul>${'<p>' + 'い'.repeat(320) + '</p>'}</main><footer>会社概要</footer></body></html>`;
+  const p = extractJob(plain);
+  assert.ok(p.text.includes('募集職種') && p.text.includes('営業&企画') && p.text.includes('・法人営業'), 'main content');
+  assert.ok(!p.text.includes('秘密') && !p.text.includes('ロゴ') && !p.text.includes('会社概要'), 'scripts, header and footer left out');
+});
+await t('research keeps only pages the search returned', async () => {
+  const v = keepFound({ facts: [{ text: 'a', url: 'https://ex.co.jp/news/1/' }, { text: 'b', url: 'https://made.up/page' }, { text: 'c', url: 'https://ex.co.jp/ir#top', title: '' }], position: [{ text: 'd', url: '' }] },
+    [{ url: 'https://ex.co.jp/news/1', title: 'ニュース' }, { url: 'https://ex.co.jp/ir', title: 'IR情報' }]);
+  assert.deepEqual(v.facts.map((x) => x.text), ['a', 'c']);
+  assert.equal(v.facts[1].title, 'IR情報'); assert.equal(v.position.length, 0);
+});
+await t('research prompt, and research in the other prompts', async () => {
+  for (const uiLang of ['', 'en', 'zh']) {
+    const p = PROMPTS.P_RESEARCH({ ...ctx, uiLang }, c);
+    assert.ok(!/undefined|\[object Object\]/.test(p) && p.includes('web_search'), uiLang + ' renders');
+    assert.ok(!p.includes(D.name) && !p.includes(D.raw.slice(0, 40)), uiLang + ' no candidate data in the research prompt');
+    assert.equal(p.includes('questions_tr'), !!uiLang);
+  }
+  const w = {}; new Function('window', readFileSync(new URL('../public/demo.js', import.meta.url), 'utf8'))(w);
+  const cr = { ...c, research: w.DEMO.research };
+  [PROMPTS.P_ANALYZE(ctx, cr), PROMPTS.P_PACK(ctx, cr), PROMPTS.P_PREP(ctx, cr, 2), PROMPTS.P_RK(ctx, cr)].forEach((p, i) => { assert.ok(p.includes('## 公開情報の調査'), 'research block ' + i); assert.ok(!/undefined/.test(p), 'renders ' + i + ' ' + (p.match(/.{60}undefined.{20}/s) || [''])[0]); });
+  assert.ok(!PROMPTS.P_PACK(ctx, c).includes('## 公開情報の調査'), 'nothing when not researched');
 });
 console.log(`${n} passed in total`);

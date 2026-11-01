@@ -48,14 +48,14 @@ export function P_ANALYZE(ctx, c) {
 応募先の求人票と企業情報を読み、この候補者の経歴のうち「何を・どの順で・どう見せるか」という書類の方針を作ってください。
 
 # 厳守
-1. 企業の特徴は、求人票と企業情報の記述を最優先の根拠にする（source: "求人票" または "企業情報"）。あなたの一般知識で補う場合は source を "一般知識" とし、確信がないことは書かない。
+1. 企業の特徴は、求人票と企業情報の記述を最優先の根拠にする（source: "求人票" または "企業情報"）。公開情報の調査がある場合はそれも根拠にできる（source: "公開情報"）。あなたの一般知識で補う場合は source を "一般知識" とし、確信がないことは書かない。
 2. 候補者の経歴にない事実は作らない。方針は既存の事例の選び方・順番・切り口で表現する。
 3. 要件に対して経歴の裏付けが弱い点は gaps に正直に書き、書類でどう扱うか（盛らずにどう書くか）を添える。
 4. episode_ids には候補者データの episodes の id だけを使う。
 5. template：応募先の業界・社風に合う書類デザインを1つ選ぶ。standard＝罫線の表組み・明朝体（金融・メーカー・官公庁など伝統的な企業）、modern＝落ち着いたゴシック体（業界を問わない）、premium＝実績ハイライトと時系列表示（IT・Web・スタートアップ・外資系・コンサルなど）、engineer＝プロジェクトごとの表（役割・規模・担当工程・開発環境）とテクニカルスキル表。応募職種が ITエンジニア（開発・インフラ・QA・PM・データなど）で、候補者データに projects がある場合は engineer を選ぶ。premium は、応募職種が数値で成果を示しにくい職種（経理・総務・法務など）の場合や、応募要件に関係する強い数値実績が候補者データに2つ未満の場合は選ばない。
 
 # 出力形式（JSONのみ）
-{"company":"正式な会社名","position":"応募職種","summary":"この求人が本当に求めていることを1文で（60字以内）","values":[{"label":"重視していること（15字以内）","detail":"具体的に（50字以内）","source":"求人票|企業情報|一般知識","quote":"根拠となる原文の短い抜粋（30字以内、なければ空）"}],"requirements":[{"text":"要件（30字以内）","type":"必須|歓迎","match":"◎|○|△","evidence":"対応する経歴（30字以内）"}],"plan":[{"value":"values の label","episode_ids":["E1"],"angle":"その事例のどこをどう見せるか（60字以内）"}],"summary_angle":"職務要約の打ち出し方（60字以内）","pr_themes":["自己PRの見出し候補（20字以内）"],"keywords":["書類に自然に入れたい語"],"gaps":["裏付けが弱い点と書類での扱い方（60字以内）"],"template":"standard|modern|premium|engineer","template_reason":"選んだ理由（40字以内）"}
+{"company":"正式な会社名","position":"応募職種","summary":"この求人が本当に求めていることを1文で（60字以内）","values":[{"label":"重視していること（15字以内）","detail":"具体的に（50字以内）","source":"求人票|企業情報|公開情報|一般知識","quote":"根拠となる原文の短い抜粋（30字以内、なければ空）"}],"requirements":[{"text":"要件（30字以内）","type":"必須|歓迎","match":"◎|○|△","evidence":"対応する経歴（30字以内）"}],"plan":[{"value":"values の label","episode_ids":["E1"],"angle":"その事例のどこをどう見せるか（60字以内）"}],"summary_angle":"職務要約の打ち出し方（60字以内）","pr_themes":["自己PRの見出し候補（20字以内）"],"keywords":["書類に自然に入れたい語"],"gaps":["裏付けが弱い点と書類での扱い方（60字以内）"],"template":"standard|modern|premium|engineer","template_reason":"選んだ理由（40字以内）"}
 件数の目安：values 3〜5、requirements は求人票の要件すべて（最大8）、plan 2〜4、pr_themes 2〜3、keywords 5〜8。
 ${uiName(ctx) ? `言語：本人は${uiName(ctx)}で読みます。company・position・keywords・quote は日本語（求人票の表記）のまま、それ以外の文章（summary、values の label と detail、requirements の text と evidence、plan の angle、summary_angle、pr_themes、gaps、template_reason）は${uiName(ctx)}で書く。source と type と match の値は上の日本語のまま。${ctx.uiLang === 'zh' ? '中国語は中国大陸で自然な表現にし、日本語の漢語をそのまま使わない（例：中堅企業→中型企业、活用→使用）。' : ''}
 ` : ''}
@@ -72,7 +72,7 @@ ${(c.job || '').slice(0, 12000)}
 """
 ${(c.info || '').slice(0, 6000)}
 """
-
+${researchBlock(c)}
 # 候補者データ
 ${J(slimProfile(ctx))}${answersBlock(ctx)}${intentBlock(ctx, true)}`;
 }
@@ -167,6 +167,7 @@ export function P_PACK(ctx, c) {
 # 厳守
 - 回答例・志望動機は、提出する職務経歴書・候補者データ・本人の転職の軸に矛盾させない。そこにない具体的な手順・数字・エピソード・動機は足さない。足りない部分は【要記入：何を書くか】と書き、本人が埋められるようにする。
 - 選考フローは、企業固有の公開情報が与えられていない限り「一般的な想定」であり、flow.note にそう書く。
+- 公開情報の調査がある場合、志望動機と逆質問に具体的な事実（事業・最近の動き）を使ってよい。ただし調査にない事実は書かず、古い情報は「〜と拝見しました」のように時期が分かる言い方にする。
 - 回答例は丸暗記用の原稿にしない。話し言葉の「です・ます」で、話して30〜40秒（150〜220字）。要点は3つまで。
 - 方針の gaps（経歴の弱い点）を突かれる質問を2問以上含め、盛らずに答える方法を示す。
 - 質問は9問：自己紹介、転職理由、志望動機、強み・弱み、希望年収・入社可能時期・他社の選考状況（1問にまとめる）、この求人ならではの質問。候補者データの入力が日本語以外と読み取れる場合は、日本で働く理由や日本語での業務経験を問う質問を1問含める。
@@ -189,7 +190,7 @@ ${(c.job || '').slice(0, 6000)}
 """
 ${(c.info || '').slice(0, 3000)}
 """
-## 提出する職務経歴書
+${researchBlock(c)}## 提出する職務経歴書
 ${J(stripDoc(c.doc))}
 
 # 候補者データ
@@ -213,7 +214,7 @@ ${uiName(ctx) ? `言語：面接は日本語なので、questions の q、fixes 
 ` : ''}
 # 応募先の方針
 ${J({ position: a.position, summary: a.summary, values: a.values, gaps: a.gaps })}
-# これまでの選考記録
+${researchBlock(c)}# これまでの選考記録
 ${J(past)}
 # 提出した職務経歴書
 ${J(stripDoc(c.doc))}
@@ -238,7 +239,7 @@ ${uiName(ctx) ? `{"motive":"","motive_tr":"motive の${uiName(ctx)}訳"}
 # 応募先：${a.company || c.name}（${a.position || ''}）
 ${J({ summary: a.summary, values: a.values })}
 ${c.pack && c.pack.motivation.long ? '# 面接用に作成済みの志望動機（参考）\n' + c.pack.motivation.long : ''}
-# 提出する職務経歴書（要約と自己PR）
+${researchBlock(c)}# 提出する職務経歴書（要約と自己PR）
 ${J({ summary: (c.doc || {}).summary, pr: (c.doc || {}).pr })}
 # 候補者データ
 ${J(slimProfile(ctx))}${intentBlock(ctx, true)}`;
@@ -302,4 +303,39 @@ ${c.doc ? '# 日本語の職務経歴書（この内容と矛盾させない）\
 ${J(slimProfile(ctx))}${answersBlock(ctx)}`;
 }
 
-export const PROMPTS = { P_PROFILE, P_ANALYZE, P_GENERATE, P_SHORTEN, P_PACK, P_PREP, P_RK, P_EXPLAIN, P_ENGLISH };
+export function P_RESEARCH(ctx, c) {
+  const a = c.analysis || {}; const L = uiName(ctx);
+  return `あなたは日本の中途採用に詳しい企業リサーチャーです。下の応募先について web_search で公開情報を調べ、志望動機・面接準備・逆質問に使える事実を、出典付きでまとめてください。
+
+# 調べ方
+- web_search は最大5回。検索語には会社名・事業名・職種名だけを使う（候補者の情報は一切使わない）。
+- 優先する情報源：その会社の公式サイト（事業内容・ニュース・IR・採用ページ・技術ブログ・社長メッセージ）、プレスリリース、信頼できる報道。
+- 口コミサイト・掲示板・まとめサイト・個人ブログの評判は使わない。
+- 同じ名前の別会社に注意する。求人票の会社と同じだと確かめられない情報は書かない。確信の度合いを confidence に書く。
+
+# 書き方
+- 事実だけを書く。推測や評価（「成長企業」「働きやすい」など）は書かない。
+- facts と position の各項目には、実際に検索結果で見たページの url をそのまま書き、分かれば時期（YYYY-MM）を date に書く。2年以上前の情報は時期を必ず書く。
+- 見つからなかった項目は書かない（件数を埋めるために作らない）。
+${L ? `- 言語：本人は${L}で読む。company は日本語の正式名称、questions は日本語（面接で使うため）で書き、questions_tr にその${L}訳を書く。それ以外の文章（overview、facts の text、position の text、talking_points、check_yourself、caveats）は${L}で書く。${ctx.uiLang === 'zh' ? '中国語は中国大陸で自然な表現にし、日本語の漢語をそのまま使わない。' : ''}` : ''}
+
+# 出力形式（JSONのみ）
+{"company":"正式な会社名","confidence":"high|medium|low","overview":"事業と規模の要約（80字以内）","facts":[{"topic":"事業|最近の動き|業績・資金調達|組織・採用|価値観・カルチャー|プロダクト・技術","text":"60字以内","url":"","title":"出典ページの名前","date":"YYYY-MM または空"}],"position":[{"text":"この職種・部署について公開情報から分かること（60字以内）","url":"","title":""}],"talking_points":["志望動機や面接で具体的に触れられる話題（40字以内）"],"questions":["逆質問の候補"],${L ? '"questions_tr":[""],' : ''}"check_yourself":["説明会や面接、口コミで自分で確かめるとよい点（30字以内）"],"caveats":["情報の古さ・不確かさについての注意（あれば）"]}
+件数：facts 4〜8、position 0〜3、talking_points 2〜4、questions 2〜3、check_yourself 2〜4、caveats 0〜2。
+
+# 応募先
+会社名：${a.company || c.name || '（求人票から読み取る）'}
+職種：${a.position || '（求人票から読み取る）'}
+## 求人票（抜粋）
+"""
+${(c.job || '').slice(0, 3000)}
+"""`;
+}
+// research results as the other prompts see them (sources and dates kept, marked as public information)
+function researchBlock(c) {
+  const r = c.research;
+  if (!r || !Array.isArray(r.facts) || !r.facts.length) return '';
+  return `\n## 公開情報の調査（自動調査・出典付き。会社が書いたことではなく、日付が古い場合がある）\n${J({ overview: r.overview, facts: r.facts.map((f) => ({ text: f.text, date: f.date, source: f.title || f.url })), position: (r.position || []).map((p) => p.text), talking_points: r.talking_points })}\n`;
+}
+
+export const PROMPTS = { P_PROFILE, P_ANALYZE, P_GENERATE, P_SHORTEN, P_PACK, P_PREP, P_RK, P_EXPLAIN, P_ENGLISH, P_RESEARCH };

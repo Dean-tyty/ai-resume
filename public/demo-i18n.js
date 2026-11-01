@@ -395,6 +395,75 @@ window.DEMO_I18N = {
         "In writing, call the company you are applying to 「貴社」; when speaking in an interview, say 「御社」.",
         "Write 「以上」 at the end to mark the end of the document."
       ]
+    },
+    "research": {
+      "company": "株式会社サンプルクラウド",
+      "confidence": "high",
+      "sample": true,
+      "overview": "Develops and provides a cloud service for expense reports and invoice management for mid-sized companies. About 300 employees (fictional sample).",
+      "facts": [
+        {
+          "topic": "事業",
+          "text": "Offers one cloud product for expense reports and receiving invoices, for companies with 100–1,000 employees",
+          "url": "https://example.com/samplecloud/service",
+          "title": "Service overview, SampleCloud (sample)",
+          "date": ""
+        },
+        {
+          "topic": "最近の動き",
+          "text": "Announced in spring 2026 a dedicated onboarding setup in which the CS team handles implementation support",
+          "url": "https://example.com/samplecloud/news/2026-04",
+          "title": "News release (sample)",
+          "date": "2026-04"
+        },
+        {
+          "topic": "業績・資金調達",
+          "text": "Raised a Series C round, to be used to strengthen CS and build features for large companies",
+          "url": "https://example.com/samplecloud/news/2025-11",
+          "title": "News release (sample)",
+          "date": "2025-11"
+        },
+        {
+          "topic": "価値観・カルチャー",
+          "text": "Its values are “Customer Outcome First”, “Build Systems, Not Heroes” and “Be Candid”",
+          "url": "https://example.com/samplecloud/company",
+          "title": "Company profile (sample)",
+          "date": ""
+        },
+        {
+          "topic": "組織・採用",
+          "text": "On the careers page, the head of CS says the priority is building ways for the team to reduce churn together",
+          "url": "https://example.com/samplecloud/recruit/cs",
+          "title": "Careers page, CS (sample)",
+          "date": "2026-02"
+        }
+      ],
+      "position": [
+        {
+          "text": "CS managers each own a set of client companies; the leader holds the KPIs of a team of 3–5",
+          "url": "https://example.com/samplecloud/recruit/cs",
+          "title": "Careers page, CS (sample)"
+        }
+      ],
+      "talking_points": [
+        "The new dedicated onboarding setup, and how you shortened implementation time",
+        "“Build Systems, Not Heroes” and how you systematized work with a health score"
+      ],
+      "questions": [
+        "オンボーディング専任体制を始めてから、CSチームの役割はどう変わりましたか？",
+        "大企業向け機能の開発に、CSの声はどのように反映されていますか？"
+      ],
+      "questions_tr": [
+        "Since the dedicated onboarding setup started, how has the CS team’s role changed?",
+        "How is the voice of CS reflected in developing features for large companies?"
+      ],
+      "check_yourself": [
+        "How CS leaders are evaluated (churn, upsell, team development)",
+        "How the size of your accounts changes as they expand to large companies"
+      ],
+      "caveats": [
+        "The funding information is as of November 2025"
+      ]
     }
   },
   "zh": {
@@ -736,6 +805,75 @@ window.DEMO_I18N = {
         "准备好用1分钟讲清引入健康度评分时遇到的反对和应对",
         "确认公司的3条价值观与自己的案例如何对应",
         "确认线下面试的地点和所需时间"
+      ]
+    },
+    "research": {
+      "company": "株式会社サンプルクラウド",
+      "confidence": "high",
+      "sample": true,
+      "overview": "面向中型企业开发和提供费用报销及发票管理云服务。员工约 300 人（虚构示例）。",
+      "facts": [
+        {
+          "topic": "事業",
+          "text": "面向员工 100～1,000 人的企业，用一款云产品同时处理费用报销和发票收取",
+          "url": "https://example.com/samplecloud/service",
+          "title": "服务介绍｜SampleCloud（示例）",
+          "date": ""
+        },
+        {
+          "topic": "最近の動き",
+          "text": "2026 年春宣布启动由 CS 团队负责导入支持的“专职入门引导体制”",
+          "url": "https://example.com/samplecloud/news/2026-04",
+          "title": "新闻稿（示例）",
+          "date": "2026-04"
+        },
+        {
+          "topic": "業績・資金調達",
+          "text": "完成 C 轮融资，资金将用于加强 CS 体制和开发面向大企业的功能",
+          "url": "https://example.com/samplecloud/news/2025-11",
+          "title": "新闻稿（示例）",
+          "date": "2025-11"
+        },
+        {
+          "topic": "価値観・カルチャー",
+          "text": "公司价值观为“Customer Outcome First”“Build Systems, Not Heroes”“Be Candid”",
+          "url": "https://example.com/samplecloud/company",
+          "title": "公司简介（示例）",
+          "date": ""
+        },
+        {
+          "topic": "組織・採用",
+          "text": "CS 部门负责人在招聘页面上表示，重视建立“由团队一起降低解约率的机制”",
+          "url": "https://example.com/samplecloud/recruit/cs",
+          "title": "招聘页面 CS 部门（示例）",
+          "date": "2026-02"
+        }
+      ],
+      "position": [
+        {
+          "text": "CS 按导入企业分别负责，组长负责 3～5 人团队的 KPI",
+          "url": "https://example.com/samplecloud/recruit/cs",
+          "title": "招聘页面 CS 部门（示例）"
+        }
+      ],
+      "talking_points": [
+        "专职入门引导体制的启动，以及你缩短导入周期的经验",
+        "“Build Systems, Not Heroes”与你用健康度评分把工作机制化的经验"
+      ],
+      "questions": [
+        "オンボーディング専任体制を始めてから、CSチームの役割はどう変わりましたか？",
+        "大企業向け機能の開発に、CSの声はどのように反映されていますか？"
+      ],
+      "questions_tr": [
+        "启动专职入门引导体制后，CS 团队的角色发生了哪些变化？",
+        "在开发面向大企业的功能时，CS 的意见是如何被采纳的？"
+      ],
+      "check_yourself": [
+        "CS 组长的考核指标（解约率、追加销售、团队培养）",
+        "向大企业扩展后，负责客户的规模会如何变化"
+      ],
+      "caveats": [
+        "融资信息为 2025 年 11 月时的内容"
       ]
     }
   }

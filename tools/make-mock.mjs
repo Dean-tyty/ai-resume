@@ -11,11 +11,11 @@ const mock = {
   profile: { ...profile, name: undefined, missing },
   analyze: D.analysis, generate: D.doc, shorten: D.doc, pack: D.pack, prep: D.prep,
   rk: { motive: '貴社の「顧客の成果から考える」という価値観に共感し、志望いたしました。【要記入：志望の決め手となった出来事】' },
-  english: D.english,
+  english: D.english, research: D.research, sampleJob: D.job,
   explain: { overview: D.explain.overview, sections: D.explain.sections, naturalness: D.explain.naturalness, conventions: D.explain.conventions },
   // the English / Chinese page (ctx.uiLang): the answers as the AI writes them for that page
   ...Object.fromEntries(['en', 'zh'].flatMap((l) => [
-    ['analyze_' + l, X[l] && X[l].analysis], ['pack_' + l, X[l] && X[l].pack], ['prep_' + l, X[l] && X[l].prep],
+    ['analyze_' + l, X[l] && X[l].analysis], ['research_' + l, X[l] && X[l].research], ['pack_' + l, X[l] && X[l].pack], ['prep_' + l, X[l] && X[l].prep],
     ['profile_' + l, X[l] && X[l].missing ? { ...profile, name: undefined, missing: X[l].missing } : null],
     ['explain_' + l, l === 'en' ? X.en && X.en.explain : { overview: D.explain.overview, sections: D.explain.sections, naturalness: D.explain.naturalness, conventions: D.explain.conventions }],
   ]).filter(([, v]) => v)),

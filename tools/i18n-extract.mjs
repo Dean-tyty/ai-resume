@@ -49,7 +49,7 @@ const E = w.ResumeEngine;
 Object.values(E.THEMES).forEach((t) => { put(t.label, 'engine.js THEMES'); put(t.note, 'engine.js THEMES'); });
 E.ACCENTS.forEach((a) => put(a.label, 'engine.js ACCENTS'));
 // shown on the page but made elsewhere: values the AI gives (分析の出典・要件の種類), counts put together in code
-['企業情報', '求人票', '必須', '歓迎', '配色', '{0}社', '{0}件', '{0}年', '{0}日',
+['企業情報', '求人票', '必須', '歓迎', '配色', '公開情報', '事業', '最近の動き', '業績・資金調達', '組織・採用', '価値観・カルチャー', 'プロダクト・技術', '{0}社', '{0}件', '{0}年', '{0}日',
   // the 履歴書 layout's warnings (public/engine.js layoutRireki)
   '欄に入りきらない文字があります：{0}', '「{0}」が欄に入りきりません。短くしてください。', '学歴・職歴が欄に入りきりません（{0}行 / {1}行）。行をまとめてください。', '免許・資格が欄に入りきりません（{0}件 / {1}件）。',
 ].forEach((k) => { if (!keys.has(k)) keys.set(k, 'extra'); });

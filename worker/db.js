@@ -53,6 +53,22 @@ export async function account(env, auth, { create = true } = {}) {
   return { user: u, created: true };
 }
 
+// has bought credits at least once (the features that cost web searches are for them)
+export async function hasPaid(env, id) {
+  return !!(await env.DB.prepare('SELECT 1 AS x FROM purchases WHERE user_id = ? AND credited = 1 LIMIT 1').bind(id).first());
+}
+// one more company research for a 応募先 that holds a credit; false when it has had max already
+export async function takeResearch(env, id, cid, max) {
+  return !!(await env.DB.prepare('UPDATE slots SET research = research + 1 WHERE user_id = ? AND company_id = ? AND research < ? RETURNING research').bind(id, cid, max).first());
+}
+export async function giveBackResearch(env, id, cid) {
+  await env.DB.prepare('UPDATE slots SET research = MAX(research - 1, 0) WHERE user_id = ? AND company_id = ?').bind(id, cid).run();
+}
+export async function researchCounts(env, id) {
+  const r = await env.DB.prepare('SELECT company_id, research FROM slots WHERE user_id = ? AND research > 0').bind(id).all();
+  return Object.fromEntries((r.results || []).map((x) => [x.company_id, x.research]));
+}
+
 export async function slotIds(env, id) {
   const r = await env.DB.prepare('SELECT company_id FROM slots WHERE user_id = ?').bind(id).all();
   return (r.results || []).map((x) => x.company_id);

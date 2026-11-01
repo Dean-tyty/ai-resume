@@ -105,6 +105,14 @@ const C2 = await addCo('株式会社テスト二号');
 await page.click(C2 + ' [data-act=analyze]');
 await page.waitForSelector(C2 + ' .an', { timeout: 15000 });
 ok((await page.innerText('#acct .credit')).includes('1'), 'analysis is free');
+// buyers' features are not open before a purchase
+ok(await page.isDisabled(C2 + ' [data-cf=jobUrl]'), 'URL import closed before a purchase');
+ok((await page.innerText(C2 + ' .research')).includes('利用枠を購入すると使えます'), 'company research offered to buyers');
+// (called from here, not from the page: refusals are expected and would show as page errors)
+const api = async (path, b) => JSON.parse((await (await fetch(BASE + path, { method: 'POST', headers: { authorization: 'Dev ' + user, 'content-type': 'application/json', origin: BASE }, body: JSON.stringify(b) })).text()).trim());
+const C2c = { id: C2.match(/"(.+)"/)[1], name: '株式会社テスト二号', job: '【募集職種】営業マネージャー\n【必須】法人営業経験3年以上' };
+ok((await api('/api/fetch-job', { url: 'https://jobs.example.com/1' })).error.code === 'paid_only', 'server: URL import refused before a purchase');
+ok((await api('/api/ai', { task: 'research', ctx: {}, c: C2c })).error.code === 'paid_only', 'server: research refused before a purchase');
 await page.click(C2 + ' [data-act=generate]');
 await page.waitForFunction(() => /あと\s*0/.test(document.querySelector('#acct .credit').textContent), null, { timeout: 30000 });
 ok(true, 'documents used the free credit');
@@ -129,6 +137,37 @@ ok((await page.locator('[data-cid], .co-it').count()) >= 3, 'data still there af
 await page.waitForFunction(() => !document.querySelector('.pill.run'), null, { timeout: 30000 });
 await page.waitForFunction(() => document.querySelector('#sync').textContent === '保存済み', null, { timeout: 8000 });
 
+// after a purchase: a posting from its URL, then the company's public information
+await act('step', '[data-step="2"]');
+await page.click('.vh [data-act=addCompany]');
+const C4id = await cardOf(); const C4 = `[data-cid="${C4id}"]`;
+await page.fill(C4 + ' [data-cf=jobUrl]', 'https://doda.jp/DodaFront/View/JobSearchDetail/j_jid__1/');
+const errsBefore = errors.length;
+await page.click(C4 + ' [data-act=fetchJob]');
+await page.waitForSelector(C4 + ' .status.err', { timeout: 8000 });
+errors.splice(errsBefore).filter((e) => !/status of 400/.test(e)).forEach((e) => errors.push(e));   // the refusal itself is expected
+ok((await page.innerText(C4 + ' .status.err')).includes('自動では読み込めません'), 'job boards are not read (paste instead)');
+await page.fill(C4 + ' [data-cf=jobUrl]', 'https://jobs.example.com/recruit/cs-lead');
+await page.click(C4 + ' [data-act=fetchJob]');
+await page.waitForFunction((S) => ((document.querySelector(S + ' [data-cf=job]') || {}).value || '').includes('カスタマーサクセス'), C4, { timeout: 10000 });
+ok(true, 'posting read from its URL');
+ok((await page.inputValue(C4 + ' [data-cf=name]')).includes('サンプルクラウド'), 'company name taken from the page');
+await page.click(C4 + ' [data-act=analyze]');
+await page.waitForSelector(C4 + ' .an', { timeout: 15000 });
+const researched = async () => { await page.waitForFunction((S) => document.querySelector(S + ' .rs-facts') && !document.querySelector(S + ' .research .status'), C4, { timeout: 15000 }); };
+await page.click(C4 + ' [data-act=research]');
+await researched();
+await shot('research');
+ok(/あと\s*3/.test(await page.innerText('#acct .credit')), 'research uses the company\'s credit (4 → 3)');
+ok((await page.innerText(C4 + ' .research')).includes('あと2回'), 'research count shown');
+ok((await page.locator(C4 + ' .rs-src a').count()) > 0, 'each fact links its source');
+for (let k = 0; k < 2; k++) { await page.click(C4 + ' [data-act=research]'); await researched(); }
+ok(await page.isDisabled(C4 + ' [data-act=research]'), 'research limited per company (button)');
+const fourth = await api('/api/ai', { task: 'research', ctx: {}, c: { id: C4id, name: await page.inputValue(C4 + ' [data-cf=name]'), job: await page.inputValue(C4 + ' [data-cf=job]') } });
+ok(fourth.error && fourth.error.code === 'limit' && fourth.error.scope === 'research', 'server: research limited to 3 per company');
+ok(/あと\s*3/.test(await page.innerText('#acct .credit')), 'credits unchanged by repeated research');
+await page.waitForFunction(() => document.querySelector('#sync').textContent === '保存済み', null, { timeout: 8000 });
+
 // another device: the same data from the server
 const ctxB = await context(browser, { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
 await ctxB.addInitScript((u) => localStorage.setItem('resume-dev-user', u), user);
@@ -136,7 +175,7 @@ const pageB = await ctxB.newPage(); watch(pageB, errors);
 await pageB.goto(BASE + '/');
 await pageB.waitForSelector('#acct .credit');
 await pageB.click('[data-act=step][data-step="2"]');
-ok((await pageB.locator('[data-cid]').count()) === 3, 'another device sees all 応募先');
+ok((await pageB.locator('[data-cid]').count()) === 4, 'another device sees all 応募先');
 await pageB.screenshot({ path: OUT + 'mobile-step2.png', fullPage: false });
 
 // conflict: B saves, then A (still on the old version) saves

@@ -1,5 +1,6 @@
 -- D1 schema for 職務経歴書AI. Apply with: npx wrangler d1 execute resume --remote --file=schema.sql
 -- (local development: the same with --local). Every statement can be run again safely.
+-- A database made before slots.research existed: ALTER TABLE slots ADD COLUMN research INTEGER NOT NULL DEFAULT 0;
 CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY,                -- Clerk user id (sub)
   email TEXT NOT NULL DEFAULT '',     -- for the Stripe checkout form; cleared when the data expires
@@ -23,6 +24,7 @@ CREATE TABLE IF NOT EXISTS slots (    -- 応募先 that have used a credit
   n INTEGER NOT NULL DEFAULT 0,       -- AI requests that succeeded for this 応募先
   busy INTEGER NOT NULL DEFAULT 0,    -- AI requests running now (the credit goes back only when none is)
   label TEXT NOT NULL DEFAULT '',     -- the company's name, set by the first success (a credit is for one company)
+  research INTEGER NOT NULL DEFAULT 0, -- company researches (web search) started for this 応募先
   created_at INTEGER NOT NULL,
   PRIMARY KEY (user_id, company_id)
 );

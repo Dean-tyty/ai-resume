@@ -489,3 +489,16 @@ summary .trl{display:block;font-weight:400}
 
 /* shown on the English / Chinese pages only */
 html[lang="ja"] .foreign-only{display:none}
+
+/* step 2: a posting from its URL; the company's public information */
+.urlrow{display:flex;gap:8px;align-items:center;margin:4px 0}
+.urlrow input{flex:1;min-width:0}
+.research{margin-top:14px;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:#fff}
+.research h5{margin:12px 0 4px;font-size:12.5px;color:var(--ink2)}
+.research ul{margin:4px 0 0;padding-left:18px}
+.research li{margin:4px 0;line-height:1.6;font-size:13px}
+.rs-facts{list-style:none;padding-left:0!important}
+.rs-facts li{padding:6px 0;border-bottom:1px dashed var(--line)}
+.rs-facts li:last-child{border-bottom:0}
+.rs-src{font-size:11.5px;color:var(--ink2);margin-top:2px}
+.rs-src a{color:var(--ink2)}

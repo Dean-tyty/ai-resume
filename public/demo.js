@@ -210,6 +210,23 @@ window.DEMO = {
     reverse: ['CSチームのKPIは現在どの指標を重視していますか？', '入社後3か月で期待される成果は何ですか？', 'プロダクトチームへの顧客の声は、どのような仕組みで届いていますか？'],
     cautions: ['英語は業務メールのみ。会話力を問われたら事実どおりに答える', '1,000名規模の顧客経験がない点は、複数部門調整の経験で補う'],
   },
+  // what the company research shows (a fictional company: the pages are examples, not real)
+  research: {
+    company: '株式会社サンプルクラウド', confidence: 'high', sample: true,
+    overview: '中堅企業向けの経費精算・請求書管理クラウドを開発・提供。従業員約300名（架空のサンプル）。',
+    facts: [
+      { topic: '事業', text: '経費精算と請求書受領を一つのクラウドで扱う製品を、従業員100〜1,000名の企業向けに提供', url: 'https://example.com/samplecloud/service', title: 'サービス紹介｜サンプルクラウド（サンプル）', date: '' },
+      { topic: '最近の動き', text: '2026年春に、導入支援をCSチームが担う「オンボーディング専任体制」を開始と発表', url: 'https://example.com/samplecloud/news/2026-04', title: 'ニュースリリース（サンプル）', date: '2026-04' },
+      { topic: '業績・資金調達', text: 'シリーズCで資金調達。CS体制の強化と大企業向け機能の開発に充てると説明', url: 'https://example.com/samplecloud/news/2025-11', title: 'ニュースリリース（サンプル）', date: '2025-11' },
+      { topic: '価値観・カルチャー', text: 'バリューとして「Customer Outcome First」「Build Systems, Not Heroes」「Be Candid」を掲げる', url: 'https://example.com/samplecloud/company', title: '会社概要（サンプル）', date: '' },
+      { topic: '組織・採用', text: 'CS部門の責任者が採用ページで、解約率を「チームで下げる仕組み」づくりを重視すると発言', url: 'https://example.com/samplecloud/recruit/cs', title: '採用ページ CS部門（サンプル）', date: '2026-02' },
+    ],
+    position: [{ text: 'CSは導入企業ごとの担当制で、リーダーは3〜5名のチームのKPIを持つと説明', url: 'https://example.com/samplecloud/recruit/cs', title: '採用ページ CS部門（サンプル）' }],
+    talking_points: ['オンボーディング専任体制の開始と、導入期間を短縮した自分の経験', '「Build Systems, Not Heroes」と、ヘルススコアで仕組み化した経験'],
+    questions: ['オンボーディング専任体制を始めてから、CSチームの役割はどう変わりましたか？', '大企業向け機能の開発に、CSの声はどのように反映されていますか？'],
+    check_yourself: ['CSリーダーの評価指標（解約率・アップセル・チームの育成）', '大企業向けへの拡大で、担当顧客の規模がどう変わるか'],
+    caveats: ['資金調達の情報は2025年11月時点のものです'],
+  },
   english: {
     name: 'Kenta Sato', name_guess: true,
     headline: 'Customer Success Team Lead | B2B SaaS',

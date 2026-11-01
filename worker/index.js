@@ -5,13 +5,15 @@
 //   POST   /api/consent {version}  agreement to the terms and to sending data to the AI service
 //   GET    /api/workspace          the saved data          PUT /api/workspace {data, base}  save it
 //   POST   /api/ai                 one AI step (ai.js)
+//   POST   /api/fetch-job {url}    a job posting read from its page, for users who have bought credits (fetchjob.js)
 //   POST   /api/checkout, /api/checkout/confirm, /api/stripe   payments (billing.js)
 //   DELETE /api/account            delete the account and everything saved
 //   POST   /api/event              steps counted for the weekly report (stats.js)
 // A daily cron deletes data not used for RETENTION_DAYS.
-import { PRODUCT, PACKS, FREE_CREDITS, CONSENT_VERSION, MAX_WORKSPACE, RETENTION_DAYS } from './config.js';
+import { PRODUCT, PACKS, FREE_CREDITS, CONSENT_VERSION, MAX_WORKSPACE, RETENTION_DAYS, RESEARCH_PER_COMPANY } from './config.js';
 import { authenticate, clerkDelete } from './auth.js';
-import { account, slotIds, getWorkspace, putWorkspace, deleteUser } from './db.js';
+import { account, slotIds, getWorkspace, putWorkspace, deleteUser, hasPaid, researchCounts } from './db.js';
+import { fetchJob } from './fetchjob.js';
 import { handleAI } from './ai.js';
 import { checkout, confirm, webhook, devPay, devPayPost } from './billing.js';
 import { beacon, track } from './stats.js';
@@ -22,7 +24,7 @@ function configJS(env) {
   const cfg = {
     clerkKey: env.CLERK_PUBLISHABLE_KEY || '', dev: env.DEV_AUTH === '1',
     packs: Object.entries(PACKS).map(([id, p]) => ({ id, ...p })), free: FREE_CREDITS, consent: CONSENT_VERSION,
-    terms: PRODUCT.terms, privacy: PRODUCT.privacy, retention: RETENTION_DAYS,
+    terms: PRODUCT.terms, privacy: PRODUCT.privacy, retention: RETENTION_DAYS, research: RESEARCH_PER_COMPANY,
   };
   return new Response('window.APP_CONFIG = ' + JSON.stringify(cfg) + ';\n', { headers: { 'content-type': 'text/javascript; charset=utf-8', ...NO_STORE } });
 }
@@ -30,7 +32,9 @@ function configJS(env) {
 async function me(request, env, auth) {
   const { user, created } = await account(env, auth);
   if (created) track(env, 'signup', request);
-  return json({ id: auth.id, credits: user.credits, slots: await slotIds(env, auth.id), consent: user.consent === CONSENT_VERSION, created });
+  // paid: has bought credits (URL reading and company research); research: researches used per 応募先
+  const [slots, paid, research] = await Promise.all([slotIds(env, auth.id), hasPaid(env, auth.id), researchCounts(env, auth.id)]);
+  return json({ id: auth.id, credits: user.credits, slots, paid, research, consent: user.consent === CONSENT_VERSION, created });
 }
 
 async function consent(request, env, auth) {
@@ -101,6 +105,7 @@ const API_AUTH = {
   'GET /api/workspace': (r, env, ctx, a) => workspace(r, env, a),
   'PUT /api/workspace': (r, env, ctx, a) => workspace(r, env, a),
   'POST /api/ai': (r, env, ctx, a) => handleAI(r, env, ctx, a),
+  'POST /api/fetch-job': (r, env, ctx, a) => fetchJob(r, env, a),
   'POST /api/checkout': (r, env, ctx, a) => checkout(r, env, a),
   'POST /api/checkout/confirm': (r, env, ctx, a) => confirm(r, env, ctx, a),
   'DELETE /api/account': (r, env, ctx, a) => deleteAccount(env, ctx, a),

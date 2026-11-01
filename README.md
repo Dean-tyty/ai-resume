@@ -28,6 +28,16 @@
 - 价格：5 社 2,480 円、10 社 3,980 円（含税）。改价格时，`worker/config.js` 的 `PACKS` 和 Stripe 的 Price 要一起改：支付金额和 `PACKS` 不一致时不加枠，并发 Lark 通知。
 - 成本保护（`worker/config.js` 的 `LIMITS`、变量 `AI_DAILY_LIMIT`）：每人每天 AI 150 次、整理经历 15 次、分析 40 次、每个应募先每天 40 次、每个应募先累计 150 次；全站每天 3000 次（到 80% 和 100% 时 Lark 通知）。
 
+### 只给购买过的用户（成本控制）
+
+「购买过」＝ `purchases` 里有一笔已加枠的购买（只用过免费 1 社分的用户不算）。服务器和页面都检查。
+
+- **从 URL 读入求人票**（`POST /api/fetch-job`，`worker/fetchjob.js`）：服务器取得页面，优先读页面里的 schema.org `JobPosting`，没有就取正文。转职网站（doda・リクナビ・ビズリーチ・Indeed・LinkedIn 等，`config.js` 的 `NO_FETCH`）不读，遵守 robots.txt，只接受 http/https 的域名（不接受 IP、localhost、非标准端口），最大 2MB、10 秒。用 JavaScript 画出来的页面读不到正文时，提示用户粘贴。每人每天 30 次。不用 AI，几乎没有成本。
+- **会社の公開情報の調査**（AI 任务 `research`）：用 Anthropic API 的 web search 工具（每次最多搜 5 次），查公司官网・新闻・IR・招聘页面，输出带出处和日期的事实、职种相关信息、志望动机可用的话题、逆质问候补、需要自己确认的点。口碑网站（OpenWork、転職会議 等，`REVIEW_SITES`）在搜索层面屏蔽，提示词也禁止。AI 回答里的出处只保留搜索真的返回过的 URL（`worker/webpage.js` 的 `keepFound`），防止编造链接。
+  - 发给 AI 的只有公司名、职种和求人票，不发经历等个人信息。
+  - 第一次调查会占用这个应募先的 1 社分（和做书类是同一个枠，之后做书类不再扣）。每个应募先最多 3 次（`RESEARCH_PER_COMPANY`，D1 `slots.research`），每人每天 10 次；示例公司（架空）不能调查。失败自动退回次数。
+  - 调查结果会加进分析、志望动机、面试准备、履历书志望动机的提示词（标明是自动调查、可能过时）。调查之后页面会提示「分析し直して方針に反映する」。
+
 ### 数据
 
 - 登录后，输入和书类保存在 D1（每人一行 JSON，带版本号；两台设备同时改时，旧的一方会被问「读入新的 / 用这边覆盖」）。撤销用的历史版本只留在本机。
@@ -50,6 +60,7 @@ npm run dev                        # http://localhost:8787
 ```
 
 - 想在本机用真的 AI：在 `.dev.vars` 里删掉 `AI_MOCK=1`，加上 `ANTHROPIC_API_KEY=...`。
+- 本机（`AI_MOCK=1`）测试 URL 读入：`https://jobs.example.com/…` 的任何 URL 都返回示例求人票（另加一行，所以不算示例求人）。调查返回示例回答。
 - 改了 `public/demo.js`（示例数据）后运行 `node tools/make-mock.mjs`，模拟 AI 的回答会随之更新。
 - 升级 `@clerk/localizations` 后运行 `node tools/make-clerk-locales.mjs`（生成日・中・英三种登录画面文字）。
 - 看书类效果：`node tools/render-docs.mjs <输出目录>`，把示例简历按四种设计输出 PDF・Word，并输出英文简历（`TARGETS=windows,mac,google` 指定 Word 的环境；`DOC=engineer` 用 `test/fixtures/engineer.json` 的工程师示例），装了 pdftoppm / LibreOffice 时还会生成 PNG。首页的样例图 `public/img/sample-resume.webp` 就是 premium 的第 1 页。
@@ -64,12 +75,12 @@ npm run dev                        # http://localhost:8787
 ## 测试
 
 ```
-node test/unit.mjs                              # Clerk 令牌、Stripe 签名、AI 回答的读取、所有提示词
+node test/unit.mjs                              # Clerk 令牌、Stripe 签名、AI 回答的读取、所有提示词、URL 检查・robots.txt・页面取文字・出处过滤
 LANG=C.UTF-8 node test/e2e.mjs                  # 先 npm run dev；浏览器里走完整流程
 LANG=C.UTF-8 node test/i18n.mjs                 # 英文・中文页面的每个画面里有没有剩下的日文界面文字
 ```
 
-E2E 需要官网的品牌套件：默认读取官网仓库本机构建的 `dist/`（`FL_OFFLINE=1 python3 tools/build.py`），路径用 `FLATLAND_DIST` 指定。E2E 覆盖：首页 → 示例 → 自己的数据 → 登录 → 同意 → 整理经历 → 应募先（扣免费枠）→ 生成书类 → 下载 PDF・Word・履历书 → 英文简历（PDF・Word，不另扣枠）→ 枠用完时购买 → 换设备读入 → 两台设备冲突 → 退出登录 → 删除账号，以及页面没有报错（含 CSP）。
+E2E 需要官网的品牌套件：默认读取官网仓库本机构建的 `dist/`（`FL_OFFLINE=1 python3 tools/build.py`），路径用 `FLATLAND_DIST` 指定。E2E 覆盖：首页 → 示例 → 自己的数据 → 登录 → 同意 → 整理经历 → 应募先（扣免费枠）→ 生成书类 → 下载 PDF・Word・履历书 → 英文简历（PDF・Word，不另扣枠）→ 枠用完时购买（购买前 URL 读入和调查不开放）→ 购买后从 URL 读入（转职网站被拒）→ 调查（扣枠、每社 3 次上限）→ 换设备读入 → 两台设备冲突 → 退出登录 → 删除账号，以及页面没有报错（含 CSP）。
 
 ## 画面预览（不需要任何账号）
 
@@ -85,13 +96,14 @@ E2E 需要官网的品牌套件：默认读取官网仓库本机构建的 `dist/
 
 1. D1：「存储和数据库」→「D1」→「创建」，名字 `resume`。把 Database ID 填进 `wrangler.jsonc` 的 `database_id`。然后建表：
    `npx wrangler d1 execute resume --remote --file=schema.sql`
+   （已经建过表的数据库，再执行一次：`npx wrangler d1 execute resume --remote --command "ALTER TABLE slots ADD COLUMN research INTEGER NOT NULL DEFAULT 0"`）
 2. Worker：「Workers 和 Pages」→「创建」→「导入 Git 存储库」→ 选上面的仓库。部署命令 `npx wrangler deploy`。
 3. 子域名：Worker →「设置」→「域和路由」→「添加」→「自定义域」→ `resume.flatland.co.jp`。
 4. 「变量和机密」里加下面的机密（类型选「密钥」）。
 
 | 名字 | 值从哪里来 |
 | --- | --- |
-| `ANTHROPIC_API_KEY` | Anthropic Console → API Keys。建议在 Console 里给这个 Key 所在的 Workspace 设每月花费上限 |
+| `ANTHROPIC_API_KEY` | Anthropic Console → API Keys。建议在 Console 里给这个 Key 所在的 Workspace 设每月花费上限。公司调查用到 web search：上线前在 Console 确认组织已允许 web search（没开时调查会失败，并发 Lark 通知）。工具版本默认 `web_search_20250305`，要换时设变量 `AI_SEARCH_TOOL` |
 | `CLERK_SECRET_KEY` | Clerk Dashboard → API Keys（`sk_live_…`） |
 | `STRIPE_SECRET_KEY` | Stripe → 开发者 → API 密钥（建议用只开放 Checkout Sessions 读写的受限密钥） |
 | `STRIPE_WEBHOOK_SECRET` | 下面 Stripe 第 3 步得到的 `whsec_…` |
@@ -130,7 +142,7 @@ E2E 需要官网的品牌套件：默认读取官网仓库本机构建的 `dist/
 - **利用规约、隐私条款、同意弹窗的文字**：都是草稿，按上面「官网登记」请专业人士确认（特别是向外国第三方提供个人信息的说明）。
 - **官网产品目录的英文・中文链接**：官网的 `content/products/*.yml` 只有一个 `url`，所以官网英文・中文页里的产品卡片会链到日文页（页面右上角可以切换语言）。要直接链到 `/en/`、`/zh/`，需要官网仓库支持按语言写 `url`（我没有改官网仓库）。
 - **英文・中文界面的译文**：由 AI 翻译，按术语表统一了用词，但没有经过母语者校对。上线前建议各请一位母语者看一遍 `i18n/en.json`、`i18n/zh.json` 和 `public/demo-i18n.js`。
-- **AI 成本**（推算，未实测）：一次请求约输入 6–9 千 token、输出 2–5 千 token（含思考），用 Sonnet 5.5（$2／$10 每百万 token）约 0.05–0.08 美元；一个应募先做齐分析、书类、面试准备、履历书、解说约 9 次，约 0.6 美元。上线后 Worker 日志里每次请求都记录了实际 token 数（`{"ai":"generate","in":…,"out":…}`），请用实测值复核价格。
+- **AI 成本**（推算，未实测）：一次请求约输入 6–9 千 token、输出 2–5 千 token（含思考），用 Sonnet 5.5（$2／$10 每百万 token）约 0.05–0.08 美元；一个应募先做齐分析、书类、面试准备、履历书、解说约 9 次，约 0.6 美元。公司调查一次：搜索最多 5 次 0.05 美元（$10／1000 次），加上搜索结果算作输入 token（估计 2–6 万）和输出，约 0.1–0.25 美元；每社最多 3 次，最坏约 0.75 美元。即便一个应募先把所有功能用满（约 1.35 美元），也低于 10 社套餐的每社单价（398 円，约 2.6 美元），但毛利会变薄，主要看调查的实际 token 数。上线后 Worker 日志里每次请求都记录了实际 token 数和搜索次数（`{"ai":"research","in":…,"out":…,"searches":…}`），请用实测值复核价格；太高时可以把 `RESEARCH_PER_COMPANY` 降到 1–2 或把 `max_uses` 降到 3。
 
 ## 文件
 
@@ -138,7 +150,7 @@ E2E 需要官网的品牌套件：默认读取官网仓库本机构建的 `dist/
 public/            页面（index.html、app.js、app.css、engine.js 排版引擎（4 种设计＋英文简历）、demo.js 示例、demo-i18n.js 示例的英中版、i18n.js 英中页面的翻译、fonts/ 书类字体、lib/）
 public/en/、zh/    英文・中文页面（tools/make-lang-pages.mjs 生成，不要手改）
 public/_headers    CSP 等响应头
-worker/            API（index.js 路由与定时清理、ai.js、prompts.js、auth.js、db.js、billing.js、stats.js、notify.js、config.js）
+worker/            API（index.js 路由与定时清理、ai.js、prompts.js、auth.js、db.js、billing.js、stats.js、notify.js、config.js、fetchjob.js 从 URL 读求人票、webpage.js 网页处理（可单独测试））
 schema.sql         D1 的表
 site/              交给官网仓库的登记文件（产品、条款、隐私）
 test/              unit.mjs、e2e.mjs
