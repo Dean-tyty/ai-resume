@@ -81,6 +81,12 @@ export async function claimSlot(env, id, cid) {
   return claimSlot(env, id, cid);
 }
 
+// An AI request for a 応募先 that already has a credit, counted as running ({state: 'have', …}); null if it has none.
+export async function holdSlot(env, id, cid) {
+  const have = await env.DB.prepare('UPDATE slots SET busy = busy + 1 WHERE user_id = ? AND company_id = ? RETURNING n, label').bind(id, cid).first();
+  return have ? { state: 'have', n: have.n, label: have.label } : null;
+}
+
 // End an AI request for a 応募先. ok: one more success, and the company's name is kept the first time.
 // Failed: when nothing has ever succeeded for the 応募先 and no other request is running, the credit goes back.
 // Returns false when ok but the slot is gone (should not happen: a running request keeps it).

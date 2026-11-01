@@ -1,30 +1,34 @@
 // POST /api/ai {task, ctx, c, rep, i}: one AI step. The prompts live here on the server (prompts.js);
-// the browser sends only the user's own data. Steps for a 応募先 use one credit the first time
-// (given back if nothing ever succeeds for it); the credit is for one company: once a name is known,
-// requests for another company under the same 応募先 are refused. Every request counts towards the
-// daily limits.
+// the browser sends only the user's own data.
+// Credits: reading a job posting (analyze) is free; making documents for a 応募先 uses one credit the first
+// time (given back if nothing ever succeeds for it). A credit is for one company: once its name is known,
+// requests for another company under the same 応募先 are refused. The sample job posting costs nothing.
+// Every request counts towards the daily limits.
 //
 // The answer can take a minute or more, so the response starts at once and sends a space every
 // 15 seconds until the JSON arrives (spaces before JSON are allowed).
 import { PROMPTS } from './prompts.js';
 import { MAX_PAYLOAD, CONSENT_VERSION, SLOT_MAX } from './config.js';
-import { account, claimSlot, finishSlot, credits, countUse } from './db.js';
-import { body, fail, str, sizeOf, jpDate, NO_STORE, sameCompany } from './util.js';
+import { account, claimSlot, holdSlot, finishSlot, credits, countUse } from './db.js';
+import { body, fail, str, sizeOf, jpDate, NO_STORE, sameCompany, sha256 } from './util.js';
 import { track } from './stats.js';
 import { notify } from './notify.js';
 import MOCK from './mock.json';
 
-// task -> [prompt, max output tokens (thinking included), needs a 応募先]
+// task -> [prompt, max output tokens (thinking included), needs a 応募先, uses a credit]
 const TASKS = {
-  profile: ['P_PROFILE', 12000, false],
-  analyze: ['P_ANALYZE', 10000, true],
-  generate: ['P_GENERATE', 16000, true],
-  shorten: ['P_SHORTEN', 16000, true],
-  pack: ['P_PACK', 14000, true],
-  prep: ['P_PREP', 10000, true],
-  rk: ['P_RK', 4000, true],
-  explain: ['P_EXPLAIN', 16000, true],
+  profile: ['P_PROFILE', 12000, false, false],
+  analyze: ['P_ANALYZE', 10000, true, false],
+  generate: ['P_GENERATE', 16000, true, true],
+  shorten: ['P_SHORTEN', 16000, true, true],
+  pack: ['P_PACK', 14000, true, true],
+  prep: ['P_PREP', 10000, true, true],
+  rk: ['P_RK', 4000, true, true],
+  explain: ['P_EXPLAIN', 16000, true, true],
 };
+// the sample job posting of the page ("サンプル求人で試す"): trying it never uses a credit
+const SAMPLE_JOB = MOCK.sampleJobHash || '';
+const isSample = async (c) => !!SAMPLE_JOB && (await sha256(c.job.replace(/\s+/g, ''))) === SAMPLE_JOB;
 
 const obj = (v, max) => (v && typeof v === 'object' && !Array.isArray(v) && sizeOf(v) <= max ? v : null);
 function cleanCtx(x) {
@@ -138,8 +142,12 @@ export async function handleAI(request, env, ctxExec, auth) {
 
   let slot = null;
   const named = c ? (c.analysis && c.analysis.company) || c.name : '';
-  if (c) {
-    slot = await claimSlot(env, auth.id, c.id);
+  const free = c ? await isSample(c) : true;
+  if (c && !free) {
+    // documents: the 応募先 takes a credit unless it has one; reading the posting: only if it already has one
+    slot = def[3] ? await claimSlot(env, auth.id, c.id) : await holdSlot(env, auth.id, c.id);
+  }
+  if (slot) {
     if (slot.state === 'none') return fail(402, 'no_credit', { credits: 0 });
     if (slot.n >= SLOT_MAX) { await finishSlot(env, auth.id, c.id, false); return fail(429, 'limit', { scope: 'slot' }); }
     if (slot.label && !sameCompany(slot.label, named)) { await finishSlot(env, auth.id, c.id, false); return fail(409, 'company_changed', { label: slot.label }); }
@@ -165,7 +173,7 @@ export async function handleAI(request, env, ctxExec, auth) {
     let out;
     try {
       const r = env.AI_MOCK === '1' ? await mockClaude(task, ctx, c) : await callClaude(env, prompt, def[1]);
-      if (c) {
+      if (slot) {
         // a re-analysis that turns out to be another company's posting is not given out under this credit
         const found = task === 'analyze' ? String(r.value.company || '') : '';
         if (slot.label && found && !sameCompany(slot.label, found)) throw new AIError('company_changed', '', { label: slot.label });

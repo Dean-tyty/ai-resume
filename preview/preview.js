@@ -52,14 +52,16 @@
       if (key === 'POST /api/ai') {
         if (!u.consent) return res(403, { error: { code: 'consent' } });
         const c = body.c;
-        if (c && !u.slots.includes(c.id)) {
+        // as on the server: reading a posting is free, documents use a credit, the sample posting never does
+        const sample = c && window.DEMO && c.job.replace(/\s+/g, '') === window.DEMO.job.replace(/\s+/g, '');
+        if (c && body.task !== 'analyze' && !sample && !u.slots.includes(c.id)) {
           if (u.credits <= 0) return res(402, { error: { code: 'no_credit', credits: 0 } });
           u.credits -= 1; u.slots.push(c.id);
         }
         await wait(body.task === 'generate' || body.task === 'pack' ? 2600 : 1500);
         const v = JSON.parse(JSON.stringify(MOCK[body.task] || {}));
         if (body.task === 'analyze' && c && c.name) v.company = c.name;
-        return res(200, { result: v, credits: u.credits, slot: 'have' });
+        return res(200, { result: v, credits: u.credits, slot: c && u.slots.includes(c.id) ? 'have' : '' });
       }
       return res(404, { error: { code: 'not_found' } });
     } finally { keep(); }

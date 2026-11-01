@@ -27,7 +27,7 @@ ok(await page.isVisible('.demo-bar'), 'sample shown with its notice');
 await page.click('.demo-bar [data-act=startOwn]');
 ok(await page.isVisible('#in-raw'), 'own data starts at step 1');
 
-// 経歴: typing works before signing in; AI asks for login, then consent
+// 経歴: typing works before signing in; AI asks for login, then consent, then carries on by itself
 await page.fill('#in-name', '山田 太郎');
 await page.click('[data-act=sampleRaw]');
 await page.fill('#in-name', '山田 太郎');
@@ -39,38 +39,36 @@ await act('devLogin');
 await page.waitForSelector('#acct .credit');
 ok((await page.innerText('#acct .credit')).includes('1'), 'new account has 1 free credit');
 ok((await page.inputValue('#in-name')) === '山田 太郎', 'what was typed before login is kept');
-await act('extract');
-await page.waitForSelector('#agree');
-ok(true, 'consent dialog before the first AI request');
-await act('consentOk');
-await page.waitForTimeout(300);
-ok(await page.isVisible('#agree'), 'consent needs the checkbox');
-await page.check('#agree');
+await page.waitForSelector('[data-act=consentOk]', { timeout: 8000 });
+ok(true, 'after login the action resumes and asks for consent first');
+ok(await page.evaluate(() => document.querySelector('#sync').textContent !== '保存済み'), 'nothing saved to the account before consent');
 await act('consentOk');
 await page.waitForSelector('.eps', { timeout: 15000 });
-ok(true, '経歴 organised (mock AI)');
+ok(true, '経歴 organised (mock AI) without a second click');
 await page.waitForFunction(() => document.querySelector('#sync').textContent === '保存済み', null, { timeout: 8000 });
-ok(true, 'saved to the server');
+ok(true, 'saved to the server after consent');
 
-// 応募先: the first one uses the free credit
+// the sample posting is free from start to finish
+const cardOf = async () => page.$eval('[data-cid]', (el) => el.dataset.cid);
 await act('step', '[data-step="2"]');
 await page.click('.vh [data-act=sampleJob]');
-await page.waitForSelector('.credit-note');
-ok((await page.innerText('.credit-note')).includes('残り1社分'), 'credit note before the first analysis');
-await page.click('[data-cid] [data-act=analyze]');
-await page.waitForSelector('[data-cid] .an', { timeout: 15000 });
-ok((await page.innerText('#acct .credit')).includes('0'), 'analysis used the credit');
-await page.click('[data-cid] [data-act=generate]');
+const sampleId = await cardOf();
+const S = `[data-cid="${sampleId}"]`;
+ok((await page.innerText(S + ' .credit-note')).includes('無料'), 'sample posting marked free');
+await page.click(S + ' [data-act=analyze]');
+await page.waitForSelector(S + ' .an', { timeout: 15000 });
+await page.click(S + ' [data-act=generate]');
 await page.waitForSelector('#preview canvas', { timeout: 30000 });
 await page.waitForFunction(() => !document.querySelector('.pill.run'), null, { timeout: 30000 });
 await shot('doc');
 ok(true, '職務経歴書 made and previewed');
+ok((await page.innerText('#acct .credit')).includes('1'), 'sample used no credit');
 
 // downloads
 for (const kind of ['pdf', 'docx']) {
   const [dl] = await Promise.all([page.waitForEvent('download'), page.click(`[data-act=${kind}]`).then(() => page.click(`[data-act=${kind}]`).catch(() => {}))]);
   const p = OUT + 'out.' + kind; await dl.saveAs(p);
-  ok(/職務経歴書_山田太郎_\d{8}\.(pdf|docx)/.test(dl.suggestedFilename()), kind + ' downloaded as ' + dl.suggestedFilename());
+  ok(/職務経歴書_山田太郎_.+_\d{8}\.(pdf|docx)/.test(dl.suggestedFilename()), kind + ' downloaded as ' + dl.suggestedFilename());
 }
 await act('tab', '[data-v=rireki]');
 await page.waitForSelector('#rkPreview canvas', { timeout: 15000 });
@@ -80,14 +78,30 @@ await page.waitForSelector('#rkPreview canvas', { timeout: 15000 });
   ok(dl.suggestedFilename().startsWith('履歴書_'), '履歴書 PDF downloaded');
 }
 
-// a second 応募先 with no credit left -> purchase
-await act('step', '[data-step="2"]');
-await page.click('.vh [data-act=addCompany]');
-const second = page.locator('[data-cid]').nth(1);
-await second.locator('[data-cf=name]').fill('株式会社テスト二号');
-await second.locator('[data-cf=job]').fill('【募集職種】営業マネージャー\n【必須】法人営業経験3年以上');
-ok((await second.locator('.credit-note').innerText()).includes('利用枠が残っていません'), 'no-credit note shown');
-await second.locator('[data-act=analyze]').click();
+// a real company: reading the posting is free, the documents use the free credit
+const addCo = async (name) => {
+  await act('step', '[data-step="2"]');
+  await page.click('.vh [data-act=addCompany]');
+  const id = await cardOf(); const C = `[data-cid="${id}"]`;
+  await page.fill(C + ' [data-cf=name]', name);
+  await page.fill(C + ' [data-cf=job]', '【募集職種】営業マネージャー\n【必須】法人営業経験3年以上');
+  return C;
+};
+const C2 = await addCo('株式会社テスト二号');
+await page.click(C2 + ' [data-act=analyze]');
+await page.waitForSelector(C2 + ' .an', { timeout: 15000 });
+ok((await page.innerText('#acct .credit')).includes('1'), 'analysis is free');
+await page.click(C2 + ' [data-act=generate]');
+await page.waitForFunction(() => /あと\s*0/.test(document.querySelector('#acct .credit').textContent), null, { timeout: 30000 });
+ok(true, 'documents used the free credit');
+await page.waitForFunction(() => !document.querySelector('.pill.run'), null, { timeout: 30000 });
+
+// a third: out of credits -> purchase -> the documents get made on return
+const C3 = await addCo('株式会社テスト三号');
+await page.click(C3 + ' [data-act=analyze]');
+await page.waitForSelector(C3 + ' .an', { timeout: 15000 });
+ok((await page.innerText(C3 + ' .credit-note')).includes('利用枠が必要'), 'no-credit note shown before making documents');
+await page.click(C3 + ' [data-act=generate]');
 await page.waitForSelector('.packs');
 ok(true, 'purchase dialog opens when out of credits');
 await shot('buy');
@@ -95,13 +109,10 @@ await page.click('[data-act=buy][data-pack=p5]');
 await page.waitForURL(/\/api\/dev\/pay/);
 await page.click('#b');
 await page.waitForURL((u) => !u.search.includes('paid') && u.pathname === '/', { timeout: 15000 });
-await page.waitForFunction(() => /残り\s*5/.test((document.querySelector('#acct .credit') || {}).textContent || ''), null, { timeout: 20000 });
-ok(true, 'paid pack added (5)');
-ok((await page.locator('[data-cid]').count()) === 2, 'data still there after the payment round trip');
-await page.locator('[data-cid]').nth(1).locator('[data-act=analyze]').click();
-await page.waitForSelector('[data-cid]:nth-child(2) .an, .stack > [data-cid]:nth-of-type(2) .an', { timeout: 15000 }).catch(() => {});
-await page.waitForFunction(() => /残り\s*4/.test(document.querySelector('#acct .credit').textContent), null, { timeout: 15000 });
-ok(true, 'second 応募先 analysed with a paid credit (4 left)');
+await page.waitForFunction(() => /あと\s*4/.test((document.querySelector('#acct .credit') || {}).textContent || ''), null, { timeout: 30000 });
+ok(true, 'paid pack added and the waiting document made at once (5 → 4)');
+ok((await page.locator('[data-cid], .co-it').count()) >= 3, 'data still there after the payment round trip');
+await page.waitForFunction(() => !document.querySelector('.pill.run'), null, { timeout: 30000 });
 await page.waitForFunction(() => document.querySelector('#sync').textContent === '保存済み', null, { timeout: 8000 });
 
 // another device: the same data from the server
@@ -111,18 +122,19 @@ const pageB = await ctxB.newPage(); watch(pageB, errors);
 await pageB.goto(BASE + '/');
 await pageB.waitForSelector('#acct .credit');
 await pageB.click('[data-act=step][data-step="2"]');
-ok((await pageB.locator('[data-cid]').count()) === 2, 'another device sees both 応募先');
+ok((await pageB.locator('[data-cid]').count()) === 3, 'another device sees all 応募先');
 await pageB.screenshot({ path: OUT + 'mobile-step2.png', fullPage: false });
 
 // conflict: B saves, then A (still on the old version) saves
-await pageB.locator('[data-cid]').nth(1).locator('[data-cf=memo]').fill('端末Bでの指示');
+await pageB.locator('[data-cid]').nth(0).locator('[data-cf=memo]').fill('端末Bでの指示');
 await pageB.waitForFunction(() => document.querySelector('#sync').textContent === '保存済み', null, { timeout: 8000 });
-await page.locator('[data-cid]').nth(1).locator('[data-cf=memo]').fill('端末Aでの指示');
+await act('step', '[data-step="2"]');
+await page.locator('[data-cid]').nth(0).locator('[data-cf=memo]').fill('端末Aでの指示');
 await page.waitForSelector('[data-act=conflictLoad]', { timeout: 8000 });
 ok(true, 'conflict detected on the older copy');
 await act('conflictLoad');
 await page.waitForTimeout(500);
-ok((await page.locator('[data-cid]').nth(1).locator('[data-cf=memo]').inputValue()) === '端末Bでの指示', 'newer copy loaded');
+ok((await page.locator('[data-cid]').nth(0).locator('[data-cf=memo]').inputValue()) === '端末Bでの指示', 'newer copy loaded');
 
 // sign out of A -> its copy leaves this browser; landing page again
 await act('devLogout');
