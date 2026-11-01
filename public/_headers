@@ -1,0 +1,10 @@
+# Response headers for the static files (Cloudflare Workers static assets). The API sets its own.
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://www.flatland.co.jp https://*.clerk.accounts.dev https://clerk.resume.flatland.co.jp https://clerk.flatland.co.jp https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://www.flatland.co.jp https://fonts.googleapis.com; font-src 'self' data: https://www.flatland.co.jp https://fonts.gstatic.com; img-src 'self' data: blob: https://img.clerk.com; connect-src 'self' https://*.clerk.accounts.dev https://clerk.resume.flatland.co.jp https://clerk.flatland.co.jp https://clerk-telemetry.com; frame-src https://challenges.cloudflare.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
+/fonts/*
+  Cache-Control: public, max-age=2592000
+/lib/*
+  Cache-Control: public, max-age=604800

@@ -1,0 +1,48 @@
+# 職務経歴書AI. How a product joins the site: docs/products.md
+# status: draft = shown nowhere | beta = on /products/ with a badge | live = on sale (the 特商法 page appears)
+id: resume
+status: draft
+order: 2
+url: https://resume.flatland.co.jp/
+stats: resume           # the product's name in the shared event data (blob2), for the weekly report
+steps:                # the steps the weekly report counts: [key, name in the report]
+  - [visit, 訪問]
+  - [signup, 登録]
+  - [profile, 経歴整理]
+  - [doc, 書類作成]
+  - [download, ダウンロード]
+  - [buy, 購入]
+ja:
+  name: 職務経歴書AI
+  tagline: 応募先ごとに、そのまま出せる職務経歴書を。
+  summary: 経歴を一度登録して求人票を貼るだけで、その会社が重視することに合わせた職務経歴書を、A4 に整ったレイアウトの PDF・Word で作ります。履歴書、志望動機と面接準備、選考の管理まで。中国語・英語での入力にも対応しています。
+  price: 最初の1社無料／5社パック 2,480円・10社パック 3,980円（税込）
+  sale:
+    price: 5社パック 2,480円、10社パック 3,980円（いずれも税込。1社分＝1つの応募先）
+    payment: クレジットカードなど、Stripe の決済画面で選べる方法
+    timing: ご購入手続きの完了時
+    delivery: お支払いの完了後、すぐに利用枠がアカウントに追加されます
+    cancel: デジタルサービスの性質上、購入後のキャンセル・返金はお受けしておりません。当社の責めによる不具合で利用できなかった場合は、お問い合わせください。
+    environment: 最新版の Google Chrome、Safari、Microsoft Edge、Firefox（JavaScript を有効にしてください）
+  privacy: |
+    「職務経歴書AI」（https://resume.flatland.co.jp/）では、次のとおり個人情報を取り扱います。
+
+    - **取得する情報**：アカウント情報（メールアドレス、氏名など、ログインに使う外部アカウントの情報を含む）、利用者が入力した経歴・学歴・資格・転職の希望・求人票・面接の記録、履歴書に記入する氏名・生年月日・住所・電話番号・メールアドレス・写真など、作成した書類、購入の記録。クレジットカード番号などの決済情報は当社では取得せず、決済代行会社（Stripe）が取り扱います。
+    - **利用目的**：職務経歴書・履歴書・面接対策などの作成と保存、利用枠の管理、お問い合わせへの対応、不正利用の防止、サービスの改善（個人を識別できない形の統計に限ります）。
+    - **AI サービスへの送信**：書類と面接対策を作るため、経歴・求人票・面接の記録などを Anthropic, PBC（米国）の AI サービス「Claude」に送信します。履歴書の住所・電話番号・生年月日・写真は送信しません。Anthropic は送信された内容を AI の学習に使用しないこととしています。
+    - **外国にある第三者への提供・委託**：上記の Anthropic, PBC のほか、ログイン認証に Clerk, Inc.（米国）、データの保存とサーバーの運用に Cloudflare, Inc.（米国）、決済に Stripe（米国の Stripe, Inc. およびその日本法人）を利用しています。AI サービスへの送信は、利用者の同意を得たうえで行います。米国の個人情報保護制度については、個人情報保護委員会が公表している「外国における個人情報の保護に関する制度等の調査」をご覧ください。
+    - **保存期間と削除**：保存したデータは、利用者がいつでも削除できます（アカウントの削除）。最後に利用してから1年が経過したデータは自動で削除します。購入の記録は、会計上必要な期間、内容を含まない形で保管します。無料枠の重複利用を防ぐため、メールアドレスから作成した復元できない値を保管します。
+en:
+  name: Japanese Résumé AI (Shokumu Keirekisho)
+  tagline: A Japanese résumé (shokumu keirekisho) tailored to each employer, ready to submit.
+  summary: Enter your career once and paste a job posting. It writes a 職務経歴書 matched to what that employer values, laid out neatly on A4 as PDF and Word, plus a 履歴書, motivation statement, interview preparation and application tracking. You can write your input in Chinese or English.
+  price: First company free; 5 companies ¥2,480, 10 companies ¥3,980 (tax incl.)
+  sale:
+    price: 5 companies ¥2,480, 10 companies ¥3,980 (tax included; one company = one application)
+zh:
+  name: 职务经历书 AI
+  tagline: 为每一家公司，生成可以直接提交的日文职务经历书。
+  summary: 只需登记一次经历、贴上招聘信息，就能按照该公司重视的方向，生成排版整齐的 A4 职务经历书（PDF、Word），以及履历书、志望动机、面试准备和选考管理。可以用中文或英文填写。
+  price: 第一家公司免费；5 家 2,480 日元、10 家 3,980 日元（含税）
+  sale:
+    price: 5 家 2,480 日元、10 家 3,980 日元（含税；1 家 = 1 个应聘公司）

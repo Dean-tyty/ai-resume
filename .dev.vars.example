@@ -1,0 +1,7 @@
+# Local development: copy to .dev.vars (never committed). With these, `npm run dev` needs no accounts:
+# a test login, canned AI answers and a test payment.
+DEV_AUTH=1
+AI_MOCK=1
+STRIPE_MOCK=1
+# To try the real AI locally instead, remove AI_MOCK and set:
+# ANTHROPIC_API_KEY=sk-ant-...

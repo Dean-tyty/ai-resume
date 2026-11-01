@@ -1,0 +1,21 @@
+{
+  "name": "resume",
+  "version": "1.0.0",
+  "description": "",
+  "main": "worker/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --local --port 8787",
+    "db:local": "wrangler d1 execute resume --local --file=schema.sql",
+    "deploy": "wrangler deploy",
+    "test": "node test/unit.mjs && node test/e2e.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@clerk/localizations": "^3.37.10",
+    "wrangler": "^4.156.0"
+  },
+  "private": true
+}

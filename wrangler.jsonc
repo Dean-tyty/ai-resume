@@ -1,0 +1,36 @@
+// 職務経歴書AI: the page (public/, static files) plus its API (worker/index.js), on resume.flatland.co.jp.
+// Deployed with: npx wrangler deploy (or Workers Builds on every push to main).
+{
+  "name": "resume",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*", "/config.js"]
+  },
+  "workers_dev": false,
+  "preview_urls": false,
+  // secrets (set in the dashboard or with `npx wrangler secret put NAME`; kept across deploys):
+  //   ANTHROPIC_API_KEY, CLERK_SECRET_KEY, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_PRICE_P5,
+  //   STRIPE_PRICE_P10, LARK_WEBHOOK, LARK_WEBHOOK_SECRET, HASH_SALT
+  "keep_vars": true,
+  "vars": {
+    // Clerk (not secret): the publishable key, the JWKS address of the instance, and the page's origin
+    "CLERK_PUBLISHABLE_KEY": "",
+    "CLERK_JWKS_URL": "",
+    "APP_ORIGINS": "https://resume.flatland.co.jp",
+    // the model and how hard it thinks; AI requests a day for the whole service (a cost guard)
+    "AI_MODEL": "claude-sonnet-5-5",
+    "AI_EFFORT": "medium",
+    "AI_DAILY_LIMIT": "3000"
+  },
+  "d1_databases": [{ "binding": "DB", "database_name": "resume", "database_id": "00000000-0000-0000-0000-000000000000" }],
+  // the shared statistics of Flatland's site and products (the weekly report)
+  "analytics_engine_datasets": [{ "binding": "STATS", "dataset": "flatland_events" }],
+  "observability": { "enabled": true },
+  // 03:30 Japan time: delete data unused for a year
+  "triggers": { "crons": ["30 18 * * *"] }
+}

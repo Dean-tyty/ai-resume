@@ -1,0 +1,136 @@
+// Payments with Stripe Checkout (the company's Stripe account; this product's own Product, Prices and
+// webhook). Packs and prices: config.js PACKS; the Stripe Price ids: secrets STRIPE_PRICE_P5, STRIPE_PRICE_P10.
+//
+//   POST /api/checkout {pack}        -> {url} of a Checkout page; Stripe sends the user back to /?paid=<session>
+//   POST /api/checkout/confirm {session}  the return page asks at once (the webhook may come a little later)
+//   POST /api/stripe                 the webhook (checkout.session.completed / async_payment_succeeded)
+//
+// A pack is added once per Checkout Session whichever of the two arrives first (db.js creditPurchase).
+import { PACKS } from './config.js';
+import { account, creditPurchase, credits } from './db.js';
+import { body, fail, json, same, readText } from './util.js';
+import { notify } from './notify.js';
+import { track } from './stats.js';
+
+async function stripe(env, method, path, params) {
+  const r = await fetch('https://api.stripe.com/v1/' + path, {
+    method,
+    headers: { authorization: 'Bearer ' + env.STRIPE_SECRET_KEY, ...(params ? { 'content-type': 'application/x-www-form-urlencoded' } : {}) },
+    body: params ? new URLSearchParams(params).toString() : undefined,
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error('stripe ' + r.status + ' ' + ((j.error && j.error.message) || ''));
+  return j;
+}
+
+const yen = (n) => Number(n).toLocaleString('ja-JP') + '円';
+
+export async function checkout(request, env, auth) {
+  const b = await body(request, 1024);
+  const pack = b && PACKS[b.pack] ? b.pack : '';
+  if (!pack) return fail(400, 'pack');
+  const origin = new URL(request.url).origin;
+  if (env.STRIPE_MOCK === '1' && auth.dev) return json({ url: origin + '/api/dev/pay?pack=' + pack });
+  const price = env['STRIPE_PRICE_' + pack.toUpperCase()];
+  if (!env.STRIPE_SECRET_KEY || !price) return fail(503, 'not_configured');
+  const { user } = await account(env, auth);
+  const params = {
+    mode: 'payment', locale: 'ja',
+    'line_items[0][price]': price, 'line_items[0][quantity]': '1',
+    success_url: origin + '/?paid={CHECKOUT_SESSION_ID}', cancel_url: origin + '/?paid=cancel',
+    client_reference_id: auth.id, 'metadata[product]': 'resume', 'metadata[user]': auth.id, 'metadata[pack]': pack,
+    'payment_intent_data[metadata][product]': 'resume', 'payment_intent_data[metadata][user]': auth.id, 'payment_intent_data[metadata][pack]': pack,
+  };
+  if (user.email) params.customer_email = user.email;
+  if (env.STRIPE_INVOICE === '1') params['invoice_creation[enabled]'] = 'true';   // a receipt-style invoice PDF (Stripe charges for it)
+  try {
+    const s = await stripe(env, 'POST', 'checkout/sessions', params);
+    return json({ url: s.url });
+  } catch (e) {
+    console.error('checkout', String(e.message || e));
+    return fail(502, 'pay_error');
+  }
+}
+
+// a paid Checkout Session of this product: the account gets the pack (other products on the same Stripe
+// account send their sessions to this webhook too; those are left alone)
+async function apply(env, s, request, ctx) {
+  const m = s.metadata || {};
+  if (m.product !== 'resume') return { ok: false, other: true };
+  const user = m.user || s.client_reference_id;
+  const pack = m.pack;
+  if (s.payment_status !== 'paid' || !user || !PACKS[pack]) return { ok: false };
+  if (s.currency !== 'jpy' || s.amount_total !== PACKS[pack].price) {
+    ctx.waitUntil(notify(env, `支払い額が想定と違うため、利用枠を追加していません（${pack}：${s.amount_total} ${s.currency}、想定 ${PACKS[pack].price} jpy）。Stripe の Price と worker/config.js の PACKS を確認してください。Checkout Session ${s.id}`));
+    return { ok: false };
+  }
+  const r = await creditPurchase(env, { session: s.id, user, pack, credits: PACKS[pack].credits, amount: s.amount_total || 0 });
+  if (r.added) {
+    track(env, 'buy', request);
+    ctx.waitUntil(notify(env, `ご購入：${PACKS[pack].label}（${yen(s.amount_total || 0)}）`));
+  } else if (!r.ok) {
+    ctx.waitUntil(notify(env, `支払いを受けましたが、利用枠を追加できませんでした（アカウントが見つかりません）。Stripe の Checkout Session ${s.id} を確認し、返金などを対応してください。`));
+  }
+  return r;
+}
+
+export async function confirm(request, env, ctx, auth) {
+  const b = await body(request, 1024);
+  const id = b && typeof b.session === 'string' && /^cs_[A-Za-z0-9_]{10,200}$/.test(b.session) ? b.session : '';
+  if (!id || !env.STRIPE_SECRET_KEY) return fail(400, 'session');
+  try {
+    const s = await stripe(env, 'GET', 'checkout/sessions/' + encodeURIComponent(id));
+    const owner = (s.metadata && s.metadata.user) || s.client_reference_id;
+    if (owner !== auth.id || (s.metadata || {}).product !== 'resume') return fail(403, 'session');
+    const r = await apply(env, s, request, ctx);
+    return json({ paid: s.payment_status === 'paid', ok: r.ok, credits: await credits(env, auth.id) });
+  } catch (e) {
+    console.error('confirm', String(e.message || e));
+    return fail(502, 'pay_error');
+  }
+}
+
+// Stripe-Signature: t=<time>,v1=<HMAC-SHA256 of "<time>.<body>" with the endpoint's signing secret>
+export async function verifyStripe(payload, header, secret, now = Date.now() / 1000) {
+  const parts = Object.create(null); const v1 = [];
+  for (const kv of String(header || '').split(',')) { const [k, v] = kv.split('='); if (k === 'v1') v1.push(v); else parts[k] = v; }
+  const t = Number(parts.t);
+  if (!t || !v1.length || Math.abs(now - t) > 300) return false;
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const mac = new Uint8Array(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(t + '.' + payload)));
+  const hex = [...mac].map((x) => x.toString(16).padStart(2, '0')).join('');
+  return v1.some((s) => same(s, hex));
+}
+
+export async function webhook(request, env, ctx) {
+  if (!env.STRIPE_WEBHOOK_SECRET) return new Response('not configured', { status: 503 });
+  const payload = await readText(request, 256 * 1024);
+  if (payload === null) return new Response('too large', { status: 413 });
+  if (!(await verifyStripe(payload, request.headers.get('stripe-signature'), env.STRIPE_WEBHOOK_SECRET))) return new Response('bad signature', { status: 400 });
+  let ev; try { ev = JSON.parse(payload); } catch { return new Response('bad json', { status: 400 }); }
+  const s = ev.data && ev.data.object;
+  if ((ev.type === 'checkout.session.completed' || ev.type === 'checkout.session.async_payment_succeeded') && s) await apply(env, s, request, ctx);
+  else if (ev.type === 'checkout.session.async_payment_failed') ctx.waitUntil(notify(env, 'コンビニ払いなどの支払いが期限切れ・失敗になりました（利用枠は追加していません）。'));
+  else if (ev.type === 'charge.refunded') ctx.waitUntil(notify(env, '返金がありました。必要なら該当ユーザーの利用枠を減らしてください（D1 の purchases で Checkout Session を確認）。'));
+  return new Response('ok');
+}
+
+// local development only (STRIPE_MOCK = "1" with DEV_AUTH): the pack is added without a payment
+export async function devPay(request, env, ctx) {
+  const url = new URL(request.url);
+  const pack = url.searchParams.get('pack');
+  if (!PACKS[pack]) return new Response('unknown pack', { status: 400 });
+  return new Response(`<!doctype html><meta charset="utf-8"><title>テスト決済</title><body style="font-family:sans-serif;padding:40px">
+<h1>テスト決済（開発用）</h1><p>${PACKS[pack].label}を購入したことにします。</p>
+<button id="b">支払う</button> <a href="/?paid=cancel">キャンセル</a>
+<script>document.getElementById('b').onclick=async()=>{const u=localStorage.getItem('resume-dev-user')||'';const r=await fetch('/api/dev/pay',{method:'POST',headers:{authorization:'Dev '+u,'content-type':'application/json'},body:JSON.stringify({pack:${JSON.stringify(pack)}})});const j=await r.json();location.href='/?paid='+j.session;};</script>`, { headers: { 'content-type': 'text/html; charset=utf-8' } });
+}
+export async function devPayPost(request, env, ctx, auth) {
+  const b = await body(request, 1024);
+  const pack = b && PACKS[b.pack] ? b.pack : '';
+  if (!pack) return fail(400, 'pack');
+  await account(env, auth);
+  const session = 'cs_test_dev' + crypto.randomUUID().replace(/-/g, '');
+  await apply(env, { id: session, payment_status: 'paid', metadata: { product: 'resume', user: auth.id, pack }, currency: 'jpy', amount_total: PACKS[pack].price }, request, ctx);
+  return json({ session });
+}
