@@ -73,10 +73,16 @@
   }
   function walkTree(root) {
     if (root.nodeType === 3) { text(root); return; }
-    if (root.nodeType !== 1 || SKIP.has(root.tagName) || skipped(root)) return;
+    if (root.nodeType !== 1 || skipped(root)) return;
+    if (SKIP.has(root.tagName)) { if (root.tagName === 'TEXTAREA') attrs(root); return; }
     attrs(root);
     const w = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, {
-      acceptNode: (n) => (n.nodeType === 1 && (SKIP.has(n.tagName) || n.hasAttribute('data-noi18n')) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT),
+      acceptNode: (n) => {
+        if (n.nodeType !== 1) return NodeFilter.FILTER_ACCEPT;
+        if (n.hasAttribute('data-noi18n')) return NodeFilter.FILTER_REJECT;
+        if (SKIP.has(n.tagName)) { if (n.tagName === 'TEXTAREA') attrs(n); return NodeFilter.FILTER_REJECT; } // a field's placeholder, never its text
+        return NodeFilter.FILTER_ACCEPT;
+      },
     });
     let n;
     while ((n = w.nextNode())) { if (n.nodeType === 3) text(n); else attrs(n); }

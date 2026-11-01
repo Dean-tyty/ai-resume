@@ -16,8 +16,9 @@ const iso = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate(
 const todayIso = () => iso(new Date());
 const today = () => { const d = new Date(); return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`; };
 const WD = UI_LANG === 'en' ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] : UI_LANG === 'zh' ? ['周日', '周一', '周二', '周三', '周四', '周五', '周六'] : '日月火水木金土';
+const SEP = UI_LANG === 'en' ? ' · ' : '・'; // between short items in a line
 const monthWd = (d) => (UI_LANG === 'en' ? ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getMonth()] + ` (${WD[d.getDay()]})` : `${d.getMonth() + 1}月（${WD[d.getDay()]}）`);
-const jpDate = (s) => { if (!s) return ''; const d = new Date(s + 'T00:00:00'); return `${d.getMonth() + 1}/${d.getDate()}（${WD[d.getDay()]}）`; };
+const jpDate = (s) => { if (!s) return ''; const d = new Date(s + 'T00:00:00'); return UI_LANG === 'en' ? d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : `${d.getMonth() + 1}/${d.getDate()}（${WD[d.getDay()]}）`; };
 const daysFrom = (s) => Math.round((new Date(s + 'T00:00:00') - new Date(todayIso() + 'T00:00:00')) / 864e5);
 
 // ---------------- state ----------------
@@ -332,11 +333,12 @@ function askConsent() {
   return new Promise((ok) => {
     modalResolve = ok;
     openModal(`<h2 id="modalTitle">はじめる前に：データの取り扱い</h2>
-      <p class="assure"><b>入力した経歴が AI の学習に使われることはありません。</b><br><b>履歴書の住所・電話番号・写真は AI に送りません。</b></p>
+      <p class="assure"><b>入力した内容が AI の学習に使われることはありません。</b><br><b>履歴書の住所・電話番号・写真は AI に送りません。</b></p>
       <ul class="consent">
         <li>経歴・求人票・面接の記録などは、書類と面接対策を作るために <b>Anthropic, PBC（米国）</b>の AI「Claude」に送信されます。</li>
         <li>入力内容と書類は、続きから使えるようにアカウントに保存されます（保存：Cloudflare, Inc.、ログイン：Clerk, Inc.、いずれも米国）。いつでも削除でき、最後に使ってから${keepFor()}たつと自動で削除されます。</li>
         <li>AI の出力には誤りが含まれることがあります。提出前に、内容が事実どおりか必ずご確認ください。</li>
+        ${UI_LANG !== 'ja' ? '<li>書類は日本語で作られます。提出前に、アプリ内の母語の対訳で内容を確認してください。</li>' : ''}
       </ul>
       <p class="hint">外国にある第三者への提供と各国の個人情報保護制度については<a href="${h(CFG.privacy)}" target="_blank" rel="noopener">プライバシーポリシー</a>をご覧ください。</p>
       ${UI_LANG !== 'ja' ? '<p class="hint">利用規約とプライバシーポリシーは日本語版が正式なものです。</p>' : ''}
@@ -353,7 +355,7 @@ function openBuy(reason) {
     ${reason ? `<p class="status warn">${h(reason)}</p>` : ''}
     ${left != null ? `<p>いま作成できる応募先：<b>あと${left}社</b></p>` : ''}
     <div class="packs">${packs.map((p) => `<button class="buy-pack ${p === best ? 'rec' : ''}" data-act="buy" data-pack="${h(p.id)}">${p === best && packs.length > 1 ? '<span class="badge">おすすめ</span>' : ''}<span class="pl">${h(p.label)}</span><b>${p.price.toLocaleString('ja-JP')}円</b><small>税込・1社あたり${Math.round(p.price / p.credits).toLocaleString('ja-JP')}円</small></button>`).join('')}</div>
-    <p class="hint">1社分 ＝ 1つの応募先。その会社の職務経歴書・履歴書・志望動機・面接準備は、何度作り直しても追加料金はかかりません。求人票の分析は無料です。</p>
+    <p class="hint">1社分 ＝ 1つの応募先。その会社の職務経歴書・履歴書・英文レジュメ・志望動機・面接準備は、何度作り直しても追加料金はかかりません（1日に使える回数には上限があります）。求人票の分析は無料です。</p>
     <p class="hint">買い切り（月額・自動更新なし）。クレジットカードなどで、Stripe の決済画面からお支払いいただけます。応募先を削除しても、使った利用枠は戻りません。</p>
     <p class="hint"><a href="${h(CFG.terms)}" target="_blank" rel="noopener">利用規約</a>　<a href="https://www.flatland.co.jp/legal/tokushoho/" target="_blank" rel="noopener">特定商取引法に基づく表示</a></p>
     <div class="row"><span class="spacer"></span><button class="btn" data-act="closeModal">閉じる</button></div>`);
@@ -494,8 +496,9 @@ function checkNumbers(parts, more) {
   return { checked: all.size, bad: [...bad] };
 }
 const docParts = (doc) => [doc.summary, ...(doc.highlights || []).flatMap((x) => [x.value, x.label]), ...doc.careers.flatMap((c) => [c.business, c.meta, ...c.blocks.flatMap((b) => [b.heading, b.overview, b.role, b.team, ...(b.env || []), ...b.duties, ...b.achievements])]), ...doc.skills, ...doc.tech, ...(doc.skillTable || []).flatMap((r) => [r.name, r.years, r.level]), ...doc.pr.map((p) => p.heading + ' ' + p.body)];
-const packParts = (p) => [p.motivation.long, p.motivation.short, ...p.questions.flatMap((q) => [q.answer, ...q.points])];
-const prepParts = (p) => [p.summary, ...p.questions.flatMap((q) => q.points), ...p.fixes.map((f) => f.better)];
+// on the English / Chinese page the points and summaries are in that language; only the Japanese is checked
+const packParts = (p) => [p.motivation.long, p.motivation.short, ...p.questions.flatMap((q) => [q.answer, ...(UI_LANG === 'ja' ? q.points : [])])];
+const prepParts = (p) => [...(UI_LANG === 'ja' ? [p.summary, ...p.questions.flatMap((q) => q.points)] : []), ...p.fixes.map((f) => f.better)];
 function futureDates(doc) {
   const now = new Date(); const cur = now.getFullYear() * 12 + now.getMonth() + 1; const out = [];
   [...doc.careers.flatMap((c) => [c.period, ...c.blocks.map((b) => b.period)]), ...doc.qualifications.map((q) => q.date)].forEach((p) => {
@@ -509,7 +512,9 @@ const simplifiedIn = (doc) => { const map = window.CHARFIX || {}; return [...new
 const ST = ['未定', '予定', '通過', '不通過', '辞退'];
 function ensureStages(c) {
   if (c.stages && c.stages.length) return c.stages;
-  const names = c.pack && c.pack.flow.steps.length ? c.pack.flow.steps.map((s) => s.name).filter(Boolean) : ['書類選考', '一次面接', '二次面接', '最終面接'];
+  // the steps' names are the user's own text: in the page's language
+  const DEF = { ja: ['書類選考', '一次面接', '二次面接', '最終面接'], en: ['Document screening (書類選考)', '1st interview (一次面接)', '2nd interview (二次面接)', 'Final interview (最終面接)'], zh: ['简历筛选（書類選考）', '一面（一次面接）', '二面（二次面接）', '终面（最終面接）'] };
+  const names = c.pack && c.pack.flow.steps.length ? c.pack.flow.steps.map((s) => s.name).filter(Boolean) : DEF[UI_LANG];
   c.stages = names.map((n, i) => newStage({ name: n, who: c.pack && c.pack.flow.steps[i] ? c.pack.flow.steps[i].who : '' }));
   return c.stages;
 }
@@ -747,7 +752,7 @@ function loadPhoto(file) {
 }
 async function makeRkMotive(c) {
   c.rk.status = 'run'; c.rk.since = Date.now(); c.rk.error = ''; render();
-  try { const r = await ask('rk', { c }, 'rk-' + c.id); c.rk.motive = E.fixChars(Sx(r && r.motive), window.CHARFIX || {}); c.rk.status = ''; }
+  try { const r = await ask('rk', { c }, 'rk-' + c.id); c.rk.motive = E.fixChars(Sx(r && r.motive), window.CHARFIX || {}); c.rk.motiveSrc = c.rk.motive; c.rk.motive_tr = Sx(r && r.motive_tr); c.rk.status = ''; }
   catch (e) { c.rk.status = ''; c.rk.error = errMsg(e); }
   save(); render();
 }
@@ -901,7 +906,7 @@ function demoBar() {
   if (!state.demo) return '';
   return hasOwnData(userState)
     ? `<div class="demo-bar"><span>いま表示しているのは<b>サンプル</b>（架空の人物・企業）です。あなたのデータはそのまま残っています。サンプルでの操作は保存されません。</span><span class="spacer"></span><button class="btn primary small" data-act="startOwn">自分のデータに戻る</button></div>`
-    : `<div class="demo-bar"><span>いま表示しているのは<b>サンプル</b>（架空の人物・企業）です。サンプルでの操作は保存されません。各ステップを見たあと、自分の経歴で始められます。</span><span class="spacer"></span><button class="btn primary small" data-act="startOwn">自分の経歴で始める</button></div>`;
+    : `<div class="demo-bar"><span>いま表示しているのは<b>サンプル</b>（架空の人物・企業）です。サンプルでの操作は保存されません。各ステップを見たあと、自分の経歴で始められます。${UI_LANG !== 'ja' ? '</span><span class="tiny">このサンプルの人物は日本語で経歴を書いています。英語・中国語で書いても書類は日本語で作られ、ステップ3で母語の対訳を見ながら確認できます。' : ''}</span><span class="spacer"></span><button class="btn primary small" data-act="startOwn">自分の経歴で始める</button></div>`;
 }
 
 function render() {
@@ -941,11 +946,11 @@ function render1() {
     <div class="card">
       <h2>経歴を入力</h2>
       <p class="hint">今お持ちの職務経歴書をそのまま貼り付けるか、経歴を箇条書きで書いてください。人数・金額・％・期間などの数字が多いほど、仕上がりが良くなります。日本語・中文・English のどれでも入力できます。</p>
-      ${lang === 'zh' ? '<p class="hint native" lang="zh">已识别为中文输入。系统会生成日文的职务经历书和履历书；在第 3 步可以用中文对照确认内容，并查看日文写法的解说和不自然之处。</p>' : lang === 'en' ? '<p class="hint native" lang="en">Your notes are in English. The documents will be written in Japanese; in step 3 you can check them against an English translation, with notes on how Japanese résumés are written.</p>' : ''}
+      ${UI_LANG !== 'ja' ? '<p class="hint">母国での経歴も含めて書いてください。日本語力（日本語能力試験のレベル（N1〜N5）、仕事で日本語を使う場面）や話せる言語も書いておくと、書類に反映されます。</p><p class="hint">整理した経歴データ（右側）と書類は日本語で作られます。右側の内容が違っていたら、左の入力を直して「経歴を整理し直す」を押してください。書類はステップ3で母語の対訳を見ながら確認できます。</p>' : (lang === 'zh' ? '<p class="hint native" lang="zh">已识别为中文输入。系统会生成日文的职务经历书和履历书；在第 3 步可以用中文对照确认内容，并查看日文写法的解说和不自然之处。</p>' : lang === 'en' ? '<p class="hint native" lang="en">Your notes are in English. The documents will be written in Japanese; in step 3 you can check them against an English translation, with notes on how Japanese résumés are written.</p>' : '')}
       <label for="in-name">氏名（書類に記載されます）</label>
       <input type="text" id="in-name" data-bind="name" value="${h(state.name)}" placeholder="例：佐藤 健太" autocomplete="name">
       ${UI_LANG !== 'ja' ? '<p class="hint tiny">書類に載る氏名です。在留カードと同じ表記で書いてください（漢字の名前は漢字で、アルファベットの名前はアルファベットかカタカナで）。</p>' : ''}
-      <div class="importer"><button class="btn small" data-act="pickResume">ファイルから読み込む（Word・PDF）</button><span class="hint tiny">今の職務経歴書のファイルから文章を読み取ります。ファイルはこの端末の中で読むだけで、送信しません。</span><span id="importStatus" class="hint tiny"></span></div>
+      <div class="importer"><button class="btn small" data-act="pickResume">ファイルから読み込む（Word・PDF）</button><span class="hint tiny">今の職務経歴書や履歴書（英語・中国語のものも可）のファイルから文章を読み取ります。ファイルはこの端末の中で読むだけで、送信しません。</span><span id="importStatus" class="hint tiny"></span></div>
       <label for="in-raw" class="lab-row">経歴・現在の職務経歴書<span class="cc" id="rawCount">${len(state.raw)}字</span></label>
       <textarea id="in-raw" data-bind="raw" rows="16" placeholder="例）2016年4月 〇〇株式会社 入社。法人営業として既存顧客80社を担当…">${h(state.raw)}</textarea>
       <details class="intent" ${intentFilled ? 'open' : ''}><summary>転職の軸（任意・志望動機と面接対策に使います）</summary>
@@ -1045,7 +1050,7 @@ function analysisHTML(a) {
   return `<div class="an">
     <div class="box"><h4>この会社が重視していること</h4>${a.summary ? `<p style="margin:0 0 10px;font-size:12.5px">${h(a.summary)}</p>` : ''}
       ${a.values.map((v) => `<div class="val"><b>${h(v.label)}</b> ${src(v.source)}<div class="d">${h(v.detail)}</div>${v.quote ? `<div class="qt" data-noi18n>「${h(v.quote)}」</div>` : ''}</div>`).join('')}</div>
-    <div class="box"><h4>求人の要件とあなたの経歴</h4><div class="req">${a.requirements.map((r) => `<span class="m ${mc[r.match] || 'b'}">${h(r.match)}</span><div class="t">${h(r.text)} <span class="tag gray">${h(r.type)}</span><div class="ev">${h(r.evidence)}</div></div>`).join('')}</div></div>
+    <div class="box"><h4>求人の要件とあなたの経歴</h4><p class="hint tiny" style="margin:-4px 0 8px">◎ 十分に合う　○ 合う　△ 一部だけ合う</p><div class="req">${a.requirements.map((r) => `<span class="m ${mc[r.match] || 'b'}">${h(r.match)}</span><div class="t">${h(r.text)} <span class="tag gray">${h(r.type)}</span><div class="ev">${h(r.evidence)}</div></div>`).join('')}</div></div>
   </div>
   <div class="plan"><h4>アピールの組み立て：どの実績を、どう見せるか</h4>
     ${a.plan.map((p) => `<div class="it"><div class="v">${h(p.value)}</div><div>${p.episode_ids.map((id) => `<span class="tag">${h(id)} ${h(ep[id] || '')}</span>`).join('')}<div>${h(p.angle)}</div></div></div>`).join('')}
@@ -1064,7 +1069,7 @@ function render3() {
   const c = company(state.active);
   const ready = state.companies.filter((x) => x.analysis && !x.doc && x.status === 'analyzed').length;
   const single = list.length === 1 && !ready;
-  $('#v3').innerHTML = viewHead('そのまま出せる書類', 'テンプレートに自動で流し込み、A4 の枚数に収めます。文字を直してもレイアウトは崩れません。', anyBusy() ? batchProgress() + '<button class="btn" data-act="abortAll">すべて中止</button>' : '') + `<div class="l3 ${single ? 'single' : ''}">
+  $('#v3').innerHTML = viewHead('そのまま出せる書類', 'テンプレートに自動で流し込み、A4 の枚数に収めます。文字を直してもレイアウトは崩れません。' + (UI_LANG !== 'ja' ? '<br>多くの日本企業には、履歴書と職務経歴書をセットで出します。英文レジュメは、求人で求められた場合や外資系企業に出します。' : ''), anyBusy() ? batchProgress() + '<button class="btn" data-act="abortAll">すべて中止</button>' : '') + `<div class="l3 ${single ? 'single' : ''}">
     ${list.length > 1 || ready ? `<aside class="side">
       <div class="lab">応募先</div>
       ${list.map((x) => `<button class="co-it ${x.id === c.id ? 'on' : ''}" data-act="open" data-id="${x.id}"><b>${h(cname(x))}</b>${pill(x)} <span class="cc">${h(x.priority)}</span></button>`).join('')}
@@ -1096,6 +1101,8 @@ function docPaneHTML(c) {
   if (c.tab === 'rireki') return `<div class="card">${head}</div>${rirekiHTML(c)}`;
   if (c.tab === 'en') return `<div class="card">${head}</div>${englishHTML(c)}`;
   const exOpen = inputLang() !== 'ja' || UI_LANG !== 'ja' || c.exStatus === 'run' || ui.exOpen;
+  // the check in one's own language: right under the document on the English / Chinese page, where it matters most
+  const exBlock = `<details class="exwrap" ${exOpen ? 'open' : ''}><summary data-act="exToggle">${UI_LANG === 'ja' ? '日本語が母語でない方へ：中文・English で内容と書き方を確認する（任意）' : '提出前に、内容と日本語の書き方を母語で確認する（おすすめ）'}</summary>${explainHTML(c)}</details>`;
   const others = state.companies.filter((x) => !x.sample).length;
   return `<div class="card dochead">${head}</div>
     <div class="docgrid ${c.edit ? 'edit' : ''}">
@@ -1114,9 +1121,10 @@ function docPaneHTML(c) {
         <div class="ctrl-row">${(c.history || []).length ? '<button class="btn ghost small" data-act="undo">1つ前の版に戻す</button>' : ''}<span class="spacer"></span><button class="btn ghost small" data-act="generate" data-id="${c.id}" ${BUSY.includes(c.status) ? 'disabled' : ''}>AI で作り直す</button></div>
       </aside>
     </div>
+    ${UI_LANG !== 'ja' ? exBlock : ''}
     ${c.downloaded && others <= 1 ? `<div class="card nudge"><div><b>1社目の書類ができました</b><div class="hint" style="margin:0">経歴はそのまま使えます。次の会社は求人票を貼るだけです。</div></div><span class="spacer"></span><button class="btn primary" data-act="nextCompany">＋ 次の応募先を追加</button></div>` : ''}
     <div class="card next"><div><b>志望動機・面接準備</b><div class="hint" style="margin:0">この書類と矛盾しない志望動機と想定問答を作ります。</div></div><span class="spacer"></span><button class="btn" data-act="tab" data-v="pack">${c.pack ? '作成済みを見る →' : '作成する →'}</button></div>
-    <details class="exwrap" ${exOpen ? 'open' : ''}><summary data-act="exToggle">日本語が母語でない方へ：中文・English で内容と書き方を確認する（任意）</summary>${explainHTML(c)}</details>`;
+    ${UI_LANG === 'ja' ? exBlock : ''}`;
 }
 function explainHTML(c) {
   const x = c.explain;
@@ -1143,6 +1151,7 @@ function rirekiHTML(c) {
   const todo = /【要記入/.test(c.rk.motive);
   return `<div class="rk">
     <div class="stack">
+      ${UI_LANG !== 'ja' ? '<div class="card"><p class="hint" style="margin:0">履歴書は、氏名・連絡先・学歴・職歴・資格などを決まった様式で書く書類で、職務経歴書と一緒に出します。共通の情報は一度入れればすべての応募先で使えます。「志望の動機」は応募先ごとに作ります。</p></div>' : ''}
       <div class="card"><h2>共通の情報</h2><p class="hint">すべての応募先で共通です。住所・電話番号・写真は AI には送りません（アカウントには保存され、ほかの端末でも使えます）。</p>
         <div class="g2f">${f('furigana', 'ふりがな', 'さとう けんた')}${f('birth', '生年月日', '', 'date')}</div>
         <div class="g2f">${f('gender', '性別（記入は任意です）', '')}<div><label>年の書き方</label><div class="seg">${[['west', '西暦'], ['jp', '和暦']].map(([k, l]) => `<button data-act="rkEra" data-v="${k}" class="${r.era === k ? 'on' : ''}">${l}</button>`).join('')}</div></div></div>
@@ -1151,23 +1160,28 @@ function rirekiHTML(c) {
         <div class="g2f">${f('tel', '電話', '090-0000-0000')}${f('email', 'E-mail', 'name@example.com')}</div>
         <details><summary>連絡先（現住所以外に連絡を希望する場合のみ）</summary><div class="g2f">${f('zip2', '郵便番号', '')}${f('addr2Kana', 'ふりがな', '')}</div>${f('addr2', '連絡先住所', '')}<div class="g2f">${f('tel2', '電話', '')}${f('email2', 'E-mail', '')}</div></details>
         <label>証明写真（縦4:横3。印刷して貼る場合は空欄でOK）</label>
+        ${UI_LANG !== 'ja' ? '<p class="hint tiny">日本の履歴書には写真を貼るのが一般的です（企業の指示があればそれに従ってください）。3か月以内に撮った、無地の背景・正面向き・胸から上の証明写真（縦40mm×横30mm）を使います。</p>' : ''}
         <div class="row" style="margin-top:4px">${r.photo ? `<img src="${r.photo}" alt="" class="rk-ph">` : ''}<label class="btn small" style="margin:0;color:var(--ink)">${r.photo ? '写真を変える' : '写真を選ぶ'}<input type="file" id="rkPhoto" accept="image/*" class="hidden"></label>${r.photo ? '<button class="btn ghost small" data-act="rkPhotoDel">写真を外す</button>' : ''}</div>
       </div>
       <div class="card"><h2>学歴・職歴</h2><p class="hint">1行に1項目、「2016年4月｜○○株式会社　入社」の形で書きます。「学歴」「職歴」「以上」だけの行は見出しとして配置されます。経歴データから自動で作っています。</p>
+        <p class="hint tiny">退職の行は「一身上の都合により退職」としています（自分の意思で辞めた場合）。会社の倒産・解雇などは「会社都合により退職」、契約が終わった場合は「契約期間満了により退職」に直してください。</p>
         <textarea rows="13" data-rk="history">${h(r.history)}</textarea>
         <div class="row"><button class="btn small" data-act="rkGen" data-v="history">経歴データから作り直す</button></div>
-        <h3>免許・資格</h3><textarea rows="4" data-rk="licenses">${h(r.licenses)}</textarea>
+        ${UI_LANG !== 'ja' ? '<p class="hint tiny">よく使う決まった言い方：入学・卒業、入社、一身上の都合により退職（自分の意思で辞めたときの一般的な書き方）、現在に至る。海外の学校・会社は正式名称で書き、必要なら国名を添えます。</p>' : ''}
+        <h3>免許・資格</h3>${UI_LANG !== 'ja' ? '<p class="hint tiny">日本語能力試験の結果は「2023年12月｜日本語能力試験 N2 合格」のように書きます。採用担当者がよく確認する項目です。</p>' : ''}<textarea rows="4" data-rk="licenses">${h(r.licenses)}</textarea>
         <div class="row"><button class="btn small" data-act="rkGen" data-v="licenses">経歴データから作り直す</button></div>
       </div>
       <div class="card"><h2>この応募先向け</h2>
         <label style="display:flex;justify-content:space-between">志望の動機・アピールポイント<span class="cc">${len(c.rk.motive)}字</span></label>
         <textarea rows="6" data-crk="motive">${h(c.rk.motive)}</textarea>
+        ${c.rk.motive_tr && c.rk.motive === c.rk.motiveSrc ? trl(c.rk.motive_tr) : ''}
         ${todo ? '<div class="fb warn" style="margin-top:8px">【要記入】が残っています。あなたの言葉で埋めてから提出してください。</div>' : ''}
         <div class="row"><button class="btn small" data-act="rkMotive" ${c.rk.status === 'run' ? 'disabled' : ''}>${c.rk.motive ? 'AI で作り直す' : 'AI で作る'}</button>${c.rk.status === 'run' ? `<span class="status" style="margin:0">${spin}作っています… ${elapsed(c.rk.since, '20〜40秒')} ${abortBtn('rk-' + c.id)}</span>` : ''}</div>
         ${c.rk.error ? `<div class="status err">${h(c.rk.error)}</div>` : ''}
         <label>本人希望記入欄</label>
         <textarea rows="3" data-crk="hope">${h(c.rk.hope)}</textarea>
         <p class="hint" style="margin-top:6px">特に希望がなければ「貴社の規定に従います。」と書くのが一般的です。勤務地や職種に譲れない条件がある場合だけ書きます。</p>
+        ${UI_LANG !== 'ja' ? '<p class="hint tiny">外国籍の方：履歴書の様式には国籍・在留資格の欄がありません。在留資格と在留期限を伝える場合は、この欄に書く方法があります（例：在留資格：技術・人文知識・国際業務（2028年3月まで））。企業や紹介会社から指示があれば、それに従ってください。</p>' : ''}
       </div>
     </div>
     <div class="stack">
@@ -1193,7 +1207,7 @@ function drawRireki(c) {
   const w = $('#rkWarn');
   if (w) {
     const r = state.rireki; const miss = [!r.furigana && 'ふりがな', !r.birth && '生年月日', !r.addr && '現住所', !r.tel && '電話', !r.email && 'E-mail'].filter(Boolean);
-    w.innerHTML = lay.warnings.map((t) => `<div class="fb warn">${h(t)}</div>`).join('') + (miss.length ? `<div class="fb note">未入力：${h(miss.join('、'))}</div>` : '<div class="fb ok">✓ 基本情報はそろっています。提出前に誤字と日付を確認してください。</div>');
+    w.innerHTML = lay.warnings.map((t) => `<div class="fb warn">${h(t)}</div>`).join('') + (miss.length ? `<div class="fb note">未入力：${miss.map((m) => `<span>${h(m)}</span>`).join('、')}</div>` : '<div class="fb ok">✓ 基本情報はそろっています。提出前に誤字と日付を確認してください。</div>');
   }
 }
 function fitbarHTML(c) {
@@ -1218,6 +1232,7 @@ function fitbarHTML(c) {
   if (zh.length || (c.fixed || []).length) out.push(`<div class="fb warn">⚠ 中国語の表記が混ざっていた可能性があります（${h([...(c.fixed || []), ...zh].slice(0, 6).join('、'))}）。字体だけでなく、文として自然な日本語か確認してください。</div>`);
   if (oks.length) out.unshift(`<div class="fb ok">${oks.map((t) => '✓ ' + t).join('<br>')}</div>`);
   out.push('<p class="hint tiny">提出前に、数値・社名・期間が事実どおりか最後に目で確認してください。</p>');
+  if (UI_LANG !== 'ja') out.push('<p class="hint tiny">日本語で書かれた内容は、この下の「母語で確認する」で1項目ずつ対訳を見られます。</p>');
   return out.join('');
 }
 function editorHTML(d, theme) {
@@ -1251,7 +1266,7 @@ function editorHTML(d, theme) {
 const trl = (t, tag) => (t && UI_LANG !== 'ja' ? `<${tag || 'div'} class="trl" lang="${UI_LANG === 'zh' ? 'zh-Hans' : 'en'}">${h(t)}</${tag || 'div'}>` : '');
 function packHTML(c) {
   const p = c.pack;
-  let s = `<div class="card pack"><div class="row" style="margin:0"><div><h2>志望動機・面接準備</h2><div class="hint" style="margin:0">提出した職務経歴書と矛盾しない志望動機・想定問答をまとめて作ります。回答例は丸暗記用ではなく、要点と30〜40秒の話し方の例です。【要記入】は、あなたにしか書けない部分です。</div></div><span class="spacer"></span>
+  let s = `<div class="card pack"><div class="row" style="margin:0"><div><h2>志望動機・面接準備</h2><div class="hint" style="margin:0">提出した職務経歴書と矛盾しない志望動機・想定問答をまとめて作ります。回答例は丸暗記用ではなく、要点と30〜40秒の話し方の例です。【要記入】は、あなたにしか書けない部分です。</div>${UI_LANG !== 'ja' ? '<div class="hint" style="margin:6px 0 0">日本企業の面接は日本語で行われることが多いです。回答例は丸暗記せず、要点を自分の日本語で話せるように練習してください。訳は、それぞれの文が何を言っているかを確かめるためのものです。【要記入】を日本語で書くのが難しければ、伝えたい内容を「経歴」や「転職の軸」に母語で書いてから作り直すと、AI が日本語にします。</div>' : ''}</div><span class="spacer"></span>
     ${p ? `<button class="btn" data-act="toStages" data-id="${c.id}">選考管理に進む →</button>` : ''}
     <button class="btn ${p ? 'ghost' : 'primary'}" data-act="pack" ${c.packStatus === 'run' ? 'disabled' : ''}>${p ? '作り直す' : '作成する'}</button></div>`;
   if (c.packStatus === 'run') s += `<div class="status">${spin}${stage('pack', c.packSince)} ${elapsed(c.packSince, '1〜2分')} ${abortBtn('pack-' + c.id)}</div>`;
@@ -1259,7 +1274,7 @@ function packHTML(c) {
   if (p) {
     const fill = (t) => h(t).replace(/【要記入[^】]*】/g, (m) => `<mark class="todo">${m}</mark>`);
     const cnt = (t, lo, hi) => { const n = len(t); return `<span class="${n < lo || n > hi ? 'off' : ''}">${n}字・目安${lo}〜${hi}字</span>`; };
-    const mv = (t, label, lo, hi, tr) => `<div class="mv"><div class="h"><span><span>${label}</span>（${cnt(t, lo, hi)}）</span><button class="btn small" data-act="copyText" data-text="${h(t)}">コピー</button></div><div data-noi18n>${fill(t)}</div>${trl(tr)}</div>`;
+    const mv = (t, label, lo, hi, tr) => `<div class="mv"><div class="h"><span><span>${label}</span>${UI_LANG === 'ja' ? `（${cnt(t, lo, hi)}）` : ` (${cnt(t, lo, hi)})`}</span><button class="btn small" data-act="copyText" data-text="${h(t)}">コピー</button></div><div data-noi18n>${fill(t)}</div>${trl(tr)}</div>`;
     const pc = checkNumbers(packParts(p), c.job + '\n' + c.info);
     if (pc.bad.length) s += `<div class="fb warn" style="margin-top:12px">⚠ あなたの入力と求人票で確認できない数値：${pc.bad.map((n) => `<mark>${h(n)}</mark>`).join('、')}<span>　面接で話す前に事実か確認してください。</span></div>`;
     s += `<h3>志望動機</h3>${p.motivation.long ? mv(p.motivation.long, '300字版', 280, 320, p.motivation.long_tr) : ''}${p.motivation.short ? mv(p.motivation.short, '150字版', 130, 160, p.motivation.short_tr) : ''}`;
@@ -1304,7 +1319,7 @@ function render4() {
   const c = company(state.active4);
   const active = list.filter((x) => x.result === '選考中').length;
   const ups = list.flatMap((x) => x.stages.filter((s) => s.status === '予定' && s.date && daysFrom(s.date) >= 0).map((s) => ({ c: x, s }))).sort((a, b) => (a.s.date + a.s.time).localeCompare(b.s.date + b.s.time));
-  const passed = list.reduce((n, x) => n + x.stages.filter((s) => s.status === '通過' && s.name !== '書類選考').length, 0);
+  const passed = list.reduce((n, x) => n + x.stages.filter((s) => s.status === '通過' && !/書類|document|screening|简历|筛选/i.test(s.name)).length, 0);
   const offers = list.filter((x) => x.result === '内定').length;
   $('#v4').innerHTML = viewHead('選考管理', '応募先ごとの選考ステップと日程を一覧にし、面接の記録から次の面接の対策を作ります。') + `
   ${ups.length || passed || offers || list.some((x) => (x.stages || []).some((s) => s.status !== '未定')) ? `<div class="kpis">
@@ -1326,7 +1341,7 @@ function render4() {
       <div class="bcards">${list.map((x) => { const i = curStage(x); const ne = nextEvent(x); return `<button class="bcard ${x.id === c.id ? 'on' : ''}" data-act="sel4" data-id="${x.id}"><b>${h(cname(x))}</b><span class="pill ${x.result === '内定' ? 'ok' : x.result === '見送り' ? 'err' : ''}">${h(x.result)}</span><div class="mini">${x.stages.map((s) => `<i class="${s.status === '通過' ? 'p' : s.status === '予定' ? 's' : (s.status === '不通過' || s.status === '辞退') ? 'f' : ''}"></i>`).join('')}</div><span class="cc">${i >= 0 ? `<span>${h(x.stages[i].name)}</span>・<span>${h(x.stages[i].status)}</span>` : '全ステップ通過'}${ne ? `　<span>次：</span>${h(jpDate(ne.date) + ' ' + ne.time)}` : ''}</span></button>`; }).join('')}</div>
     </div>
     <div class="card"><h2>これからの予定</h2>
-      ${ups.length ? `<div class="sched">${ups.slice(0, 8).map(({ c: x, s }) => { const d = new Date(s.date + 'T00:00:00'); const dd = daysFrom(s.date); return `<div class="it ${dd <= 3 ? 'soon' : ''}" data-act="sel4" data-id="${x.id}"><div class="dt"><b>${d.getDate()}</b><small data-noi18n>${monthWd(d)}</small></div><div><b style="font-size:13px">${h(cname(x))}</b><div class="cc"><span>${h(s.name)}</span>${s.time ? '・' + h(s.time) : ''}${s.format ? `・<span>${h(s.format)}</span>` : ''}${dd === 0 ? '・<span>今日</span>' : dd > 0 ? `・<span>あと${dd}日</span>` : ''}</div></div></div>`; }).join('')}</div>` : '<div class="empty" style="padding:18px">日程が入った面接はまだありません。</div>'}
+      ${ups.length ? `<div class="sched">${ups.slice(0, 8).map(({ c: x, s }) => { const d = new Date(s.date + 'T00:00:00'); const dd = daysFrom(s.date); return `<div class="it ${dd <= 3 ? 'soon' : ''}" data-act="sel4" data-id="${x.id}"><div class="dt"><b>${d.getDate()}</b><small data-noi18n>${monthWd(d)}</small></div><div><b style="font-size:13px">${h(cname(x))}</b><div class="cc"><span>${h(s.name)}</span>${s.time ? SEP + h(s.time) : ''}${s.format ? `${SEP}<span>${h(s.format)}</span>` : ''}${dd === 0 ? `${SEP}<span>今日</span>` : dd === 1 ? `${SEP}<span>明日</span>` : dd > 0 ? `${SEP}<span>あと${dd}日</span>` : ''}</div></div></div>`; }).join('')}</div>` : '<div class="empty" style="padding:18px">日程が入った面接はまだありません。</div>'}
     </div>
   </div>
   <div class="card" style="margin-top:16px">${stagesHTML(c)}</div>`;
@@ -1497,7 +1512,7 @@ document.addEventListener('click', (e) => {
     case 'copyField': { const v = getPath(c.doc, b.dataset.path); copy(Array.isArray(v) ? v.map((p) => (p.heading ? '【' + p.heading + '】\n' : '') + p.body).join('\n\n') : v); break; }
     case 'abort': { const ctl = controllers[b.dataset.key]; if (ctl) ctl.abort(); break; }
     case 'sel4': state.active4 = b.dataset.id; save(); render(); break;
-    case 'addStage': { const x = company(state.active4); x.stages.push(newStage({ name: 'ステップ' + (x.stages.length + 1) })); save(); render(); break; }
+    case 'addStage': { const x = company(state.active4); x.stages.push(newStage({ name: (UI_LANG === 'en' ? 'Step ' : UI_LANG === 'zh' ? '步骤 ' : 'ステップ') + (x.stages.length + 1) })); save(); render(); break; }
     case 'delStage': { const x = company(state.active4); if (x.stages.length > 1 && confirm2(b, '削除する？')) { x.stages = x.stages.filter((s) => s.id !== b.dataset.sid); save(); render(); } break; }
     case 'prep': { const x = company(state.active4); const i = x.stages.findIndex((s) => s.id === b.dataset.sid); if (i >= 0) makePrep(x, i); break; }
     case 'demo': if (!state.demo) userState = state; state = demoState(); render(); window.scrollTo(0, 0); break;

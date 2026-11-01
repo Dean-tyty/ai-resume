@@ -9,7 +9,7 @@ const root = new URL('../', import.meta.url).pathname;
 const JA = /[぀-ヿ㐀-鿿！-｠　-〿]/;
 const keys = new Map();
 // text that is data, not page text (dates, the 学歴・職歴 lines of the 履歴書)
-const IGNORE = new Set(['周日', '周一', '周二', '周三', '周四', '周五', '周六', '{0}年{1}月{2}日', '日月火水木金土', '{0}/{1}（{2}）', '年', '日', '月', '｜現在に至る', '一身上の都合により退職', '貴社の規定に従います。']);
+const IGNORE = new Set(['步骤', '周日', '周一', '周二', '周三', '周四', '周五', '周六', '{0}年{1}月{2}日', '日月火水木金土', '{0}/{1}（{2}）', '年', '日', '月', '｜現在に至る', '一身上の都合により退職', '貴社の規定に従います。']);
 const put = (k, where) => {
   k = k.replace(/\s+/g, ' ').trim();
   if (!k || !JA.test(k)) return;
@@ -17,6 +17,7 @@ const put = (k, where) => {
   let i = 0; k = k.replace(/\u0000/g, () => '{' + i++ + '}');
   if (!/[\u3040-\u30ff\u3400-\u9fff]/.test(k)) return;   // punctuation only
   if (IGNORE.has(k)) return;
+  if (/^(Document screening|1st interview|2nd interview|Final interview) \(|^(简历筛选|一面|二面|终面)（/.test(k)) return; // already in that language
   if (!keys.has(k)) keys.set(k, where);
 };
 const ATTR = /\b(placeholder|title|aria-label|alt|content)="([^"]*)"/g;
@@ -48,7 +49,10 @@ const E = w.ResumeEngine;
 Object.values(E.THEMES).forEach((t) => { put(t.label, 'engine.js THEMES'); put(t.note, 'engine.js THEMES'); });
 E.ACCENTS.forEach((a) => put(a.label, 'engine.js ACCENTS'));
 // shown on the page but made elsewhere: values the AI gives (分析の出典・要件の種類), counts put together in code
-['企業情報', '求人票', '必須', '歓迎', '配色', '{0}社', '{0}件', '{0}年', '{0}日'].forEach((k) => { if (!keys.has(k)) keys.set(k, 'extra'); });
+['企業情報', '求人票', '必須', '歓迎', '配色', '{0}社', '{0}件', '{0}年', '{0}日',
+  // the 履歴書 layout's warnings (public/engine.js layoutRireki)
+  '欄に入りきらない文字があります：{0}', '「{0}」が欄に入りきりません。短くしてください。', '学歴・職歴が欄に入りきりません（{0}行 / {1}行）。行をまとめてください。', '免許・資格が欄に入りきりません（{0}件 / {1}件）。',
+].forEach((k) => { if (!keys.has(k)) keys.set(k, 'extra'); });
 const out = [...keys].map(([k, where]) => ({ k, where }));
 writeFileSync(root + 'i18n/keys.json', JSON.stringify(out, null, 1));
 console.log(out.length, 'keys → i18n/keys.json');

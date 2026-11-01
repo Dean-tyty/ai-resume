@@ -14,6 +14,8 @@ function intentBlock(ctx, forDoc) {
 // /en/ and /zh/ pages: what the user reads is written in their language; what goes to the company stays Japanese
 const UI = { en: '英語', zh: '中国語（簡体字）' };
 const uiName = (ctx) => UI[ctx.uiLang] || '';
+// how the translations shown under the Japanese are written
+const trRule = (ctx) => `${uiName(ctx)}訳では、【要記入：…】の印は【要記入】のまま残し、コロンの後の説明だけを訳す（例：【要記入：the reason you chose this company】）。${ctx.uiLang === 'zh' ? '中国語は中国大陸で自然な表現にし、日本語の漢語をそのまま使わない（例：中堅企業→中型企业、活用→使用・推广使用、法人営業→企业客户销售）。中国語の文中の引用は “” を使う。' : ''}`;
 function slimProfile(ctx) { const p = Object.assign({}, ctx.profile || {}); delete p.missing; return p; }
 function stripDoc(d) { const o = Object.assign({}, d || {}); delete o.name; delete o.date; delete o.title; return o; }
 export function P_PROFILE(ctx) {
@@ -55,7 +57,7 @@ export function P_ANALYZE(ctx, c) {
 # 出力形式（JSONのみ）
 {"company":"正式な会社名","position":"応募職種","summary":"この求人が本当に求めていることを1文で（60字以内）","values":[{"label":"重視していること（15字以内）","detail":"具体的に（50字以内）","source":"求人票|企業情報|一般知識","quote":"根拠となる原文の短い抜粋（30字以内、なければ空）"}],"requirements":[{"text":"要件（30字以内）","type":"必須|歓迎","match":"◎|○|△","evidence":"対応する経歴（30字以内）"}],"plan":[{"value":"values の label","episode_ids":["E1"],"angle":"その事例のどこをどう見せるか（60字以内）"}],"summary_angle":"職務要約の打ち出し方（60字以内）","pr_themes":["自己PRの見出し候補（20字以内）"],"keywords":["書類に自然に入れたい語"],"gaps":["裏付けが弱い点と書類での扱い方（60字以内）"],"template":"standard|modern|premium|engineer","template_reason":"選んだ理由（40字以内）"}
 件数の目安：values 3〜5、requirements は求人票の要件すべて（最大8）、plan 2〜4、pr_themes 2〜3、keywords 5〜8。
-${uiName(ctx) ? `言語：本人は${uiName(ctx)}で読みます。company・position・keywords・quote は日本語（求人票の表記）のまま、それ以外の文章（summary、values の label と detail、requirements の text と evidence、plan の angle、summary_angle、pr_themes、gaps、template_reason）は${uiName(ctx)}で書く。source と type と match の値は上の日本語のまま。
+${uiName(ctx) ? `言語：本人は${uiName(ctx)}で読みます。company・position・keywords・quote は日本語（求人票の表記）のまま、それ以外の文章（summary、values の label と detail、requirements の text と evidence、plan の angle、summary_angle、pr_themes、gaps、template_reason）は${uiName(ctx)}で書く。source と type と match の値は上の日本語のまま。${ctx.uiLang === 'zh' ? '中国語は中国大陸で自然な表現にし、日本語の漢語をそのまま使わない（例：中堅企業→中型企业、活用→使用）。' : ''}
 ` : ''}
 # 応募先
 会社名：${c.name || '（求人票から読み取る）'}
@@ -172,7 +174,7 @@ export function P_PACK(ctx, c) {
 # 出力形式（JSONのみ）
 ${uiName(ctx) ? `{"motivation":{"long":"","short":"","long_tr":"long の${uiName(ctx)}訳","short_tr":""},"flow":{"note":"","steps":[{"name":"","who":"","focus":""}]},"questions":[{"q":"日本語の質問","q_tr":"q の${uiName(ctx)}訳","intent":"","points":[""],"answer":"日本語の回答例","answer_tr":"answer の${uiName(ctx)}訳"}],"reverse":["日本語の逆質問"],"reverse_tr":["reverse の${uiName(ctx)}訳"],"cautions":[""]}
 件数：flow.steps 3〜5、questions 9、reverse 3、cautions 2〜4。
-言語：面接は日本語なので、motivation の long と short、questions の q と answer、reverse は日本語で書く。本人は${uiName(ctx)}で読むので、*_tr にその忠実な訳を、flow（note・name・who・focus）、intent、points、cautions は${uiName(ctx)}で書く。【要記入】は訳でもそのまま残す。`
+言語：面接は日本語なので、motivation の long と short、questions の q と answer、reverse は日本語で書く。本人は${uiName(ctx)}で読むので、*_tr にその忠実な訳を、flow（note・name・who・focus）、intent、points、cautions は${uiName(ctx)}で書く。${trRule(ctx)}`
   : `{"motivation":{"long":"志望動機（280〜320字。転職の軸が未入力なら【要記入】を含める）","short":"志望動機（130〜160字）"},"flow":{"note":"","steps":[{"name":"","who":"","focus":""}]},"questions":[{"q":"","intent":"質問の意図","points":["回答の要点"],"answer":"回答例"}],"reverse":["逆質問"],"cautions":["注意点と対策"]}
 件数：flow.steps 3〜5、questions 9、reverse 3、cautions 2〜4。`}
 
@@ -207,7 +209,7 @@ export function P_PREP(ctx, c, i) {
 # 出力形式（JSONのみ）
 {"summary":"ここまでの選考の要点（80字以内）","focus":["次の面接で見られそうな点"],"questions":[{"q":"","why":"そう予想する理由","points":["回答の要点"]${uiName(ctx) ? ',"q_tr":""' : ''}}],"fixes":[{"issue":"前回詰まった点","better":"答え直し方"${uiName(ctx) ? ',"better_tr":""' : ''}}],"reverse":["逆質問"],${uiName(ctx) ? '"reverse_tr":[""],' : ''}"checklist":["前日までにやること"]}
 件数：focus 3、questions 5、fixes 0〜3、reverse 3、checklist 3〜5。
-${uiName(ctx) ? `言語：面接は日本語なので、questions の q、fixes の better、reverse は日本語で書き、q_tr・better_tr・reverse_tr にその${uiName(ctx)}訳を書く。summary、focus、why、points、fixes の issue、checklist は${uiName(ctx)}で書く。
+${uiName(ctx) ? `言語：面接は日本語なので、questions の q、fixes の better、reverse は日本語で書き、q_tr・better_tr・reverse_tr にその${uiName(ctx)}訳を書く。summary、focus、why、points、fixes の issue、checklist は${uiName(ctx)}で書く。${trRule(ctx)}
 ` : ''}
 # 応募先の方針
 ${J({ position: a.position, summary: a.summary, values: a.values, gaps: a.gaps })}
@@ -230,7 +232,8 @@ export function P_RK(ctx, c) {
 - 中国語の簡体字は日本の字体にする。
 
 # 出力形式（JSONのみ）
-{"motive":""}
+${uiName(ctx) ? `{"motive":"","motive_tr":"motive の${uiName(ctx)}訳"}
+本人は${uiName(ctx)}で読むので motive_tr に忠実な訳を書く（motive は日本語）。${trRule(ctx)}` : '{"motive":""}'}
 
 # 応募先：${a.company || c.name}（${a.position || ''}）
 ${J({ summary: a.summary, values: a.values })}
