@@ -104,6 +104,7 @@ export function P_GENERATE(ctx, c) {
 - 候補者データにない事実・数値・役職・期間・人数・社名・業務・顧客の規模や属性を一切作らない（例：データにない「育成」「マネジメント」「中堅企業担当」を推測で書かない）。できるのは、選ぶ・並べ替える・言い換える・強調することだけ。
 - 数値は候補者データの表記どおりに書く（丸めたり盛ったりしない）。
 - 実績は、本人の役割（主導／担当／チームとして）が候補者データで分かる場合だけ明記する。分からない場合は役割を盛らない。
+- 方針の values のうち source が「公開情報」のものは、見せ方を決めるためだけに使う。会社のニュース・数字・日付・スローガンは職務経歴書に書かない。
 
 # 最適化のルール
 - 方針（plan / summary_angle / pr_themes / keywords）に沿って、応募先に効く経歴・実績を前に出し、関係の薄い業務は短くする。
@@ -162,21 +163,29 @@ ${J(stripDoc(c.doc))}`;
 }
 export function P_PACK(ctx, c) {
   const a = c.analysis || {};
-  return `あなたは日本の中途採用で面接官を多く務めてきた採用担当者です。以下の応募先と、候補者が実際に提出する職務経歴書にもとづいて、面接準備パックを作ってください。
+  return `あなたは日本の中途採用で面接官を多く務めてきた採用担当者です。以下の応募先と、候補者が実際に提出する職務経歴書にもとづいて、面接準備パックを作ってください。今日の日付は${ctx.today}です。
 
 # 厳守
 - 回答例・志望動機は、提出する職務経歴書・候補者データ・本人の転職の軸に矛盾させない。そこにない具体的な手順・数字・エピソード・動機は足さない。足りない部分は【要記入：何を書くか】と書き、本人が埋められるようにする。
 - 選考フローは、企業固有の公開情報が与えられていない限り「一般的な想定」であり、flow.note にそう書く。
-- 公開情報の調査がある場合、志望動機と逆質問に具体的な事実（事業・最近の動き）を使ってよい。ただし調査にない事実は書かず、古い情報は「〜と拝見しました」のように時期が分かる言い方にする。
 - 回答例は丸暗記用の原稿にしない。話し言葉の「です・ます」で、話して30〜40秒（150〜220字）。要点は3つまで。
 - 方針の gaps（経歴の弱い点）を突かれる質問を2問以上含め、盛らずに答える方法を示す。
+- 逆質問：求人票・企業情報・公開情報の調査で答えが分かることは聞かない。形は「前提（調べた事実、1文）＋自分の経験とのつながり＋公開情報では分からない問い」。条件だけの質問（年収・残業・休日）、口コミやネガティブな報道を前提にした質問、相手を試す質問、「はい／いいえ」で終わる質問はしない。調査の question_seeds は使ってよいが、本人の経験とのつながりを足す。
 - 質問は9問：自己紹介、転職理由、志望動機、強み・弱み、希望年収・入社可能時期・他社の選考状況（1問にまとめる）、この求人ならではの質問。候補者データの入力が日本語以外と読み取れる場合は、日本で働く理由や日本語での業務経験を問う質問を1問含める。
 
+${c.research && c.research.facts && c.research.facts.length && c.research.confidence !== 'low' ? `# 公開情報の使い方（下に調査がある）
+- 「なぜこの会社か」には調査の事実を1つ（多くても2つ）だけ使う。本人の転職の軸か職務経歴書の事例と直接つながる事実に限る。つながる事実がなければ使わず【要記入：この会社を選ぶ理由】を残す。
+- 形は「事実（短く、自分の言葉で）→ 本人の軸・経験とのつながり → 入社後にどう生かすか」。事実の紹介は全体の3分の1以下。
+- 会社の文章を写さない。スローガン・バリューの引用は1か所・15字以内。理念やバリューへの共感だけを志望理由の中心にしない（中心は事業・顧客・この職種の役割と本人の経験の接点）。
+- 売上・調達額・株価・順位などの数字は志望動機に入れない。会社の課題を断定しない。
+- ニュースは時期を入れて書く（例「2026年4月に発表された〜」）。今日から1年以上前のニュースは志望動機に使わない。
+- 使った事実の id を motivation.used に入れる（例 ["F2"]）。使わなければ空配列。
+` : ''}
 # 出力形式（JSONのみ）
-${uiName(ctx) ? `{"motivation":{"long":"","short":"","long_tr":"long の${uiName(ctx)}訳","short_tr":""},"flow":{"note":"","steps":[{"name":"","who":"","focus":""}]},"questions":[{"q":"日本語の質問","q_tr":"q の${uiName(ctx)}訳","intent":"","points":[""],"answer":"日本語の回答例","answer_tr":"answer の${uiName(ctx)}訳"}],"reverse":["日本語の逆質問"],"reverse_tr":["reverse の${uiName(ctx)}訳"],"cautions":[""]}
+${uiName(ctx) ? `{"motivation":{"long":"","short":"","long_tr":"long の${uiName(ctx)}訳","short_tr":"","used":["使った公開情報の id"]},"flow":{"note":"","steps":[{"name":"","who":"","focus":""}]},"questions":[{"q":"日本語の質問","q_tr":"q の${uiName(ctx)}訳","intent":"","points":[""],"answer":"日本語の回答例","answer_tr":"answer の${uiName(ctx)}訳"}],"reverse":["日本語の逆質問"],"reverse_tr":["reverse の${uiName(ctx)}訳"],"cautions":[""]}
 件数：flow.steps 3〜5、questions 9、reverse 3、cautions 2〜4。
 言語：面接は日本語なので、motivation の long と short、questions の q と answer、reverse は日本語で書く。本人は${uiName(ctx)}で読むので、*_tr にその忠実な訳を、flow（note・name・who・focus）、intent、points、cautions は${uiName(ctx)}で書く。${trRule(ctx)}`
-  : `{"motivation":{"long":"志望動機（280〜320字。転職の軸が未入力なら【要記入】を含める）","short":"志望動機（130〜160字）"},"flow":{"note":"","steps":[{"name":"","who":"","focus":""}]},"questions":[{"q":"","intent":"質問の意図","points":["回答の要点"],"answer":"回答例"}],"reverse":["逆質問"],"cautions":["注意点と対策"]}
+  : `{"motivation":{"long":"志望動機（280〜320字。転職の軸が未入力なら【要記入】を含める）","short":"志望動機（130〜160字）","used":["使った公開情報の id"]},"flow":{"note":"","steps":[{"name":"","who":"","focus":""}]},"questions":[{"q":"","intent":"質問の意図","points":["回答の要点"],"answer":"回答例"}],"reverse":["逆質問"],"cautions":["注意点と対策"]}
 件数：flow.steps 3〜5、questions 9、reverse 3、cautions 2〜4。`}
 
 # 応募先：${a.company || c.name}（${a.position || ''}）
@@ -199,13 +208,15 @@ ${J(slimProfile(ctx))}${intentBlock(ctx, false)}`;
 export function P_PREP(ctx, c, i) {
   const a = c.analysis || {}; const st = c.stages[i];
   const past = c.stages.slice(0, i).map((s) => ({ step: s.name, status: s.status, date: s.date, format: s.format, interviewer: s.who, record: s.log }));
-  return `あなたは日本の中途採用の面接対策コーチです。応募先「${a.company || c.name}」の選考で、本人がこれまでに受けた選考の記録をもとに、次の「${st.name}」の対策を作ってください。
+  return `あなたは日本の中途採用の面接対策コーチです。応募先「${a.company || c.name}」の選考で、本人がこれまでに受けた選考の記録をもとに、次の「${st.name}」の対策を作ってください。今日の日付は${ctx.today}です。
 
 # 厳守
 - 根拠は、下の選考記録・提出した職務経歴書・候補者データ・方針だけ。面接官の意図や評価は推測であることがわかる書き方にする。
 - 前回うまく答えられなかった点は、事実を盛らずに答え直す方法を示す。候補者データや記録にない具体例は足さず、必要なら【要記入：何を書くか】とする。
 - 前回の質問と応募先の方針から、次の面接で深掘りされそうな点を予測する。記録がなければ方針と書類から予測する。
 - 「${st.name}」で一般的に会う相手${st.who ? '（本人のメモ：' + st.who + '）' : ''}が気にすることに合わせる。
+- 公開情報の調査がある場合、この面接の相手に合う事実を1〜2個だけ使う（現場・マネージャー → 職種・部署・プロダクト・社員インタビュー、部門長 → 部門の方針・募集背景、役員・社長 → 中期経営計画・トップメッセージ・直近の決算で会社が説明した重点）。使う場合は checklist に「使う事実のリンク先を開き、日付と内容が今も正しいか確かめる」を入れる。
+- 逆質問：求人票・公開情報の調査・これまでの選考記録で答えが分かることは聞かない。「前提（調べた事実か面接で聞いたこと、1文）＋自分の経験とのつながり＋公開情報では分からない問い」の形で、相手に合わせる。一次・二次では条件だけの質問（年収・残業・休日）をしない。口コミ・ネガティブな報道・面接官個人の情報を前提にしない。
 
 # 出力形式（JSONのみ）
 {"summary":"ここまでの選考の要点（80字以内）","focus":["次の面接で見られそうな点"],"questions":[{"q":"","why":"そう予想する理由","points":["回答の要点"]${uiName(ctx) ? ',"q_tr":""' : ''}}],"fixes":[{"issue":"前回詰まった点","better":"答え直し方"${uiName(ctx) ? ',"better_tr":""' : ''}}],"reverse":["逆質問"],${uiName(ctx) ? '"reverse_tr":[""],' : ''}"checklist":["前日までにやること"]}
@@ -230,6 +241,7 @@ export function P_RK(ctx, c) {
 # 厳守
 - 候補者データ・本人の転職の軸・提出する職務経歴書にない事実や動機を作らない。足りない部分は【要記入：何を書くか】とする。
 - です・ます調で200〜260字。職務経歴書の自己PRの繰り返しにせず、志望動機を中心に、生かせる経験を1つ添える。
+- 公開情報の調査がある場合、使うのは事業・顧客・職種に関する変わりにくい事実を1つまで。ニュース・数字・日付・スローガンの引用は入れない（履歴書は提出後も残り、面接で読み返されるため）。面接用の志望動機の文をそのまま使わない（骨子は同じでよい）。
 - 中国語の簡体字は日本の字体にする。
 
 # 出力形式（JSONのみ）
@@ -305,23 +317,36 @@ ${J(slimProfile(ctx))}${answersBlock(ctx)}`;
 
 export function P_RESEARCH(ctx, c) {
   const a = c.analysis || {}; const L = uiName(ctx);
-  return `あなたは日本の中途採用に詳しい企業リサーチャーです。下の応募先について web_search で公開情報を調べ、志望動機・面接準備・逆質問に使える事実を、出典付きでまとめてください。
+  const hosts = (c.hosts || []).filter(Boolean);
+  return `あなたは日本の中途採用に詳しい企業リサーチャーです。今日の日付は${ctx.today}です。下の応募先について web_search で公開情報を調べ、志望動機・面接準備・逆質問の材料になる事実を、出典付きでまとめてください。候補者の情報は与えられていません。候補者の経験と結びつけるのは後の工程なので、ここでは会社側のことだけを書きます。
 
-# 調べ方
-- web_search は最大5回。検索語には会社名・事業名・職種名だけを使う（候補者の情報は一切使わない）。
-- 優先する情報源：その会社の公式サイト（事業内容・ニュース・IR・採用ページ・技術ブログ・社長メッセージ）、プレスリリース、信頼できる報道。
+# まず、同じ会社か確かめる
+- 手がかり：正式名称、本社所在地、事業内容、求人票の内容${hosts.length ? `、本人が示したページのドメイン（${hosts.join('、')}）` : ''}。
+- 求人票に社名がない（「大手メーカー」「非公開」など）、または同じ名前の会社が絞り込めない場合は調べるのをやめ、confidence を "low"、facts を空にし、caveats に理由を書く。
+- 親会社・子会社・海外本社・グループの別会社の情報は、応募先の情報として書かない。どうしても使う場合は entity を "グループ" にし、本文に「親会社の〜」のように明記する。
+
+# 調べ方（web_search は最大5回。検索語は会社名・事業名・職種名だけ。候補者の情報は使わない）
+1. 公式サイトの会社概要・事業紹介（同じ会社か確かめる）
+2. 採用ページ：募集背景・求める人物像・社員インタビュー・この職種の仕事
+3. 上場企業は IR（直近の決算説明資料・中期経営計画）、未上場はプレスリリース（資金調達の使い道・事業計画）。あわせて社長・トップのメッセージ
+4. 今日から12か月以内のニュースリリース・報道
+5. 職種に合わせて1回（エンジニア：技術ブログ、営業・CS：導入事例、企画・マーケ：新サービス）
 - 口コミサイト・掲示板・まとめサイト・個人ブログの評判は使わない。
-- 同じ名前の別会社に注意する。求人票の会社と同じだと確かめられない情報は書かない。確信の度合いを confidence に書く。
 
 # 書き方
-- 事実だけを書く。推測や評価（「成長企業」「働きやすい」など）は書かない。
-- facts と position の各項目には、実際に検索結果で見たページの url をそのまま書き、分かれば時期（YYYY-MM）を date に書く。2年以上前の情報は時期を必ず書く。
+- 事実だけを書く。推測や評価（「成長企業」「働きやすい」など）は書かない。強みは「会社は〜を強みとして説明」の形にする。
+- 書かないもの：設立年・資本金・受賞歴・CSR活動・株価・求人票と同じ内容・業界一般の話・競合他社の名前を出した比較。
+- 決算は、会社が説明した増減の理由と注力領域を1つ。数字は1つまで。
+- 「最近の動き」は今日から12か月以内の発表だけ。日付が確かめられないニュースは書かない。中期経営計画・トップメッセージは最新のものだけ。2年以上前の情報は書かない（日付のない会社概要・事業紹介は除く）。
+- facts と position の各項目には、実際に検索結果で見たページの url をそのまま書き、分かれば時期（YYYY-MM）を date に書く。
 - 見つからなかった項目は書かない（件数を埋めるために作らない）。
-${L ? `- 言語：本人は${L}で読む。company は日本語の正式名称、questions は日本語（面接で使うため）で書き、questions_tr にその${L}訳を書く。それ以外の文章（overview、facts の text、position の text、talking_points、check_yourself、caveats）は${L}で書く。${ctx.uiLang === 'zh' ? '中国語は中国大陸で自然な表現にし、日本語の漢語をそのまま使わない。' : ''}` : ''}
-
+- hooks：志望動機の材料になりそうな事実と、その理由（会社側の視点）。候補者の経験には触れない。
+- questions：facts を前提にした、公開情報では答えが分からない問いだけ。サイトや求人票を読めば答えが分かる問い（事業内容・制度・拠点など）、条件だけの問い（年収・残業・休日）、相手を試す問い、「はい／いいえ」で終わる問いは書かない。for は聞く相手（現場・マネージャーには仕事の進め方とチーム、部門長には部門の課題と期待、役員には事業の方向性）。
+- check_yourself：公開情報では分からず、入社を判断するために説明会・面接・人事面談で確かめるとよい点。中立な聞き方が分かるように書く。
+${L ? `- 言語：本人は${L}で読む。company は日本語の正式名称、questions の q は日本語（面接で使うため）で書き、q_tr にその${L}訳を書く。topic・entity・for は下の日本語の選択肢のまま。それ以外の文章（overview、hiring_context、identity.match、facts と position の text、hooks の why、check_yourself、caveats）は${L}で書く。${ctx.uiLang === 'zh' ? '中国語は中国大陸で自然な表現にし、日本語の漢語をそのまま使わない。' : ''}\n` : ''}
 # 出力形式（JSONのみ）
-{"company":"正式な会社名","confidence":"high|medium|low","overview":"事業と規模の要約（80字以内）","facts":[{"topic":"事業|最近の動き|業績・資金調達|組織・採用|価値観・カルチャー|プロダクト・技術","text":"60字以内","url":"","title":"出典ページの名前","date":"YYYY-MM または空"}],"position":[{"text":"この職種・部署について公開情報から分かること（60字以内）","url":"","title":""}],"talking_points":["志望動機や面接で具体的に触れられる話題（40字以内）"],"questions":["逆質問の候補"],${L ? '"questions_tr":[""],' : ''}"check_yourself":["説明会や面接、口コミで自分で確かめるとよい点（30字以内）"],"caveats":["情報の古さ・不確かさについての注意（あれば）"]}
-件数：facts 4〜8、position 0〜3、talking_points 2〜4、questions 2〜3、check_yourself 2〜4、caveats 0〜2。
+{"company":"正式な会社名","confidence":"high|medium|low","identity":{"official_site":"公式サイトの URL","match":"求人票と一致した点（30字以内）"},"overview":"事業と規模の要約（80字以内）","hiring_context":"募集背景の手がかり（求人票・採用ページに書かれている場合だけ。推測しない。なければ空）","facts":[{"id":"F1","topic":"事業・顧客|経営方針・中期経営計画|トップメッセージ|直近の決算|最近の動き|採用・求める人物像|プロダクト・技術|会社が説明する強み","entity":"応募先|グループ","text":"60字以内","url":"","title":"出典ページの名前","date":"YYYY-MM または空"}],"position":[{"text":"この職種・部署について公開情報から分かること（60字以内）","url":"","title":""}],"hooks":[{"fact":"F2","why":"志望動機の材料になる理由（会社側の視点、40字以内）"}],"questions":[{"q":"逆質問","${L ? 'q_tr":"","' : ''}premise":"F2","for":"現場|部門長|役員"}],"check_yourself":["確かめるとよい点と、中立な聞き方（40字以内）"],"caveats":["情報の古さ・不確かさについての注意（あれば）"]}
+件数：facts 4〜8（id は F1 から順に）、position 0〜3、hooks 2〜3、questions 2〜3、check_yourself 2〜3、caveats 0〜2。
 
 # 応募先
 会社名：${a.company || c.name || '（求人票から読み取る）'}
@@ -331,11 +356,17 @@ ${L ? `- 言語：本人は${L}で読む。company は日本語の正式名称�
 ${(c.job || '').slice(0, 3000)}
 """`;
 }
-// research results as the other prompts see them (sources and dates kept, marked as public information)
+const ymd = (t) => { const d = new Date(Number(t) + 9 * 3600e3); return Number.isFinite(d.getTime()) ? d.toISOString().slice(0, 10) : ''; };
+// research results as the other prompts see them: numbered facts with their dates and sources, marked as an
+// automatic survey of public information (nothing when the company could not be confirmed)
 function researchBlock(c) {
   const r = c.research;
-  if (!r || !Array.isArray(r.facts) || !r.facts.length) return '';
-  return `\n## 公開情報の調査（自動調査・出典付き。会社が書いたことではなく、日付が古い場合がある）\n${J({ overview: r.overview, facts: r.facts.map((f) => ({ text: f.text, date: f.date, source: f.title || f.url })), position: (r.position || []).map((p) => p.text), talking_points: r.talking_points })}\n`;
+  if (!r || !Array.isArray(r.facts) || !r.facts.length || r.confidence === 'low') return '';
+  const facts = r.facts.map((f, i) => ({ id: f.id || 'F' + (i + 1), topic: f.topic, entity: f.entity || '応募先', date: f.date, text: f.text, source: f.title || f.url }));
+  const seeds = (r.questions || []).map((q) => (typeof q === 'string' ? { q } : { q: q.q, premise: q.premise, for: q.for }));
+  return `\n## 公開情報の調査（${ymd(r.at) || '日付不明'} 時点の自動調査。会社が書いたものではない。確からしさ：${r.confidence || 'medium'}）
+志望動機に使えるのは entity が「応募先」で、今日から1年以内か時期に左右されない事実だけ。
+${J({ overview: r.overview, hiring_context: r.hiring_context || '', facts, position: (r.position || []).map((p) => p.text), hooks: r.hooks || [], question_seeds: seeds, caveats: r.caveats || [] })}\n`;
 }
 
 export const PROMPTS = { P_PROFILE, P_ANALYZE, P_GENERATE, P_SHORTEN, P_PACK, P_PREP, P_RK, P_EXPLAIN, P_ENGLISH, P_RESEARCH };

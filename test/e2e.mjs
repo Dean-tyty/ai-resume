@@ -106,8 +106,14 @@ await page.click(C2 + ' [data-act=analyze]');
 await page.waitForSelector(C2 + ' .an', { timeout: 15000 });
 ok((await page.innerText('#acct .credit')).includes('1'), 'analysis is free');
 // buyers' features are not open before a purchase
-ok(await page.isDisabled(C2 + ' [data-cf=jobUrl]'), 'URL import closed before a purchase');
-ok((await page.innerText(C2 + ' .research')).includes('利用枠を購入すると使えます'), 'company research offered to buyers');
+ok(await page.isVisible(C2 + ' .urlrow.locked'), 'URL import shown as a buyers\' feature before a purchase');
+ok((await page.innerText(C2 + ' .research')).includes('購入して使う'), 'company research offered to buyers');
+await page.click(C2 + ' .research [data-act=researchExample]');
+ok((await page.innerText('#modal')).includes('結果の例'), 'example result shown before buying');
+await act('closeModal');
+await page.click(C2 + ' .urlrow.locked [data-act=fetchJob]');
+ok((await page.innerText('#modal')).includes('無料の1社分では使えません'), 'purchase dialog says why (buyers\' feature)');
+await act('closeModal');
 // (called from here, not from the page: refusals are expected and would show as page errors)
 const api = async (path, b) => JSON.parse((await (await fetch(BASE + path, { method: 'POST', headers: { authorization: 'Dev ' + user, 'content-type': 'application/json', origin: BASE }, body: JSON.stringify(b) })).text()).trim());
 const C2c = { id: C2.match(/"(.+)"/)[1], name: '株式会社テスト二号', job: '【募集職種】営業マネージャー\n【必須】法人営業経験3年以上' };
@@ -156,13 +162,17 @@ await page.click(C4 + ' [data-act=analyze]');
 await page.waitForSelector(C4 + ' .an', { timeout: 15000 });
 const researched = async () => { await page.waitForFunction((S) => document.querySelector(S + ' .rs-facts') && !document.querySelector(S + ' .research .status'), C4, { timeout: 15000 }); };
 await page.click(C4 + ' [data-act=research]');
+ok((await page.innerText(C4 + ' [data-act=research]')).includes('もう一度押す'), 'asked before research uses a credit');
+await page.click(C4 + ' [data-act=research]');
 await researched();
 await shot('research');
 ok(/あと\s*3/.test(await page.innerText('#acct .credit')), 'research uses the company\'s credit (4 → 3)');
 ok((await page.innerText(C4 + ' .research')).includes('あと2回'), 'research count shown');
+ok((await page.innerText(C4 + ' .research')).includes('事実5件'), 'result summary');
 ok((await page.locator(C4 + ' .rs-src a').count()) > 0, 'each fact links its source');
 for (let k = 0; k < 2; k++) { await page.click(C4 + ' [data-act=research]'); await researched(); }
-ok(await page.isDisabled(C4 + ' [data-act=research]'), 'research limited per company (button)');
+ok((await page.innerText(C4 + ' .research')).includes('上限') && !(await page.isVisible(C4 + ' [data-act=research]')), 'research limited per company (no button)');
+ok(await page.isVisible(C4 + ' [data-act=researchBack]'), 'previous result can be restored');
 const fourth = await api('/api/ai', { task: 'research', ctx: {}, c: { id: C4id, name: await page.inputValue(C4 + ' [data-cf=name]'), job: await page.inputValue(C4 + ' [data-cf=job]') } });
 ok(fourth.error && fourth.error.code === 'limit' && fourth.error.scope === 'research', 'server: research limited to 3 per company');
 ok(/あと\s*3/.test(await page.innerText('#acct .credit')), 'credits unchanged by repeated research');

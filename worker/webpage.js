@@ -92,22 +92,30 @@ function jobText(j) {
   return { text: parts.map(([k, v]) => `【${k}】\n${v}`).join('\n\n'), company: txt(org), title: txt(j.title) };
 }
 // the text of a page as it would be pasted: the JobPosting data when the page has it, else the main content
-export function extractJob(html) {
+export function extractJob(html, now = Date.now()) {
   const jobs = jsonLdJobs(html);
   const title = htmlText((/<title[^>]*>([\s\S]*?)<\/title>/i.exec(html) || [])[1] || '').slice(0, 200);
-  if (jobs.length) { const j = jobText(jobs[0]); if (j.text.length > 150) return { text: j.text.slice(0, 12000), title: j.title || title, company: j.company }; }
+  if (jobs.length) {
+    const j = jobText(jobs[0]);
+    // a list page holds several postings (the first is taken; the user is told); a closed one is flagged
+    const until = String(jobs[0].validThrough || '').slice(0, 10);
+    const expired = /^\d{4}-\d{2}-\d{2}$/.test(until) && Date.parse(until + 'T23:59:59+09:00') < now ? until : '';
+    if (j.text.length > 150) return { text: j.text.slice(0, 12000), title: j.title || title, company: j.company, count: jobs.length, expired };
+  }
   const main = (/<main\b[\s\S]*?<\/main>/i.exec(html) || /<article\b[\s\S]*?<\/article>/i.exec(html) || [])[0];
   let text = main ? htmlText(main) : '';
   if (text.length < 300) text = htmlText((/<body\b[\s\S]*<\/body>/i.exec(html) || [html])[0]);
   return { text: text.slice(0, 12000), title, company: '' };
 }
 
-// company research: keep only items whose page the search really returned; the page's title from the search
+// company research: keep only items whose page the search really returned; the page's title and age from the
+// search when the answer has none. Facts keep their ids (F1…) so hooks and questions can point at them.
+const ym = (age) => { const t = Date.parse(String(age || '')); if (!Number.isFinite(t)) return ''; const d = new Date(t); return d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0'); };
 export function keepFound(v, sources) {
-  const found = new Map(sources.map((x) => [x.url.replace(/#.*$/, '').replace(/\/$/, ''), x]));
-  const ok = (it) => { const k = String(it && it.url || '').replace(/#.*$/, '').replace(/\/$/, ''); const f = found.get(k); if (!f) return null; return { ...it, url: f.url, title: it.title || f.title }; };
-  v.facts = (Array.isArray(v.facts) ? v.facts : []).map(ok).filter(Boolean);
-  v.position = (Array.isArray(v.position) ? v.position : []).map(ok).filter(Boolean);
+  const key = (u) => String(u || '').replace(/#.*$/, '').replace(/\/$/, '');
+  const found = new Map(sources.map((x) => [key(x.url), x]));
+  const ok = (it) => { const f = found.get(key(it && it.url)); if (!f) return null; return { ...it, url: f.url, title: it.title || f.title, ...('date' in it || f.age ? { date: it.date || ym(f.age) } : {}) }; };
+  v.facts = (Array.isArray(v.facts) ? v.facts : []).map((f, i) => (f && typeof f === 'object' ? { ...f, id: f.id || 'F' + (i + 1) } : f)).map(ok).filter(Boolean);
+  v.position = (Array.isArray(v.position) ? v.position : []).map(ok).filter(Boolean).map(({ date, ...p }) => p);
   return v;
 }
-

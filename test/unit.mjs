@@ -166,23 +166,33 @@ await t('a posting page as plain text', async () => {
   const p = extractJob(plain);
   assert.ok(p.text.includes('募集職種') && p.text.includes('営業&企画') && p.text.includes('・法人営業'), 'main content');
   assert.ok(!p.text.includes('秘密') && !p.text.includes('ロゴ') && !p.text.includes('会社概要'), 'scripts, header and footer left out');
+  const two = `<script type="application/ld+json">${JSON.stringify([{ ...ld, validThrough: '2026-01-31' }, ld])}</script>`;
+  const t2 = extractJob(two, Date.parse('2026-11-01'));
+  assert.equal(t2.count, 2, 'a list page'); assert.equal(t2.expired, '2026-01-31', 'a closed posting');
 });
 await t('research keeps only pages the search returned', async () => {
   const v = keepFound({ facts: [{ text: 'a', url: 'https://ex.co.jp/news/1/' }, { text: 'b', url: 'https://made.up/page' }, { text: 'c', url: 'https://ex.co.jp/ir#top', title: '' }], position: [{ text: 'd', url: '' }] },
     [{ url: 'https://ex.co.jp/news/1', title: 'ニュース' }, { url: 'https://ex.co.jp/ir', title: 'IR情報' }]);
   assert.deepEqual(v.facts.map((x) => x.text), ['a', 'c']);
+  assert.deepEqual(v.facts.map((x) => x.id), ['F1', 'F3'], 'ids kept for hooks and questions');
   assert.equal(v.facts[1].title, 'IR情報'); assert.equal(v.position.length, 0);
+  const d = keepFound({ facts: [{ text: 'x', url: 'https://ex.co.jp/n', date: '' }] }, [{ url: 'https://ex.co.jp/n', title: 't', age: 'April 3, 2026' }]);
+  assert.equal(d.facts[0].date, '2026-04', 'date from the search result');
 });
 await t('research prompt, and research in the other prompts', async () => {
   for (const uiLang of ['', 'en', 'zh']) {
     const p = PROMPTS.P_RESEARCH({ ...ctx, uiLang }, c);
     assert.ok(!/undefined|\[object Object\]/.test(p) && p.includes('web_search'), uiLang + ' renders');
     assert.ok(!p.includes(D.name) && !p.includes(D.raw.slice(0, 40)), uiLang + ' no candidate data in the research prompt');
-    assert.equal(p.includes('questions_tr'), !!uiLang);
+    assert.equal(p.includes('q_tr'), !!uiLang);
+    assert.ok(p.includes('2026年11月1日'), uiLang + ' knows today');
   }
   const w = {}; new Function('window', readFileSync(new URL('../public/demo.js', import.meta.url), 'utf8'))(w);
   const cr = { ...c, research: w.DEMO.research };
   [PROMPTS.P_ANALYZE(ctx, cr), PROMPTS.P_PACK(ctx, cr), PROMPTS.P_PREP(ctx, cr, 2), PROMPTS.P_RK(ctx, cr)].forEach((p, i) => { assert.ok(p.includes('## 公開情報の調査'), 'research block ' + i); assert.ok(!/undefined/.test(p), 'renders ' + i + ' ' + (p.match(/.{60}undefined.{20}/s) || [''])[0]); });
   assert.ok(!PROMPTS.P_PACK(ctx, c).includes('## 公開情報の調査'), 'nothing when not researched');
+  assert.ok(PROMPTS.P_PACK(ctx, cr).includes('motivation.used') && !PROMPTS.P_PACK(ctx, c).includes('# 公開情報の使い方'), 'usage rules only with research');
+  assert.ok(!PROMPTS.P_PACK(ctx, { ...cr, research: { ...w.DEMO.research, confidence: 'low' } }).includes('## 公開情報の調査'), 'not used when unsure of the company');
+  assert.ok(PROMPTS.P_RESEARCH(ctx, { ...c, hosts: ['careers.example.co.jp'] }).includes('careers.example.co.jp'), 'page hosts as a clue');
 });
 console.log(`${n} passed in total`);

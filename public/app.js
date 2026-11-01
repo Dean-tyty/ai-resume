@@ -45,6 +45,9 @@ function migrate(st) {
     if (!c.tab) c.tab = 'doc';
     c.rk = Object.assign({ motive: '', hope: '貴社の規定に従います。', status: '' }, c.rk || {}); if (c.rk.status === 'run') c.rk.status = '';
     if (c.exStatus === 'run') c.exStatus = c.explain ? 'done' : '';
+    if (c.researchStatus === 'run') c.researchStatus = '';
+    if (c.fetchStatus === 'run') c.fetchStatus = '';
+    if (c.research) c.research = normResearch(c.research);
     c.batch = false;
   });
   return st;
@@ -157,7 +160,8 @@ async function refreshMe() {
 const hasSlot = (c) => !!(acct.me && acct.me.slots.has(c.id));
 const isPaid = () => !!(acct.me && acct.me.paid);
 const researchLeft = (c) => (CFG.research || 3) - ((acct.me && acct.me.research[c.id]) || 0);
-const RESUMABLE = new Set(['extract', 'analyze', 'generate', 'pack', 'prep', 'rkMotive', 'explain', 'analyzeAll', 'generateAll', 'research']);
+const RESUMABLE = new Set(['extract', 'analyze', 'generate', 'pack', 'prep', 'rkMotive', 'explain', 'analyzeAll', 'generateAll', 'research', 'fetchJob']);
+const SHOW_ONLY = new Set(['research']);   // after a purchase these are shown, not started (they would use a credit)
 let lastAct = null;
 function savePending() { try { if (lastAct) sessionStorage.setItem('resume-pending', JSON.stringify(lastAct)); } catch (e) { /* not resumed */ } }
 function runPending() {
@@ -166,6 +170,7 @@ function runPending() {
   const sel = Object.keys(a).map((k) => `[data-${k.replace(/[A-Z]/g, (m) => '-' + m.toLowerCase())}="${CSS.escape(a[k])}"]`).join('');
   const btn = document.querySelector(sel);
   if (!btn || btn.disabled) return false;
+  if (SHOW_ONLY.has(a.act)) { setTimeout(() => { btn.scrollIntoView({ block: 'center', behavior: 'smooth' }); btn.focus({ preventScroll: true }); btn.classList.add('flash'); }, 150); return true; }
   setTimeout(() => btn.click(), 150); return true;
 }
 
@@ -180,13 +185,13 @@ async function ask(task, extra, key) {
   if (!acct.me) await refreshMe();
   if (!acct.me.consent && !(await askConsent())) throw { code: 'consent_declined' };
   const c = extra && extra.c;
-  if (task === 'research' && !acct.me.paid) { openBuy('会社の公開情報の調査は、利用枠を購入した方が使える機能です。'); throw { code: 'paid_only' }; }
-  if (c && task !== 'analyze' && !c.sample && !hasSlot(c) && acct.me.credits <= 0) { openBuy('この会社の書類を作るには、利用枠が1社分必要です（求人票の分析は無料です）。'); throw { code: 'no_credit' }; }
+  if (task === 'research' && !acct.me.paid) { openBuy('会社の公開情報の調査は、利用枠を購入した方が使える機能です。', 'buyer'); throw { code: 'paid_only' }; }
+  if (c && task !== 'analyze' && !c.sample && !hasSlot(c) && acct.me.credits <= 0) { openBuy(task === 'research' ? '会社の公開情報を調べるには、この会社の利用枠（1社分）が必要です。' : 'この会社の書類を作るには、利用枠が1社分必要です（求人票の分析は無料です）。'); throw { code: 'no_credit' }; }
   const ctl = new AbortController(); controllers[key] = ctl;
   try {
     // company research needs only the company and the posting (nothing about the user is sent)
     const payload = task === 'research'
-      ? { task, ctx: { uiLang: UI_LANG }, c: { id: c.id, name: c.name, job: c.job, analysis: c.analysis ? { company: c.analysis.company, position: c.analysis.position } : null } }
+      ? { task, ctx: { uiLang: UI_LANG }, c: { id: c.id, name: c.name, job: c.job, analysis: c.analysis ? { company: c.analysis.company, position: c.analysis.position } : null, hosts: [hostOf(c.jobUrl), hostOf(c.siteUrl)].filter(Boolean) } }
       : Object.assign({ task, ctx: ctxPay() }, extra, c ? { c: cPay(c) } : {});
     const j = await api('POST', '/api/ai', payload, ctl.signal);
     if (typeof j.credits === 'number') acct.me.credits = j.credits;
@@ -229,6 +234,7 @@ function errMsg(e) {
     company_changed: `この応募先は「${(e && e.label) || '別の会社'}」の分として利用枠を使っています。別の会社に応募するときは「＋ 応募先を追加」から追加してください。`,
     paid_only: 'この機能は、利用枠を購入した方が使えます。',
     sample: 'サンプルの会社は架空のため、公開情報は調べられません。',
+    research_empty: `公開情報を十分に見つけられませんでした（回数と利用枠は使っていません）。会社名を正式名称にするか、公式サイトの URL を入れてもう一度お試しください。${e && e.reason ? '（' + e.reason + '）' : ''}`,
     url: 'URL の形が正しくありません。「https://」から始まる求人ページの URL を貼ってください。',
     site_not_allowed: 'このサイトは利用規約などの理由で自動では読み込めません。求人ページの本文をコピーして、下の欄に貼り付けてください。',
     robots: 'このページはサイトの設定（robots.txt）で自動の読み込みが許可されていません。本文をコピーして貼り付けてください。',
@@ -350,6 +356,16 @@ function openModal(html, o) {
 function closeModal(v) { $('#modal').classList.add('hidden'); document.body.classList.remove('noscroll'); modalLock = false; if (modalResolve) { const r = modalResolve; modalResolve = null; r(v); } }
 $('#modal').addEventListener('click', (e) => { if (e.target.id === 'modal' && !modalLock) closeModal(false); });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('#modal').classList.contains('hidden') && !modalLock) closeModal(false); });
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter' || e.isComposing || !e.target.matches || !e.target.matches('[data-cf=jobUrl]')) return;
+  e.preventDefault(); const b = e.target.closest('[data-cid]') && e.target.closest('[data-cid]').querySelector('[data-act=fetchJob]'); if (b && !b.disabled) b.click();
+});
+// open / closed sections are remembered across re-renders (the posting, the research result)
+document.addEventListener('toggle', (e) => {
+  const d = e.target; if (!d || !d.dataset) return;
+  const k = d.dataset.jobd ? 'jobOpen' : d.dataset.rs ? 'rsOpen' : ''; if (!k) return;
+  const c = company(d.dataset.jobd || d.dataset.rs); if (c) c[k] = d.open;
+}, true);
 function askConsent() {
   return new Promise((ok) => {
     modalResolve = ok;
@@ -367,17 +383,19 @@ function askConsent() {
       <p class="hint" style="text-align:right;margin-top:8px"><a href="${h(CFG.terms)}" target="_blank" rel="noopener">利用規約</a>　<a href="${h(CFG.privacy)}" target="_blank" rel="noopener">プライバシーポリシー</a></p>`, { lock: true });
   });
 }
-function openBuy(reason) {
+function openBuy(reason, kind) {
   const packs = CFG.packs || [];
   const left = acct.me ? acct.me.credits : null;
   if (reason) savePending();
   const best = packs.reduce((m, p) => (!m || p.price / p.credits < m.price / m.credits ? p : m), null);
-  openModal(`<h2 id="modalTitle">次の応募先の書類を作る</h2>
+  const buyer = kind === 'buyer';
+  openModal(`<h2 id="modalTitle">${buyer ? '利用枠を購入する' : '次の応募先の書類を作る'}</h2>
     ${reason ? `<p class="status warn">${h(reason)}</p>` : ''}
+    ${buyer ? '<p class="hint" style="margin:0 0 8px">無料の1社分では使えません。購入すると、すでに登録した会社にも使えます。</p>' : ''}
     ${left != null ? `<p>いま作成できる応募先：<b>あと${left}社</b></p>` : ''}
     <div class="packs">${packs.map((p) => `<button class="buy-pack ${p === best ? 'rec' : ''}" data-act="buy" data-pack="${h(p.id)}">${p === best && packs.length > 1 ? '<span class="badge">おすすめ</span>' : ''}<span class="pl">${h(p.label)}</span><b>${p.price.toLocaleString('ja-JP')}円</b><small>税込・1社あたり${Math.round(p.price / p.credits).toLocaleString('ja-JP')}円</small></button>`).join('')}</div>
     <p class="hint">1社分 ＝ 1つの応募先。その会社の職務経歴書・履歴書・英文レジュメ・志望動機・面接準備は、何度作り直しても追加料金はかかりません（1日に使える回数には上限があります）。求人票の分析は無料です。</p>
-    <p class="hint">購入した方は、求人ページの URL からの読み込みと、会社の公開情報の調査（出典付き・1社につき${CFG.research || 3}回まで）も使えます。</p>
+    <ul class="trust buyer"><li>求人ページの URL から求人票を読み込み</li><li>会社の公開情報の調査（出典付き・1社につき${CFG.research || 3}回まで。その会社の1社分に含まれます）</li></ul>
     <p class="hint">買い切り（月額・自動更新なし）。クレジットカードなどで、Stripe の決済画面からお支払いいただけます。応募先を削除しても、使った利用枠は戻りません。</p>
     <p class="hint"><a href="${h(CFG.terms)}" target="_blank" rel="noopener">利用規約</a>　<a href="https://www.flatland.co.jp/legal/tokushoho/" target="_blank" rel="noopener">特定商取引法に基づく表示</a></p>
     <div class="row"><span class="spacer"></span><button class="btn" data-act="closeModal">閉じる</button></div>`);
@@ -411,7 +429,7 @@ async function paidReturn() {
     await new Promise((ok) => setTimeout(ok, 2500));
   }
   hideNotice();
-  if (acct.me && acct.me.credits > before) { toast(`利用枠を追加しました（あと${acct.me.credits}社分）`); render(); runPending(); }
+  if (acct.me && acct.me.credits > before) { toast(`利用枠を追加しました（あと${acct.me.credits}社分）。求人ページの URL からの読み込みと、会社の公開情報の調査も使えます`); render(); runPending(); }
   else showNotice('お支払いの確認に時間がかかっています。数分後にページを再読み込みしてください。解決しない場合はお問い合わせください。');
 }
 async function deleteAccount() {
@@ -481,7 +499,7 @@ function normAnalysis(a) {
 function normPack(p) {
   p = p || {}; const m = p.motivation || {};
   // *_tr: the translation for the English / Chinese page (the Japanese is what is said in the interview)
-  return { motivation: { long: Sx(m.long), short: Sx(m.short), long_tr: Sx(m.long_tr), short_tr: Sx(m.short_tr) },
+  return { at: Number(p.at) || 0, motivation: { long: Sx(m.long), short: Sx(m.short), long_tr: Sx(m.long_tr), short_tr: Sx(m.short_tr), used: A(m.used).map(Sx) },
     flow: { note: Sx(p.flow && p.flow.note), steps: A(p.flow && p.flow.steps).map((s) => ({ name: Sx(s.name), who: Sx(s.who), focus: Sx(s.focus) })) },
     questions: A(p.questions).map((q) => ({ q: Sx(q.q), q_tr: Sx(q.q_tr), intent: Sx(q.intent), points: A(q.points).map(Sx), answer: Sx(q.answer), answer_tr: Sx(q.answer_tr) })),
     reverse: A(p.reverse).map(Sx), reverse_tr: A(p.reverse_tr).map(Sx), cautions: A(p.cautions).map(Sx) };
@@ -512,6 +530,8 @@ const nd = (s) => String(s).replace(/[０-９．]/g, (c) => (c === '．' ? '.' :
 // Numbers are checked against what the user typed (not against AI-structured data), with digit boundaries.
 function userSource() { const it = state.intent || {}; return nd([state.raw, Object.values(state.answers || {}).join('\n'), it.reason, it.axis, it.conditions, ...(state.companies || []).flatMap((c) => (c.stages || []).map((s) => Object.values(s.log || {}).join('\n')))].join('\n')); }
 // `more`: other text the numbers may come from (the job posting, for interview material that quotes it)
+// the researched facts as text: numbers taken from them are not the user's, but they are sourced
+const researchText = (c) => (c && c.research ? [...c.research.facts, ...c.research.position].map((f) => [f.text, f.date, (f.date || '').replace(/^(\d{4})-0?(\d+).*$/, '$1年$2月')].join(' ')).join('\n') : '');
 function checkNumbers(parts, more) {
   const src = userSource() + '\n' + nd(more || ''); const all = new Set(), bad = new Set();
   parts.forEach((t) => { (nd(t || '').match(/\d+(?:\.\d+)?/g) || []).forEach((n) => { all.add(n); const re = new RegExp('(^|[^0-9.])' + n.replace(/\./g, '\\.') + '(?![0-9]|\\.[0-9])'); if (!re.test(src)) bad.add(n); }); });
@@ -601,72 +621,126 @@ async function refit(c) {
   c.status = 'done'; save(); render();
 }
 // ---------------- for buyers: a posting from its URL, the company's public information ----------------
+const hostOf = (u) => { try { return new URL(String(u || '').trim()).hostname; } catch (e) { return ''; } };
 async function fetchJobUrl(c) {
-  const url = (c.jobUrl || '').trim();
-  if (!url) { toast('求人ページの URL を入れてください'); return; }
-  if (!acct.user) { openLogin(); return; }
+  if (!acct.user) { savePending(); openLogin(); return; }
   if (!acct.me) await refreshMe();
-  if (!acct.me.paid) { openBuy('求人ページの URL からの読み込みは、利用枠を購入した方が使える機能です。'); return; }
-  c.fetchStatus = 'run'; c.fetchError = ''; render();
+  if (!acct.me.paid) { openBuy('求人ページの URL からの読み込みは、利用枠を購入した方が使える機能です。', 'buyer'); return; }
+  const url = (c.jobUrl || '').trim();
+  if (!url) { toast('求人ページの URL を入れてください'); const i = document.querySelector(`[data-cid="${c.id}"] [data-cf=jobUrl]`); if (i) i.focus(); return; }
+  c.fetchStatus = 'run'; c.fetchError = ''; c.fetchCode = ''; c.fetchNote = ''; render();
   try {
     const r = await api('POST', '/api/fetch-job', { url });
-    c.job = Sx(r.text).slice(0, 12000);
+    c.jobPrev = c.job; c.job = Sx(r.text).slice(0, 12000); c.jobOpen = true;
     if (!c.name && r.company) c.name = Sx(r.company).slice(0, 120);
+    c.fetchNote = [r.count > 1 ? `このページには求人が${r.count}件ありました。最初の1件を読み込んだので、目的の求人か確かめてください。` : '',
+      r.expired ? `この求人は掲載期限（${Sx(r.expired)}）を過ぎている可能性があります。` : ''].filter(Boolean).join(' ');
     c.fetchStatus = ''; toast('求人ページを読み込みました。内容を確かめてから分析してください');
-  } catch (e) { c.fetchStatus = ''; c.fetchError = errMsg(e); }
+    save(); render();
+    setTimeout(() => { const t = document.querySelector(`[data-cid="${c.id}"] [data-cf=job]`); if (t) { t.scrollIntoView({ block: 'center', behavior: 'smooth' }); t.focus({ preventScroll: true }); } }, 60);
+    return;
+  } catch (e) { c.fetchStatus = ''; c.fetchError = errMsg(e); c.fetchCode = e.code || ''; }
   save(); render();
 }
 const safeUrl = (u) => (/^https?:\/\//i.test(String(u || '')) ? String(u) : '');
+// research as stored: facts F1…, what can go into the motivation (hooks), questions with the fact they rest on.
+// Older results (talking_points, questions as text) are read too.
 function normResearch(r) {
   r = r || {};
-  const item = (x) => ({ topic: Sx(x.topic), text: Sx(x.text), url: safeUrl(x.url), title: Sx(x.title), date: Sx(x.date) });
-  return { company: Sx(r.company), confidence: ['high', 'medium', 'low'].includes(r.confidence) ? r.confidence : 'medium', sample: !!r.sample, overview: Sx(r.overview),
-    facts: A(r.facts).map(item).filter((x) => x.text && x.url), position: A(r.position).map(item).filter((x) => x.text && x.url),
-    talking_points: A(r.talking_points).map(Sx).filter(Boolean), questions: A(r.questions).map(Sx).filter(Boolean), questions_tr: A(r.questions_tr).map(Sx),
+  const item = (x, i) => ({ id: Sx(x.id) || (i != null ? 'F' + (i + 1) : ''), topic: Sx(x.topic), entity: Sx(x.entity) || '応募先', text: Sx(x.text), url: safeUrl(x.url), title: Sx(x.title), date: Sx(x.date) });
+  const hooks = A(r.hooks).length ? A(r.hooks).map((x) => ({ fact: Sx(x.fact), why: Sx(x.why) })) : A(r.talking_points).map((t) => ({ fact: '', why: Sx(t) }));
+  const qs = A(r.questions).map((q, i) => (typeof q === 'string' ? { q: Sx(q), q_tr: Sx(A(r.questions_tr)[i]), premise: '', for: '' } : { q: Sx(q.q), q_tr: Sx(q.q_tr), premise: Sx(q.premise), for: Sx(q.for) }));
+  const id = r.identity || {};
+  return { company: Sx(r.company), confidence: ['high', 'medium', 'low'].includes(r.confidence) ? r.confidence : 'medium', sample: !!r.sample,
+    identity: { official_site: safeUrl(id.official_site), match: Sx(id.match) }, overview: Sx(r.overview), hiring_context: Sx(r.hiring_context),
+    facts: A(r.facts).map((x, i) => item(x, i)).filter((x) => x.text && x.url), position: A(r.position).map((x) => item(x)).filter((x) => x.text && x.url),
+    hooks: hooks.filter((x) => x.why), questions: qs.filter((q) => q.q),
     check_yourself: A(r.check_yourself).map(Sx).filter(Boolean), caveats: A(r.caveats).map(Sx).filter(Boolean), at: r.at || Date.now() };
 }
 async function makeResearch(c) {
   c.researchStatus = 'run'; c.researchSince = Date.now(); c.researchError = ''; render();
-  try { c.research = normResearch(await ask('research', { c }, 'rs-' + c.id)); c.researchStatus = ''; }
-  catch (e) { c.researchStatus = ''; c.researchError = errMsg(e); }
+  try {
+    const nr = normResearch(await ask('research', { c }, 'rs-' + c.id));
+    if (c.research && !c.research.sample) c.researchPrev = c.research;
+    c.research = nr; c.researchStatus = ''; c.rsOpen = true;
+  } catch (e) { c.researchStatus = ''; c.researchError = errMsg(e); }
   save(); render();
 }
+// another 応募先 at the same company already researched: its result can be reused (no search)
+const sameCo = (a, b) => { const n = (x) => String(x || '').replace(/株式会社|（株）|\(株\)|（架空）|[\s　]/g, ''); const x = n(a); const y = n(b); return !!x && !!y && (x.includes(y) || y.includes(x)); };
+const researchTwin = (c) => state.companies.find((x) => x !== c && x.research && !x.research.sample && sameCo(cname(x), cname(c)));
+const ymLabel = (d) => { const m = /^(\d{4})-(\d{2})/.exec(d || ''); if (!m) return ''; const y = +m[1]; const mo = +m[2]; return UI_LANG === 'en' ? ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][mo - 1] + ' ' + y : `${y}年${mo}月`; };
+const dayLabel = (t) => { const d = new Date(t); return UI_LANG === 'en' ? d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`; };
+const srcLink = (x) => { let host = ''; try { host = new URL(x.url).hostname.replace(/^www\./, ''); } catch (e) { /* none */ } return `<a href="${h(x.url)}" target="_blank" rel="noopener noreferrer nofollow">${h(x.title || host)}<span class="sr">（新しいタブで開きます）</span></a> <span class="cc" data-noi18n>· ${h(host)}${x.date ? ' · ' + h(ymLabel(x.date) || x.date) : ''}</span>`; };
+const FOR = { 現場: '現場の担当者・マネージャーに', 部門長: '部門長に', 役員: '役員に' };
 function researchHTML(c) {
   const r = c.research; const run = c.researchStatus === 'run';
-  const paid = isPaid() || state.demo;
-  const left = researchLeft(c);
-  let s = `<div class="research"><div class="row" style="margin:0;align-items:center"><h4 style="margin:0">会社の公開情報（出典付き）</h4><span class="tag">購入者向け</span><span class="spacer"></span>`;
-  if (!c.sample && !state.demo) {
-    s += paid ? `<button class="btn ${r ? 'ghost' : ''} small" data-act="research" data-id="${c.id}" ${run || left <= 0 || BUSY.includes(c.status) ? 'disabled' : ''}>${r ? 'もう一度調べる' : '公式サイトやニュースを調べる'}</button>`
-      : '<button class="btn ghost small" data-act="openBuy">利用枠を購入すると使えます</button>';
+  const paid = isPaid(); const max = CFG.research || 3; const left = researchLeft(c);
+  const live = !c.sample && !state.demo;
+  const twin = live && !r ? researchTwin(c) : null;
+  let s = `<div class="research" id="rs-${c.id}">`;
+  if (!r) {
+    s += `<div class="rs-head"><h4 tabindex="-1">会社の公開情報を調べる</h4>${live && !paid ? '<span class="pill lock">購入者向け</span>' : ''}</div>`;
+    s += '<p class="hint" style="margin:6px 0 0">会社の公式サイト・ニュース・IR・採用ページを AI が検索し、志望動機や逆質問に使える事実を出典付きでまとめます。</p>';
+    s += '<p class="hint tiny" style="margin:4px 0 0">検索に使うのは会社名・職種・求人票だけです。あなたの経歴は送りません。口コミサイトは使いません。</p>';
+    if (c.sample && !state.demo) s += '<p class="hint tiny" style="margin:4px 0 0">サンプルの会社は架空のため、公開情報は調べられません。</p>';
+    if (live && !run) {
+      if (twin) s += `<div class="row" style="margin:10px 0 0"><button class="btn small" data-act="useTwin" data-id="${c.id}">「${h(cname(twin))}」の調査結果を使う（無料）</button></div>`;
+      if (!paid) s += `<div class="row" style="margin:10px 0 0;align-items:center"><button class="btn small" data-act="research" data-id="${c.id}">🔒 購入して使う</button><button class="linkbtn" data-act="researchExample">結果の例を見る</button></div>`;
+      else {
+        s += `<div class="row" style="margin:10px 0 0;align-items:center"><button class="btn small ${c.analysis ? 'primary' : ''}" data-act="research" data-id="${c.id}" ${left <= 0 || BUSY.includes(c.status) ? 'disabled' : ''}>${hasSlot(c) ? '公式サイトやニュースを調べる' : '調べる（この会社の1社分を使う）'}</button><span class="hint tiny">1社につき${max}回まで。1〜2分かかります。</span></div>`;
+        if (!hasSlot(c)) s += '<p class="credit-note warn">この会社の利用枠（1社分）を使います。この会社の書類・面接準備は、追加料金なしで作れます。</p>';
+      }
+    }
   }
-  s += '</div>';
-  if (!r && !run) {
-    s += `<p class="hint" style="margin:6px 0 0"><span>会社の公式サイト・ニュース・IR・採用ページを AI が検索し、志望動機や逆質問に使える事実を出典付きでまとめます。口コミサイトは使いません。</span>${c.sample && !state.demo ? ' <span>サンプルの会社は架空のため、公開情報は調べられません。</span>' : ''}${paid && !c.sample ? ` <span>1社につき${CFG.research || 3}回まで。</span>${hasSlot(c) ? '' : ' <span>この会社の利用枠（1社分）を使います。</span>'}` : ''}</p>`;
-  }
-  if (paid && !c.sample && r && left < (CFG.research || 3)) s += `<p class="hint tiny" style="margin:4px 0 0">あと${Math.max(0, left)}回調べられます。</p>`;
-  if (run) s += `<div class="status">${spin}${stage('research', c.researchSince)} ${elapsed(c.researchSince, '1〜2分')} ${abortBtn('rs-' + c.id)}</div>`;
-  if (c.researchError) s += `<div class="status err">${h(c.researchError)}</div>`;
+  if (run) s += `<div class="status" role="status">${spin}${stage('research', c.researchSince)} ${elapsed(c.researchSince, '1〜2分')} ${abortBtn('rs-' + c.id)}</div>`;
+  if (c.researchError) s += `<div class="status err" role="alert">${h(c.researchError)}</div>`;
   if (r) {
+    const fact = (id) => r.facts.find((f) => f.id === id);
+    s += `<details class="rs" data-rs="${c.id}" ${c.rsOpen || run ? 'open' : ''}><summary><span class="rs-sum"><b>会社の公開情報（出典付き）</b><span>事実${r.facts.length}件</span><span>${h(dayLabel(r.at))} 調査</span></span></summary>`;
     if (r.sample) s += '<p class="hint tiny" style="margin:6px 0 0">サンプル：架空の会社のため、リンク先は例です。</p>';
+    // the next step: the motivation statement and interview answers made before this research don't use it yet
+    if (!r.sample && live) {
+      if (c.pack && (c.pack.at || 0) < r.at) s += `<div class="fb note rs-cta"><span>志望動機・想定問答は、調べる前に作ったものです。</span><button class="btn small primary" data-act="reflect" data-id="${c.id}" ${c.packStatus === 'run' ? 'disabled' : ''}>志望動機・想定問答に反映する（無料）</button></div>`;
+      else if (!c.pack) s += `<div class="fb note rs-cta"><span>このあと作る志望動機・面接準備に、調べた情報が使われます。</span></div>`;
+    }
     if (r.confidence === 'low') s += '<div class="fb warn" style="margin-top:8px">同じ名前の別の会社の情報が混ざっている可能性があります。リンク先で会社を確かめてください。</div>';
-    if (r.overview) s += `<p style="margin:8px 0">${h(r.overview)}</p>`;
-    const src = (x) => `<a href="${h(x.url)}" target="_blank" rel="noopener noreferrer nofollow" data-noi18n>${h(x.title || new URL(x.url).hostname)}</a>${x.date ? ` <span class="cc">${h(x.date)}</span>` : ''}`;
-    if (r.facts.length) s += `<ul class="rs-facts">${r.facts.map((x) => `<li>${x.topic ? `<span class="tag gray">${h(x.topic)}</span> ` : ''}${h(x.text)}<div class="rs-src">${src(x)}</div></li>`).join('')}</ul>`;
-    if (r.position.length) s += `<h5>この職種について</h5><ul class="rs-facts">${r.position.map((x) => `<li>${h(x.text)}<div class="rs-src">${src(x)}</div></li>`).join('')}</ul>`;
-    if (r.talking_points.length) s += `<h5>志望動機・面接で触れられる話題</h5><ul>${r.talking_points.map((x) => `<li>${h(x)}</li>`).join('')}</ul>`;
-    if (r.questions.length) s += `<h5>逆質問の候補</h5><ul>${r.questions.map((x, i) => `<li><span data-noi18n>${h(x)}</span>${trl(r.questions_tr[i])}</li>`).join('')}</ul>`;
-    if (r.check_yourself.length) s += `<h5>自分で確かめたいこと（説明会・面接・口コミで）</h5><ul>${r.check_yourself.map((x) => `<li>${h(x)}</li>`).join('')}</ul>`;
+    if (r.overview) s += `<p style="margin:10px 0 4px">${h(r.overview)}</p>`;
+    if (r.identity.match || r.identity.official_site) s += `<p class="hint tiny" style="margin:0">${r.identity.match ? `<span>同じ会社か：${h(r.identity.match)}</span> ` : ''}${r.identity.official_site ? `<span class="rs-src">${srcLink({ url: r.identity.official_site, title: '公式サイト' })}</span>` : ''}</p>`;
+    if (r.hiring_context) s += `<div class="rs-ctx"><b>募集背景の手がかり</b><span>${h(r.hiring_context)}</span></div>`;
+    s += '<div class="rs-cols"><div>';
+    if (r.facts.length) s += `<h5>主な事実</h5><ul class="rs-facts">${r.facts.map((x) => `<li><span class="tag gray">${h(x.topic || '公開情報')}</span><div><div>${h(x.text)}${x.entity === 'グループ' ? ' <span class="tag warn">グループ会社</span>' : ''}</div><div class="rs-src">${srcLink(x)}</div></div></li>`).join('')}</ul>`;
+    if (r.position.length) s += `<h5>この職種について</h5><ul class="rs-facts">${r.position.map((x) => `<li><span class="tag gray">職種</span><div><div>${h(x.text)}</div><div class="rs-src">${srcLink(x)}</div></div></li>`).join('')}</ul>`;
+    s += '</div><div>';
+    if (r.hooks.length) s += `<h5>志望動機の材料になりそうなこと</h5><ul>${r.hooks.map((x) => { const f = fact(x.fact); return `<li>${h(x.why)}${f ? `<span class="rs-sub">${h(f.text)}</span>` : ''}</li>`; }).join('')}</ul>`;
+    if (r.questions.length) s += `<h5>逆質問の候補</h5><ul>${r.questions.map((q) => `<li><span data-noi18n>${h(q.q)}</span>${trl(q.q_tr)}${FOR[q.for] ? `<span class="rs-sub">${FOR[q.for]}</span>` : ''}</li>`).join('')}</ul>`;
+    if (r.check_yourself.length) s += `<h5>自分で確かめたいこと</h5><ul>${r.check_yourself.map((x) => `<li>${h(x)}</li>`).join('')}</ul>`;
+    s += `<details class="mini"><summary>口コミサイトについて</summary><p>口コミサイトは AI の調査に使っていません。匿名の投稿は書き手の職種や時期を確かめられず、AI が要約すると一部の声が事実のように見えるためです。応募や入社を判断する材料として読むのは役立ちます。読むときは、直近2〜3年の投稿か、職種・部署が近いか、同じ点が複数の投稿で繰り返されているかを見てください。面接では口コミを根拠にせず、気になる点は中立な質問に言い換えて、人事面談やオファー面談で確かめましょう。</p></details>`;
+    s += '</div></div>';
     if (r.caveats.length) s += r.caveats.map((x) => `<p class="hint tiny" style="margin:4px 0 0">※ ${h(x)}</p>`).join('');
-    const stale = c.analysis && (!c.analyzedAt || c.analyzedAt < r.at) && !r.sample;
-    s += `<p class="hint tiny" style="margin:8px 0 0"><span>AI が自動で集めた公開情報です。内容と日付はリンク先で確かめてください。この情報は方針・志望動機・面接準備に使われます。</span>${stale ? ` <button class="linkbtn" data-act="analyze" data-id="${c.id}">分析し直して方針に反映する</button>` : ''}</p>`;
+    s += '<p class="hint tiny" style="margin:8px 0 0">AI が自動で集めた公開情報です。内容と日付はリンク先で確かめてください。検索に使ったのは会社名・職種・求人票だけです。</p>';
+    if (live && paid) {
+      s += '<div class="row rs-again" style="margin:10px 0 0;align-items:center">';
+      if (left > 0) s += `<button class="btn small ghost" data-act="research" data-id="${c.id}" ${run || BUSY.includes(c.status) ? 'disabled' : ''}>もう一度調べる（あと${left}回）</button><span class="hint tiny">別の会社の情報だったとき、情報が少ないときに</span>`;
+      else s += `<span class="pill">この会社の調査は上限（${max}回）に達しました</span>`;
+      if (c.researchPrev) s += `<span class="spacer"></span><button class="linkbtn" data-act="researchBack" data-id="${c.id}">前回の結果に戻す</button>`;
+      s += '</div>';
+      if (left > 0) s += `<label class="tiny-l">公式サイトの URL（任意・同じ名前の別の会社と区別するため）</label><input type="url" inputmode="url" data-cf="siteUrl" value="${h(c.siteUrl || '')}" placeholder="https://www.example.co.jp/" aria-label="公式サイトの URL">`;
+    }
+    s += '</details>';
   }
   return s + '</div>';
+}
+// the sample result, for people deciding whether to buy
+function researchExample() {
+  const X = UI_LANG !== 'ja' && window.DEMO_I18N && window.DEMO_I18N[UI_LANG];
+  const ex = { id: 'example', sample: true, research: normResearch((X && X.research) || DEMO.research), rsOpen: true };
+  openModal(`<h2 id="modalTitle">会社の公開情報の調査：結果の例</h2><p class="hint">架空の会社の例です。実際の調査では、公式サイト・ニュース・IR・採用ページのリンク先が付きます。</p>${researchHTML(ex)}<div class="row"><span class="spacer"></span><button class="btn" data-act="closeModal">閉じる</button><button class="btn primary" data-act="openBuy" data-why="buyer">利用枠を購入する</button></div>`);
 }
 
 async function makePack(c) {
   c.packStatus = 'run'; c.packError = ''; c.packSince = Date.now(); render();
-  try { c.pack = normPack(await ask('pack', { c }, 'pack-' + c.id)); c.packStatus = 'done'; }
+  try { c.pack = normPack(await ask('pack', { c }, 'pack-' + c.id)); c.pack.at = Date.now(); c.packStatus = 'done'; }
   catch (e) { c.packStatus = c.pack ? 'done' : 'err'; c.packError = errMsg(e); }
   save(); render();
 }
@@ -1008,7 +1082,9 @@ function render() {
   $('#steps').innerHTML = steps.map(([i, t, b], k) => `${k ? '<span class="sep"></span>' : ''}<button data-act="step" data-step="${i}" class="${state.step === i ? 'on' : ''} ${done[i] && state.step !== i ? 'done' : ''}"><span class="num">${done[i] && state.step !== i ? '✓' : i}</span><span class="lbl">${t}</span>${b ? `<span class="cnt">${b}</span>` : ''}</button>`).join('');
   ['v1', 'v2', 'v3', 'v4'].forEach((id, i) => $('#' + id).classList.toggle('on', state.step === i + 1));
   if (state.step === 1) render1(); else if (state.step === 2) render2(); else if (state.step === 3) render3(); else render4();
+  if (lastFocus && document.activeElement === document.body) { const el = document.querySelector(lastFocus); if (el) el.focus({ preventScroll: true }); }
 }
+let lastFocus = '';
 
 // ---------------- step 1 ----------------
 // the input's language: Chinese or English input shows the help in that language
@@ -1099,6 +1175,19 @@ function batchProgress() {
   const done = inBatch.filter((c) => !BUSY.includes(c.status)).length;
   return `<span class="pill run">${done < inBatch.length ? spin : ''}まとめて処理：${done}/${inBatch.length}社 完了</span>`;
 }
+// the job posting from its URL (buyers); a quiet link for others
+function urlRowHTML(c) {
+  if (c.sample || state.demo) return '';
+  if (!isPaid()) return `<div class="urlrow locked"><button class="linkbtn" data-act="fetchJob" data-id="${c.id}">🔒 求人ページの URL から読み込む（購入者向け）</button></div>`;
+  const run = c.fetchStatus === 'run';
+  let s = `<label>求人ページの URL から読み込む</label><div class="urlrow"><input type="url" inputmode="url" enterkeyhint="go" data-cf="jobUrl" value="${h(c.jobUrl || '')}" placeholder="https://（会社の採用ページなど）" aria-label="求人ページの URL"><button class="btn small ${run ? 'wait' : ''}" data-act="fetchJob" data-id="${c.id}" ${run ? 'disabled' : ''}>${run ? spin + '読み込み中…' : 'URL から読み込む'}</button></div>`;
+  if (c.fetchError) {
+    s += `<div class="status err" role="alert" style="margin:2px 0 6px">${h(c.fetchError)}</div>`;
+    if (['site_not_allowed', 'robots', 'login_required', 'too_little', 'not_html'].includes(c.fetchCode)) s += `<p class="hint tiny" style="margin:0 0 8px"><span>ページ全体をコピーして貼り付けても大丈夫です（関係のない部分は分析のときに読み飛ばします）。</span>${c.name ? ` <a href="https://www.google.com/search?q=${encodeURIComponent(c.name + ' 採用')}" target="_blank" rel="noopener noreferrer">この会社の採用ページを探す</a>` : ''}</p>`;
+  } else s += '<p class="hint tiny" style="margin:2px 0 8px">会社の採用ページなどから本文を読み込みます。転職サイト（doda・リクナビ・ビズリーチなど）や、ログインが必要なページは読み込めないため、本文を貼り付けてください。</p>';
+  if (c.fetchNote) s += `<div class="fb warn" style="margin:0 0 8px">${h(c.fetchNote)}</div>`;
+  return s;
+}
 function companyHTML(c) {
   const a = c.analysis;
   const busy = BUSY.includes(c.status);
@@ -1109,17 +1198,15 @@ function companyHTML(c) {
       ${pill(c)}
       <button class="btn ghost small" data-act="delCompany" data-id="${c.id}">削除</button>
     </div>
-    <details ${a ? '' : 'open'}><summary>求人票・企業情報${a ? '（入力済み）' : ''}</summary>
-      <label>求人票（全文を貼り付け）</label>
-      <div class="urlrow"><input type="url" data-cf="jobUrl" value="${h(c.jobUrl || '')}" placeholder="求人ページの URL（会社の採用ページなど）" aria-label="求人ページの URL" ${isPaid() ? '' : 'disabled'}><button class="btn small" data-act="${isPaid() ? 'fetchJob' : 'openBuy'}" data-id="${c.id}" ${c.fetchStatus === 'run' ? 'disabled' : ''}>${c.fetchStatus === 'run' ? '読み込み中…' : 'URL から読み込む'}</button></div>
-      <p class="hint tiny" style="margin:2px 0 6px">${isPaid() ? '会社の採用ページなどから本文を読み込みます。転職サイト（doda・リクナビ・ビズリーチなど）や、ログインが必要なページは読み込めないため、本文を貼り付けてください。' : '利用枠を購入した方は、求人ページの URL から読み込めます。'}</p>
-      ${c.fetchError ? `<div class="status err" style="margin:0 0 8px">${h(c.fetchError)}</div>` : ''}
+    <details data-jobd="${c.id}" ${!a || c.jobOpen || c.fetchStatus || c.fetchError ? 'open' : ''}><summary>求人票・企業情報${a ? '（入力済み）' : ''}</summary>
+      ${urlRowHTML(c)}
+      <label>${isPaid() && !c.sample ? 'または、求人票の本文を貼り付け' : '求人票（全文を貼り付け）'}</label>
       <textarea rows="9" data-cf="job" placeholder="仕事内容・必須要件・歓迎要件・求める人物像などを含めて貼り付けてください">${h(c.job)}</textarea>
       <label>企業情報（任意・あると精度が上がります）</label>
       <textarea rows="4" data-cf="info" placeholder="企業理念・バリュー・トップメッセージ・中期経営計画の要点など">${h(c.info)}</textarea>
     </details>
     ${a ? analysisHTML(a) : ''}
-    ${a || c.research ? researchHTML(c) : ''}
+    ${a || c.research || (c.job.trim() && !c.sample) ? researchHTML(c) : ''}
     <label>見せ方への追加指示（任意）</label>
     <input type="text" data-cf="memo" value="${h(c.memo)}" placeholder="例：マネジメント経験をもっと前に出したい／英語力は控えめに">
     ${c.error ? `<div class="status err">${h(c.error)}</div>` : ''}
@@ -1366,9 +1453,13 @@ function packHTML(c) {
     const fill = (t) => h(t).replace(/【要記入[^】]*】/g, (m) => `<mark class="todo">${m}</mark>`);
     const cnt = (t, lo, hi) => { const n = len(t); return `<span class="${n < lo || n > hi ? 'off' : ''}">${n}字・目安${lo}〜${hi}字</span>`; };
     const mv = (t, label, lo, hi, tr) => `<div class="mv"><div class="h"><span><span>${label}</span>${UI_LANG === 'ja' ? `（${cnt(t, lo, hi)}）` : ` (${cnt(t, lo, hi)})`}</span><button class="btn small" data-act="copyText" data-text="${h(t)}">コピー</button></div><div data-noi18n>${fill(t)}</div>${trl(tr)}</div>`;
-    const pc = checkNumbers(packParts(p), c.job + '\n' + c.info);
+    const pc = checkNumbers(packParts(p), c.job + '\n' + c.info + '\n' + researchText(c));
+    const r = c.research;
+    if (r && !r.sample && (p.at || 0) < r.at) s += `<div class="fb note" style="margin-top:12px"><span>会社の公開情報を調べた後、まだ作り直していません。</span> <button class="btn small primary" data-act="pack" ${c.packStatus === 'run' ? 'disabled' : ''}>調べた情報で作り直す</button></div>`;
     if (pc.bad.length) s += `<div class="fb warn" style="margin-top:12px">⚠ あなたの入力と求人票で確認できない数値：${pc.bad.map((n) => `<mark>${h(n)}</mark>`).join('、')}<span>　面接で話す前に事実か確認してください。</span></div>`;
     s += `<h3>志望動機</h3>${p.motivation.long ? mv(p.motivation.long, '300字版', 280, 320, p.motivation.long_tr) : ''}${p.motivation.short ? mv(p.motivation.short, '150字版', 130, 160, p.motivation.short_tr) : ''}`;
+    const used = r ? p.motivation.used.map((id) => r.facts.find((f) => f.id === id)).filter(Boolean) : [];
+    if (used.length) s += `<div class="rs-used"><b>この志望動機で使った公開情報</b><ul>${used.map((f) => `<li>${h(f.text)}<div class="rs-src">${srcLink(f)}</div></li>`).join('')}</ul><div class="hint tiny">話す前に、リンク先で内容と日付が今も正しいか確かめてください。</div></div>`;
     if (p.flow.steps.length) s += `<h3>選考の流れ <span class="tag warn">${h(p.flow.note || '一般的な想定')}</span></h3><div class="flow">${p.flow.steps.map((x) => `<div><b>${h(x.name)}</b>${h(x.who)}<div style="color:var(--ink2)">${h(x.focus)}</div></div>`).join('')}</div>`;
     if (p.questions.length) s += `<h3>想定質問と回答例（${p.questions.length}問）</h3>${p.questions.map((q, i) => `<details ${i === 0 ? 'open' : ''}><summary>Q${i + 1}. <span data-noi18n>${h(q.q)}</span>${trl(q.q_tr, 'span')}</summary><div class="intent">意図：${h(q.intent)}</div><ul>${q.points.map((x) => `<li>${h(x)}</li>`).join('')}</ul>${mv(q.answer, '回答例', 150, 220, q.answer_tr)}</details>`).join('')}`;
     if (p.reverse.length) s += `<h3>逆質問</h3><ul>${p.reverse.map((x, i) => `<li><span data-noi18n>${h(x)}</span>${trl(p.reverse_tr && p.reverse_tr[i])}</li>`).join('')}</ul>`;
@@ -1469,7 +1560,7 @@ function stagesHTML(c) {
 }
 function prepHTML(p, c) {
   let s = '';
-  const pc = checkNumbers(prepParts(p), c ? c.job + '\n' + c.info : '');
+  const pc = checkNumbers(prepParts(p), c ? c.job + '\n' + c.info + '\n' + researchText(c) : '');
   if (pc.bad.length) s += `<div class="fb warn" style="margin-top:10px">⚠ あなたの入力と求人票で確認できない数値：${pc.bad.map((n) => `<mark>${h(n)}</mark>`).join('、')}</div>`;
   if (p.summary) s += `<div class="sum" style="margin-top:10px">${h(p.summary)}</div>`;
   if (p.focus.length) s += `<h3>見られそうな点</h3><div>${p.focus.map((x) => `<span class="tag">${h(x)}</span>`).join('')}</div>`;
@@ -1561,6 +1652,7 @@ document.addEventListener('change', (e) => {
 document.addEventListener('click', (e) => {
   const b = e.target.closest('[data-act]'); if (!b) return;
   if (RESUMABLE.has(b.dataset.act)) lastAct = Object.assign({}, b.dataset);
+  lastFocus = `[data-act="${CSS.escape(b.dataset.act)}"]` + (b.dataset.id ? `[data-id="${CSS.escape(b.dataset.id)}"]` : '');
   const act = b.dataset.act; const c = b.dataset.id ? company(b.dataset.id) : company(state.step === 4 ? state.active4 : state.active);
   switch (act) {
     case 'step': state.step = +b.dataset.step; save(); render(); window.scrollTo(0, 0); break;
@@ -1570,8 +1662,12 @@ document.addEventListener('click', (e) => {
     case 'sampleJob': state.companies.unshift(newCompany({ name: DEMO.jobName, job: DEMO.job, info: DEMO.companyInfo, sample: true })); save(); render(); break;
     case 'delCompany': if (c && !BUSY.includes(c.status) && confirm2(b, '本当に削除（もう一度押す）')) { state.companies = state.companies.filter((x) => x !== c); save(); render(); toast('削除しました'); } break;
     case 'analyze': if (c) analyze(c); break;
-    case 'fetchJob': if (c) fetchJobUrl(c); break;
-    case 'research': if (c) makeResearch(c); break;
+    case 'fetchJob': if (!c) break; if (isPaid() && c.job.trim() && (c.jobUrl || '').trim() && !confirm2(b, '貼り付けた本文を置き換えます（もう一度押す）')) break; fetchJobUrl(c); break;
+    case 'research': if (!c) break; if (isPaid() && !hasSlot(c) && !c.sample && acct.me.credits > 0 && !confirm2(b, `1社分を使います（あと${acct.me.credits}社→${acct.me.credits - 1}社・もう一度押す）`)) break; makeResearch(c); break;
+    case 'researchBack': if (c && c.researchPrev) { const x = c.research; c.research = c.researchPrev; c.researchPrev = x; save(); render(); } break;
+    case 'researchExample': researchExample(); break;
+    case 'useTwin': { const t = c && researchTwin(c); if (t) { c.research = Object.assign({}, t.research); c.rsOpen = true; save(); render(); toast('調査結果を使いました（検索はしていません）'); } break; }
+    case 'reflect': if (c) { state.active = c.id; state.step = 3; c.tab = 'pack'; save(); render(); window.scrollTo(0, 0); makePack(c); } break;
     case 'analyzeAll': (async () => { const qs = state.companies.filter((x) => x.job.trim() && !x.analysis && !BUSY.includes(x.status)); if (!(await readyFor(qs))) return; state.companies.forEach((x) => { x.batch = qs.includes(x); }); qs.forEach((x) => { x.status = 'queued'; }); render(); pool(qs, 2, (x) => (x.status === 'queued' ? analyze(x) : null)); })(); break;
     case 'generate': if (c) { if (c.doc && c.dirty && !confirm2(b, '手で直した箇所も作り直されます（もう一度押す）')) break; state.active = c.id; state.step = 3; save(); generate(c); window.scrollTo(0, 0); } break;
     case 'generateAll': (async () => { const qs = state.companies.filter((x) => x.analysis && !x.doc && x.status === 'analyzed'); if (qs.length && (await readyFor(qs))) { state.companies.forEach((x) => { x.batch = qs.includes(x); }); qs.forEach((x) => { x.status = 'queued'; }); state.active = qs[0].id; state.step = 3; render(); pool(qs, 2, (x) => (x.status === 'queued' ? generate(x) : null)); } })(); break;
@@ -1618,7 +1714,7 @@ document.addEventListener('click', (e) => {
     case 'devLogout': localStorage.removeItem('resume-dev-user'); onUserChange(null); break;
     case 'closeModal': closeModal(false); break;
     case 'consentOk': b.disabled = true; api('POST', '/api/consent', { version: CFG.consent }).then(() => { acct.me.consent = true; closeModal(true); acct.dirty = acct.dirty || hasOwnData(state); syncUI(); schedulePush(200); }).catch(() => { b.disabled = false; toast('送信できませんでした。もう一度お試しください'); }); break;
-    case 'openBuy': openBuy(''); break;
+    case 'openBuy': openBuy('', b.dataset.why); break;
     case 'toPrice': if (!ui.lp || state.demo) { e.preventDefault(); openBuy(''); } break;
     case 'buy': buy(b.dataset.pack, b); break;
     case 'hideNotice': hideNotice(); break;

@@ -56,6 +56,8 @@ function cleanCompany(c) {
   return {
     id: c.id, name: str(c.name, 120), job: str(c.job, 12000), info: str(c.info, 6000), priority: str(c.priority, 10) || '本命', memo: str(c.memo, 1500),
     analysis: obj(c.analysis, 40000), doc: obj(c.doc, 60000), maxPages: c.maxPages === 3 ? 3 : 2, research: obj(c.research, 24000),
+    // the pages the user pointed at (job posting, official site): host names only, to tell same-name companies apart
+    hosts: Array.isArray(c.hosts) ? c.hosts.slice(0, 3).map((x) => str(x, 100).toLowerCase()).filter((x) => /^[a-z0-9.-]+\.[a-z]{2,}$/.test(x)) : [],
     pack: m ? { motivation: { long: str(m.long, 1200), short: str(m.short, 600) } } : null,
     stages: Array.isArray(c.stages) ? c.stages.slice(0, 10).map((s) => ({
       name: str(s && s.name, 40), status: str(s && s.status, 10), date: str(s && s.date, 10), format: str(s && s.format, 20), who: str(s && s.who, 80),
@@ -143,6 +145,7 @@ async function mockClaude(task, ctx, c) {
   if (/【モック失敗】/.test(ctx.raw + (c ? c.memo : ''))) throw new AIError('invalid_json', 'mock');
   const v = JSON.parse(JSON.stringify(MOCK[task + '_' + ctx.uiLang] || MOCK[task]));
   if (task === 'analyze' && c && c.name) v.company = c.name;
+  if (task === 'research') v.sample = false;   // behaves as a real result (the next steps show)
   return { value: v, usage: {} };
 }
 
@@ -199,7 +202,12 @@ export async function handleAI(request, env, ctxExec, auth) {
     let out;
     try {
       const r = env.AI_MOCK === '1' ? await mockClaude(task, ctx, c) : await callClaude(env, prompt, def[1], task === 'research' ? [searchTool(env)] : null);
-      if (task === 'research' && r.sources) r.value = keepFound(r.value, r.sources);
+      if (task === 'research') {
+        if (r.sources) r.value = keepFound(r.value, r.sources);
+        // nothing usable found (or not sure it is the same company): not counted, the credit is not used
+        const facts = Array.isArray(r.value.facts) ? r.value.facts : [];
+        if (facts.length < 2 || (r.value.confidence === 'low' && facts.length < 3)) throw new AIError('research_empty', 'facts ' + facts.length, { reason: String((Array.isArray(r.value.caveats) && r.value.caveats[0]) || '').slice(0, 200) });
+      }
       if (slot) {
         // a re-analysis that turns out to be another company's posting is not given out under this credit
         const found = task === 'analyze' ? String(r.value.company || '') : '';

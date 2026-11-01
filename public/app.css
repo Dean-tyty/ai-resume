@@ -57,7 +57,7 @@ h2{font-size:15.5px;margin:0 0 4px;font-weight:700;text-wrap:balance}
 h3{font-size:13px;margin:16px 0 8px;color:var(--ink2);font-weight:700;letter-spacing:.02em}
 .hint{color:var(--ink2);font-size:13px;margin:0 0 12px}
 label{display:block;font-size:12px;color:var(--ink2);margin:12px 0 5px;font-weight:500}
-input[type=text],input[type=date],input[type=time],textarea,select{width:100%;border:1px solid var(--line2);border-radius:9px;padding:8px 11px;background:#fff;font-size:13.5px;line-height:1.65;transition:border-color .15s,box-shadow .15s}
+input[type=text],input[type=url],input[type=date],input[type=time],textarea,select{width:100%;border:1px solid var(--line2);border-radius:9px;padding:8px 11px;background:#fff;font-size:13.5px;line-height:1.65;transition:border-color .15s,box-shadow .15s}
 textarea{resize:vertical}
 input:focus,textarea:focus,select:focus{outline:0;border-color:var(--accent2);box-shadow:0 0 0 3px rgba(11,18,32,.12)}
 .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:14px}
@@ -344,6 +344,7 @@ fl-footer:not(:defined){display:block}
 .pc span{font-size:13px;color:var(--ink2)}
 .pc b{font-size:24px;letter-spacing:.01em}
 .pc small{font-size:12px;color:var(--ink3)}
+.pc small.plus{color:var(--ok);margin-top:4px;font-size:11.5px}
 @media (max-width:600px){.prices{grid-template-columns:1fr}}
 .lp-price .hint{max-width:760px}
 .lp-faq{margin-top:56px;max-width:820px}
@@ -353,7 +354,7 @@ fl-footer:not(:defined){display:block}
 .lp-faq p{margin:10px 0 0;color:var(--ink2);font-size:14px}
 
 .modal{position:fixed;inset:0;z-index:80;background:rgba(11,18,32,.38);display:grid;place-items:center;padding:20px;overflow:auto}
-.modal .sheet{background:var(--paper);border-radius:20px;max-width:560px;width:100%;padding:26px 28px;box-shadow:0 20px 60px rgba(11,18,32,.25)}
+.modal .sheet{background:var(--paper);border-radius:20px;max-width:560px;width:100%;min-width:0;padding:26px 28px;box-shadow:0 20px 60px rgba(11,18,32,.25)}
 .modal h2{margin:0 0 12px;font-size:19px}
 .modal p{margin:8px 0;font-size:14px}
 .modal .row{margin-top:18px;gap:8px}
@@ -404,7 +405,7 @@ details.intent[open]>summary{margin-bottom:6px}
 @media (max-width:640px){
   main .row>.btn,main .row>.spacer+.btn{flex:1 1 100%;min-height:46px}
   .row .spacer{display:none}
-  input[type=text],input[type=date],input[type=time],textarea,select{font-size:16px;min-height:44px}
+  input[type=text],input[type=url],input[type=date],input[type=time],textarea,select{font-size:16px;min-height:44px}
 }
 
 /* step 3: the document first, its controls beside it */
@@ -493,12 +494,46 @@ html[lang="ja"] .foreign-only{display:none}
 /* step 2: a posting from its URL; the company's public information */
 .urlrow{display:flex;gap:8px;align-items:center;margin:4px 0}
 .urlrow input{flex:1;min-width:0}
+.urlrow .btn{min-width:9.5em;justify-content:center;display:inline-flex;align-items:center;gap:6px}
+.urlrow.locked{margin:0 0 6px}
+.urlrow.locked .linkbtn{text-align:left;line-height:1.6}
+input[type=url]:disabled,input[type=text]:disabled{background:var(--salt);color:var(--ink3);border-style:dashed}
 .research{margin-top:14px;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:#fff}
-.research h5{margin:12px 0 4px;font-size:12.5px;color:var(--ink2)}
+.rs-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.research h4{margin:0;font-size:13px}
+.research h4::before,.rs-sum b::before{content:"";display:inline-block;width:6px;height:6px;border-radius:2px;background:var(--sun);margin-right:7px;vertical-align:2px}
+.research h5{margin:16px 0 6px;font-size:13px;color:var(--ink);font-weight:700}
 .research ul{margin:4px 0 0;padding-left:18px}
-.research li{margin:4px 0;line-height:1.6;font-size:13px}
+.research li{margin:4px 0;line-height:1.65;font-size:13px}
+.rs-sub{display:block;margin-top:1px;font-size:11.5px;color:var(--ink3)}
+.pill.lock::before{content:"🔒";margin-right:4px;font-size:10.5px}
+details.rs>summary{list-style:none;cursor:pointer;padding:4px 0}
+details.rs>summary::-webkit-details-marker{display:none}
+.rs-sum{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;font-size:12.5px;color:var(--ink2)}
+.rs-sum b{font-size:13px;color:var(--ink)}
+.rs-sum::after{content:"▾";margin-left:auto;color:var(--ink3)}
+details.rs[open] .rs-sum::after{content:"▴"}
+.fb.note{background:var(--accent-soft);color:var(--ink);margin-top:10px}
+.rs-cta .btn{margin-left:auto}
+.rs-ctx{margin:8px 0 0;font-size:12.5px;display:flex;gap:8px;flex-wrap:wrap}
+.rs-ctx b{font-weight:600}
+.rs-cols{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:4px 22px}
 .rs-facts{list-style:none;padding-left:0!important}
-.rs-facts li{padding:6px 0;border-bottom:1px dashed var(--line)}
+.rs-facts li{display:grid;grid-template-columns:9.5em minmax(0,1fr);column-gap:10px;padding:8px 0;border-bottom:1px dashed var(--line);margin:0}
 .rs-facts li:last-child{border-bottom:0}
-.rs-src{font-size:11.5px;color:var(--ink2);margin-top:2px}
-.rs-src a{color:var(--ink2)}
+.rs-facts .tag{justify-self:start;align-self:start;margin-top:1px}
+.rs-src{font-size:12px;color:var(--ink3);margin-top:2px}
+.rs-src a{color:var(--ink);text-decoration-color:var(--sun);text-underline-offset:3px;display:inline-block;padding:4px 0}
+.rs-src a::after{content:" ↗";color:var(--ink3)}
+.rs-used{margin:10px 0 0;padding:10px 13px;border-radius:10px;background:var(--salt);font-size:12.5px}
+.rs-used ul{margin:4px 0;padding-left:18px}
+.rs-again .hint{margin:0}
+details.mini{margin:12px 0 0;font-size:12px;color:var(--ink2)}
+details.mini>summary{cursor:pointer;color:var(--ink2)}
+details.mini p{margin:6px 0 0;line-height:1.7}
+.tiny-l{font-size:11.5px;margin-top:8px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.btn.flash{box-shadow:0 0 0 3px var(--sun)}
+.trust.buyer{grid-template-columns:1fr;margin:4px 0 10px}
+@media (max-width:900px){.rs-cols{grid-template-columns:1fr}}
+@media (max-width:640px){.urlrow{flex-wrap:wrap}.urlrow input,.urlrow .btn{flex:1 1 100%;min-height:44px}.rs-facts li{grid-template-columns:1fr;row-gap:4px}.rs-src a{min-height:32px;padding:7px 0}details>summary{padding:10px 0}}

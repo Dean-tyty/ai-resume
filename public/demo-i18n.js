@@ -129,10 +129,13 @@ window.DEMO_I18N = {
     ],
     "pack": {
       "motivation": {
-        "long": "現職では従業員50〜300名規模の顧客を中心に担当してきましたが、より大きく複雑な組織での活用推進に挑戦したいと考え、中堅企業向けの貴社を志望しました。ヘルススコアを自ら設計し、チームの運用に定着させて解約率を8.1%から4.3%に改善した経験は、関係者が多い顧客でこそ生きると考えています。「Build Systems, Not Heroes」は、私が大切にしてきた仕組み化の考え方と重なります。【要記入：貴社のプロダクトや顧客に惹かれた具体的な理由】",
-        "short": "より大きく複雑な組織での活用推進に挑戦したく、中堅企業向けの貴社を志望しました。ヘルススコアを設計しチームで運用した経験を、CSの仕組みづくりとチームのリードに生かします。",
-        "long_tr": "In my current job I have mainly handled customers with 50–300 employees, but I want to take on driving adoption in larger, more complex organizations, so I am applying to your company, which serves mid-sized businesses. I designed a health score myself, made it part of how the team works, and improved the churn rate from 8.1% to 4.3%, and I believe this experience will be most useful with customers that have many stakeholders. \"Build Systems, Not Heroes\" matches the idea of building systems that I have always valued. 【要記入：貴社のプロダクトや顧客に惹かれた具体的な理由】 (to fill in: the specific reason the company's product or customers appeal to you)",
-        "short_tr": "I want to take on driving adoption in larger, more complex organizations, so I am applying to your company, which serves mid-sized businesses. I will use my experience designing a health score and running it with my team to build CS systems and lead the team."
+        "long": "現職では従業員50〜300名規模の顧客を中心に担当してきましたが、より大きく複雑な組織での活用推進に挑戦したいと考え、中堅企業向けの貴社を志望しました。2026年4月に始められたオンボーディング専任体制は、導入資料を標準化して導入期間を45日から30日に短縮した私の経験が、最も生きる場面だと考えています。ヘルススコアを設計してチームの運用に定着させ、解約率を8.1%から4.3%に改善した経験も生かし、関係者の多いお客様の定着を、人に頼らない仕組みで支えたいと考えています。入社後はまず導入プロセスの標準化から取り組み、誰が担当しても同じ判断ができるチームをつくります。",
+        "short": "より大きく複雑な組織での活用推進に挑戦したく、中堅企業向けの貴社を志望しました。2026年4月に始められたオンボーディング専任体制のもとで、導入期間を45日から30日に短縮した経験と、ヘルススコアをチームで運用した経験を生かし、CSの仕組みづくりとチームのリードに取り組みます。",
+        "long_tr": "In my current job I have mainly handled customers with 50–300 employees, but I want to take on driving adoption in larger, more complex organizations, so I am applying to your company, which serves mid-sized businesses. The dedicated onboarding setup you started in April 2026 is where I believe my experience will help most: I standardized onboarding materials and shortened the time to go-live from 45 to 30 days. I also designed a health score, made it part of how the team works and improved the churn rate from 8.1% to 4.3%, and I want to use that experience to support customers with many stakeholders through systems that don’t depend on individuals. After joining, I would start by standardizing the onboarding process and build a team in which anyone in charge can make the same decisions.",
+        "short_tr": "I want to take on driving adoption in larger, more complex organizations, so I am applying to your company, which serves mid-sized businesses. Under the dedicated onboarding setup you started in April 2026, I will use my experience shortening the time to go-live from 45 to 30 days and running a health score with my team to build CS systems and lead the team.",
+        "used": [
+          "F2"
+        ]
       },
       "flow": {
         "note": "A general assumption, not based on public information specific to this company.",
@@ -190,11 +193,11 @@ window.DEMO_I18N = {
           "intent": "How deeply you have researched the company, and whether you can repeat your results after joining",
           "points": [
             "The customer base: mid-sized companies",
-            "How you match \"Customer Outcome First\"",
-            "One situation where your experience would be useful"
+            "Where the dedicated onboarding setup from April 2026 (public information) meets your experience",
+            "How you would use it after joining"
           ],
-          "answer": "中堅企業向けにサービスを提供されている点と、「Customer Outcome First」という考え方に惹かれました。私も営業時代から、導入して終わりではなく定着まで支えることを大切にしてきました。ヘルススコアを設計し、チームで運用してきた経験は、貴社のオンボーディング設計と解約防止の仕事に生かせると考えています。【要記入：貴社のサービスで特に関心を持った点】",
-          "answer_tr": "I was drawn to the fact that you provide your service to mid-sized companies, and to the idea of \"Customer Outcome First.\" Since my sales days, I too have valued supporting customers until the product takes hold, rather than stopping at implementation. I believe my experience designing a health score and running it with my team can be put to use in your onboarding design and churn-prevention work. 【要記入：貴社のサービスで特に関心を持った点】 (to fill in: what interests you most about the company's service)"
+          "answer": "中堅企業向けにサービスを提供されている点と、2026年4月にオンボーディング専任体制を始められた点に惹かれました。私も営業時代から、導入して終わりではなく定着まで支えることを大切にしてきました。現職では導入資料を標準化して導入期間を45日から30日に短縮し、ヘルススコアをチームで運用してきました。この経験は、貴社のオンボーディング設計と解約防止の仕事にそのまま生かせると考えています。",
+          "answer_tr": "I was drawn to the fact that you serve mid-sized companies and that you started a dedicated onboarding setup in April 2026. Since my sales days, I have cared about supporting customers not just until implementation but until they really use the product. In my current job I standardized onboarding materials, shortening the time to go-live from 45 to 30 days, and I have run a health score with my team. I believe this experience will be directly useful in your onboarding design and churn prevention work."
         },
         {
           "q": "あなたの強みと弱みを教えてください",
@@ -246,14 +249,14 @@ window.DEMO_I18N = {
         }
       ],
       "reverse": [
-        "CSチームのKPIは現在どの指標を重視していますか？",
-        "入社後3か月で期待される成果は何ですか？",
-        "プロダクトチームへの顧客の声は、どのような仕組みで届いていますか？"
+        "現職では導入期間の短縮に取り組んできました。オンボーディング専任体制のもとで、CSリーダーにはどのような役割を期待されていますか？",
+        "入社後3か月で、どのような状態になっていることを期待されていますか？",
+        "解約の兆しをチームで共有する仕組みは、今どのように運用されていますか？"
       ],
       "reverse_tr": [
-        "Which metrics does the CS team currently focus on as KPIs?",
-        "What results would you expect in the first 3 months after joining?",
-        "Through what system does customer feedback reach the product team?"
+        "In my current job I have worked on shortening onboarding. Under the dedicated onboarding setup, what role do you expect CS leaders to play?",
+        "What state would you expect me to have reached three months after joining?",
+        "How does the team currently share early signs of churn?"
       ],
       "cautions": [
         "English is limited to work email. If asked about your speaking ability, answer honestly",
@@ -400,42 +403,57 @@ window.DEMO_I18N = {
       "company": "株式会社サンプルクラウド",
       "confidence": "high",
       "sample": true,
+      "identity": {
+        "official_site": "https://example.com/samplecloud",
+        "match": "Company name, business and head office match the job posting"
+      },
       "overview": "Develops and provides a cloud service for expense reports and invoice management for mid-sized companies. About 300 employees (fictional sample).",
+      "hiring_context": "The careers page says it is adding CS team leaders as it expands to large companies",
       "facts": [
         {
-          "topic": "事業",
+          "id": "F1",
+          "topic": "事業・顧客",
+          "entity": "応募先",
           "text": "Offers one cloud product for expense reports and receiving invoices, for companies with 100–1,000 employees",
           "url": "https://example.com/samplecloud/service",
           "title": "Service overview, SampleCloud (sample)",
           "date": ""
         },
         {
+          "id": "F2",
           "topic": "最近の動き",
-          "text": "Announced in spring 2026 a dedicated onboarding setup in which the CS team handles implementation support",
+          "entity": "応募先",
+          "text": "Announced a dedicated onboarding setup in which the CS team handles implementation support",
           "url": "https://example.com/samplecloud/news/2026-04",
           "title": "News release (sample)",
           "date": "2026-04"
         },
         {
-          "topic": "業績・資金調達",
-          "text": "Raised a Series C round, to be used to strengthen CS and build features for large companies",
+          "id": "F3",
+          "topic": "経営方針・中期経営計画",
+          "entity": "応募先",
+          "text": "Says the Series C funds will go to strengthening CS and building features for large companies",
           "url": "https://example.com/samplecloud/news/2025-11",
           "title": "News release (sample)",
           "date": "2025-11"
         },
         {
-          "topic": "価値観・カルチャー",
-          "text": "Its values are “Customer Outcome First”, “Build Systems, Not Heroes” and “Be Candid”",
-          "url": "https://example.com/samplecloud/company",
-          "title": "Company profile (sample)",
-          "date": ""
-        },
-        {
-          "topic": "組織・採用",
-          "text": "On the careers page, the head of CS says the priority is building ways for the team to reduce churn together",
+          "id": "F4",
+          "topic": "採用・求める人物像",
+          "entity": "応募先",
+          "text": "The head of CS says the priority is building ways for the team to reduce churn together",
           "url": "https://example.com/samplecloud/recruit/cs",
           "title": "Careers page, CS (sample)",
           "date": "2026-02"
+        },
+        {
+          "id": "F5",
+          "topic": "トップメッセージ",
+          "entity": "応募先",
+          "text": "The CEO sets out “Build Systems, Not Heroes” and stresses systems that don’t depend on individuals",
+          "url": "https://example.com/samplecloud/message",
+          "title": "Message from the CEO (sample)",
+          "date": ""
         }
       ],
       "position": [
@@ -445,24 +463,36 @@ window.DEMO_I18N = {
           "title": "Careers page, CS (sample)"
         }
       ],
-      "talking_points": [
-        "The new dedicated onboarding setup, and how you shortened implementation time",
-        "“Build Systems, Not Heroes” and how you systematized work with a health score"
+      "hooks": [
+        {
+          "fact": "F2",
+          "why": "It has just started investing in early-stage support, so the CS role is growing"
+        },
+        {
+          "fact": "F4",
+          "why": "It wants people who lower churn through systems, not individual heroics"
+        }
       ],
       "questions": [
-        "オンボーディング専任体制を始めてから、CSチームの役割はどう変わりましたか？",
-        "大企業向け機能の開発に、CSの声はどのように反映されていますか？"
-      ],
-      "questions_tr": [
-        "Since the dedicated onboarding setup started, how has the CS team’s role changed?",
-        "How is the voice of CS reflected in developing features for large companies?"
+        {
+          "q": "オンボーディング専任体制を始めてから、CSリーダーにはどのような役割を期待されていますか？",
+          "premise": "F2",
+          "for": "現場",
+          "q_tr": "Since starting the dedicated onboarding setup, what role do you expect CS leaders to play?"
+        },
+        {
+          "q": "大企業向けに広げていく中で、CSチームの担当の持ち方はどう変わっていく見込みですか？",
+          "premise": "F3",
+          "for": "部門長",
+          "q_tr": "As you expand to large companies, how do you expect the way the CS team divides its accounts to change?"
+        }
       ],
       "check_yourself": [
-        "How CS leaders are evaluated (churn, upsell, team development)",
-        "How the size of your accounts changes as they expand to large companies"
+        "How leaders are evaluated: ask “Which metrics are leaders evaluated on?”",
+        "Size of accounts: ask “When will the team start handling more large companies?”"
       ],
       "caveats": [
-        "The funding information is as of November 2025"
+        "How the funds will be used is as described in the November 2025 announcement"
       ]
     }
   },
@@ -595,10 +625,13 @@ window.DEMO_I18N = {
     ],
     "pack": {
       "motivation": {
-        "long": "現職では従業員50〜300名規模の顧客を中心に担当してきましたが、より大きく複雑な組織での活用推進に挑戦したいと考え、中堅企業向けの貴社を志望しました。ヘルススコアを自ら設計し、チームの運用に定着させて解約率を8.1%から4.3%に改善した経験は、関係者が多い顧客でこそ生きると考えています。「Build Systems, Not Heroes」は、私が大切にしてきた仕組み化の考え方と重なります。【要記入：貴社のプロダクトや顧客に惹かれた具体的な理由】",
-        "short": "より大きく複雑な組織での活用推進に挑戦したく、中堅企業向けの貴社を志望しました。ヘルススコアを設計しチームで運用した経験を、CSの仕組みづくりとチームのリードに生かします。",
-        "long_tr": "我在现职中主要负责员工50～300人规模的客户，但希望挑战在更大、更复杂的组织中推动产品的落地使用，因此应聘面向中型企业的贵公司。我亲自设计了健康度评分，让它在团队运营中固定下来，把解约率从8.1%降到了4.3%，我认为这段经验在相关人员众多的客户那里更能发挥作用。“Build Systems, Not Heroes”与我一直重视的机制化思路是一致的。【要記入：貴社のプロダクトや顧客に惹かれた具体的な理由】",
-        "short_tr": "我希望挑战在更大、更复杂的组织中推动产品的落地使用，因此应聘面向中型企业的贵公司。我会把设计健康度评分并在团队中运营的经验，用在搭建CS机制和带领团队上。"
+        "long": "現職では従業員50〜300名規模の顧客を中心に担当してきましたが、より大きく複雑な組織での活用推進に挑戦したいと考え、中堅企業向けの貴社を志望しました。2026年4月に始められたオンボーディング専任体制は、導入資料を標準化して導入期間を45日から30日に短縮した私の経験が、最も生きる場面だと考えています。ヘルススコアを設計してチームの運用に定着させ、解約率を8.1%から4.3%に改善した経験も生かし、関係者の多いお客様の定着を、人に頼らない仕組みで支えたいと考えています。入社後はまず導入プロセスの標準化から取り組み、誰が担当しても同じ判断ができるチームをつくります。",
+        "short": "より大きく複雑な組織での活用推進に挑戦したく、中堅企業向けの貴社を志望しました。2026年4月に始められたオンボーディング専任体制のもとで、導入期間を45日から30日に短縮した経験と、ヘルススコアをチームで運用した経験を生かし、CSの仕組みづくりとチームのリードに取り組みます。",
+        "long_tr": "在现在的公司，我主要负责员工 50～300 人规模的客户，但我希望挑战在更大、更复杂的组织中推动产品的使用，因此应聘面向中型企业的贵公司。贵公司 2026 年 4 月开始的专职入门引导体制，正是我的经验最能发挥作用的地方：我曾把导入资料标准化，把上线周期从 45 天缩短到 30 天。我还设计了健康度评分并让团队用起来，把解约率从 8.1% 降到 4.3%。我希望运用这些经验，用不依赖个人的机制，帮助相关人员众多的客户真正用起来。入职后，我会先从导入流程的标准化着手，打造一个无论谁负责都能做出同样判断的团队。",
+        "short_tr": "我希望挑战在更大、更复杂的组织中推动产品的使用，因此应聘面向中型企业的贵公司。在贵公司 2026 年 4 月开始的专职入门引导体制下，我将运用把上线周期从 45 天缩短到 30 天、以及和团队一起运营健康度评分的经验，着手建设 CS 机制并带领团队。",
+        "used": [
+          "F2"
+        ]
       },
       "flow": {
         "note": "这是一般性的推测，并非基于该公司特有的公开信息。",
@@ -656,11 +689,11 @@ window.DEMO_I18N = {
           "intent": "企业研究的深度，以及入职后能否复制成果",
           "points": [
             "客户群是中型企业",
-            "与“Customer Outcome First”的契合",
-            "举一个自己的经验能发挥作用的场景"
+            "2026 年 4 月的专职入门引导体制（公开信息）与自己经验的交集",
+            "入职后如何运用"
           ],
-          "answer": "中堅企業向けにサービスを提供されている点と、「Customer Outcome First」という考え方に惹かれました。私も営業時代から、導入して終わりではなく定着まで支えることを大切にしてきました。ヘルススコアを設計し、チームで運用してきた経験は、貴社のオンボーディング設計と解約防止の仕事に生かせると考えています。【要記入：貴社のサービスで特に関心を持った点】",
-          "answer_tr": "我被贵公司面向中型企业提供服务这一点，以及“Customer Outcome First”的理念所吸引。我从做销售时起，也一直重视不止于导入、而是支持客户直到真正用起来。我认为设计健康度评分并在团队中运营的经验，可以用在贵公司的上线引导设计和防止解约的工作中。【要記入：貴社のサービスで特に関心を持った点】"
+          "answer": "中堅企業向けにサービスを提供されている点と、2026年4月にオンボーディング専任体制を始められた点に惹かれました。私も営業時代から、導入して終わりではなく定着まで支えることを大切にしてきました。現職では導入資料を標準化して導入期間を45日から30日に短縮し、ヘルススコアをチームで運用してきました。この経験は、貴社のオンボーディング設計と解約防止の仕事にそのまま生かせると考えています。",
+          "answer_tr": "我被贵公司面向中型企业提供服务，以及 2026 年 4 月启动专职入门引导体制这两点所吸引。我从做销售时起，就一直重视不止于导入、而是支持客户直到真正用起来。在现在的公司，我把导入资料标准化，把上线周期从 45 天缩短到 30 天，并和团队一起运营健康度评分。我认为这些经验可以直接用在贵公司的入门引导设计和防止解约的工作中。"
         },
         {
           "q": "あなたの強みと弱みを教えてください",
@@ -712,14 +745,14 @@ window.DEMO_I18N = {
         }
       ],
       "reverse": [
-        "CSチームのKPIは現在どの指標を重視していますか？",
-        "入社後3か月で期待される成果は何ですか？",
-        "プロダクトチームへの顧客の声は、どのような仕組みで届いていますか？"
+        "現職では導入期間の短縮に取り組んできました。オンボーディング専任体制のもとで、CSリーダーにはどのような役割を期待されていますか？",
+        "入社後3か月で、どのような状態になっていることを期待されていますか？",
+        "解約の兆しをチームで共有する仕組みは、今どのように運用されていますか？"
       ],
       "reverse_tr": [
-        "CS团队的KPI目前最重视哪些指标？",
-        "入职后3个月内期待取得什么成果？",
-        "客户的声音是通过什么样的机制传达给产品团队的？"
+        "我在现在的公司一直致力于缩短导入周期。在专职入门引导体制下，贵公司期待 CS 组长承担什么样的角色？",
+        "入职 3 个月后，贵公司希望我达到什么样的状态？",
+        "目前团队是如何共享客户解约的苗头的？"
       ],
       "cautions": [
         "英语仅限于工作邮件。如果被问到口语能力，按事实回答",
@@ -811,42 +844,57 @@ window.DEMO_I18N = {
       "company": "株式会社サンプルクラウド",
       "confidence": "high",
       "sample": true,
+      "identity": {
+        "official_site": "https://example.com/samplecloud",
+        "match": "公司名、业务内容和总部所在地与招聘信息一致"
+      },
       "overview": "面向中型企业开发和提供费用报销及发票管理云服务。员工约 300 人（虚构示例）。",
+      "hiring_context": "招聘页面表示，随着向大企业扩展，将增加带领 CS 团队的组长",
       "facts": [
         {
-          "topic": "事業",
+          "id": "F1",
+          "topic": "事業・顧客",
+          "entity": "応募先",
           "text": "面向员工 100～1,000 人的企业，用一款云产品同时处理费用报销和发票收取",
           "url": "https://example.com/samplecloud/service",
           "title": "服务介绍｜SampleCloud（示例）",
           "date": ""
         },
         {
+          "id": "F2",
           "topic": "最近の動き",
-          "text": "2026 年春宣布启动由 CS 团队负责导入支持的“专职入门引导体制”",
+          "entity": "応募先",
+          "text": "宣布启动由 CS 团队负责导入支持的“专职入门引导体制”",
           "url": "https://example.com/samplecloud/news/2026-04",
           "title": "新闻稿（示例）",
           "date": "2026-04"
         },
         {
-          "topic": "業績・資金調達",
-          "text": "完成 C 轮融资，资金将用于加强 CS 体制和开发面向大企业的功能",
+          "id": "F3",
+          "topic": "経営方針・中期経営計画",
+          "entity": "応募先",
+          "text": "表示 C 轮融资的资金将用于加强 CS 体制和开发面向大企业的功能",
           "url": "https://example.com/samplecloud/news/2025-11",
           "title": "新闻稿（示例）",
           "date": "2025-11"
         },
         {
-          "topic": "価値観・カルチャー",
-          "text": "公司价值观为“Customer Outcome First”“Build Systems, Not Heroes”“Be Candid”",
-          "url": "https://example.com/samplecloud/company",
-          "title": "公司简介（示例）",
-          "date": ""
-        },
-        {
-          "topic": "組織・採用",
-          "text": "CS 部门负责人在招聘页面上表示，重视建立“由团队一起降低解约率的机制”",
+          "id": "F4",
+          "topic": "採用・求める人物像",
+          "entity": "応募先",
+          "text": "CS 部门负责人表示，重视建立“由团队一起降低解约率的机制”",
           "url": "https://example.com/samplecloud/recruit/cs",
           "title": "招聘页面 CS 部门（示例）",
           "date": "2026-02"
+        },
+        {
+          "id": "F5",
+          "topic": "トップメッセージ",
+          "entity": "応募先",
+          "text": "总经理提出“Build Systems, Not Heroes”，重视不依赖个人的机制建设",
+          "url": "https://example.com/samplecloud/message",
+          "title": "总经理致辞（示例）",
+          "date": ""
         }
       ],
       "position": [
@@ -856,24 +904,36 @@ window.DEMO_I18N = {
           "title": "招聘页面 CS 部门（示例）"
         }
       ],
-      "talking_points": [
-        "专职入门引导体制的启动，以及你缩短导入周期的经验",
-        "“Build Systems, Not Heroes”与你用健康度评分把工作机制化的经验"
+      "hooks": [
+        {
+          "fact": "F2",
+          "why": "正是开始加强导入初期支持的时期，CS 的职责在扩大"
+        },
+        {
+          "fact": "F4",
+          "why": "希望找的是靠机制而不是靠个人努力来降低解约率的人"
+        }
       ],
       "questions": [
-        "オンボーディング専任体制を始めてから、CSチームの役割はどう変わりましたか？",
-        "大企業向け機能の開発に、CSの声はどのように反映されていますか？"
-      ],
-      "questions_tr": [
-        "启动专职入门引导体制后，CS 团队的角色发生了哪些变化？",
-        "在开发面向大企业的功能时，CS 的意见是如何被采纳的？"
+        {
+          "q": "オンボーディング専任体制を始めてから、CSリーダーにはどのような役割を期待されていますか？",
+          "premise": "F2",
+          "for": "現場",
+          "q_tr": "开始专职入门引导体制后，贵公司期待 CS 组长承担什么样的角色？"
+        },
+        {
+          "q": "大企業向けに広げていく中で、CSチームの担当の持ち方はどう変わっていく見込みですか？",
+          "premise": "F3",
+          "for": "部門長",
+          "q_tr": "在向大企业扩展的过程中，CS 团队负责客户的方式预计会有什么变化？"
+        }
       ],
       "check_yourself": [
-        "CS 组长的考核指标（解约率、追加销售、团队培养）",
-        "向大企业扩展后，负责客户的规模会如何变化"
+        "组长的考核指标：可以问“组长按哪些指标考核？”",
+        "负责客户的规模：可以问“大企业客户大概什么时候开始增加？”"
       ],
       "caveats": [
-        "融资信息为 2025 年 11 月时的内容"
+        "融资资金的用途是 2025 年 11 月发布时的说明"
       ]
     }
   }
