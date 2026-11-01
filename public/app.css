@@ -86,7 +86,7 @@ input:focus,textarea:focus,select:focus{outline:0;border-color:var(--accent2);bo
 .pill.run{background:var(--accent-soft);color:var(--accent)}
 .pill.err{background:var(--err-soft);color:var(--err)}
 .pill.warn{background:var(--warn-soft);color:var(--warn)}
-.demo-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--salt);border:1px solid var(--line);color:var(--ink);border-radius:12px;padding:11px 16px;margin-bottom:18px;font-size:13px}
+.demo-bar{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:4px 16px;background:var(--salt);border:1px solid var(--line);color:var(--ink);border-radius:12px;padding:11px 16px;margin-bottom:18px;font-size:13px}
 .notice{max-width:1320px;margin:14px auto 0;padding:0 24px}
 .notice div{background:var(--warn-soft);color:var(--warn);border-radius:12px;padding:11px 16px;font-size:13px}
 #toast{position:fixed;left:16px;right:16px;margin-inline:auto;width:fit-content;max-width:560px;text-align:center;bottom:26px;background:#141b25;color:#fff;padding:9px 18px;border-radius:999px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:60}
@@ -273,10 +273,10 @@ table.board tr.on td{background:var(--accent-soft)}
 .mini i{width:18px;height:6px;border-radius:3px;background:var(--line2);display:block}
 .mini i.p{background:var(--ok)}.mini i.s{background:var(--accent2)}.mini i.f{background:var(--err)}
 .sched{display:flex;flex-direction:column;gap:8px}
-.sched .it{display:grid;grid-template-columns:52px 1fr;gap:10px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:8px 10px;background:#fff;cursor:pointer}
-.sched .dt{text-align:center;border-radius:10px;background:var(--salt);color:var(--ink);padding:4px 0;line-height:1.25}
+.sched .it{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:8px 10px;background:#fff;cursor:pointer}
+.sched .dt{text-align:center;border-radius:10px;background:var(--salt);color:var(--ink);padding:4px 8px;line-height:1.25;min-width:52px}
 .sched .dt b{display:block;font-size:17px;font-family:var(--font-display)}
-.sched .dt small{font-size:12px}
+.sched .dt small{font-size:12px;display:block;white-space:nowrap}
 .sched .it.soon .dt{background:var(--accent);color:#fff}
 .stages{display:flex;flex-direction:column;gap:12px;margin-top:14px}
 .stage{border:1px solid var(--line);border-radius:14px;background:#fff;padding:14px 16px;position:relative}
@@ -334,7 +334,7 @@ fl-footer:not(:defined){display:block}
 .lp .hint{margin-top:12px}
 .lp-feats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:64px}
 .feat{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:20px 22px}
-.feat b{display:block;font-size:15.5px;margin-bottom:6px}
+.feat b{display:block;font-size:15.5px;margin-bottom:6px;line-height:1.45;text-wrap:balance}
 .feat p{margin:0;color:var(--ink2);font-size:13.5px}
 @media (max-width:900px){.lp-feats{grid-template-columns:1fr 1fr}}
 @media (max-width:600px){.lp{padding-top:44px}.lp-feats{grid-template-columns:1fr}.lp-cta .btn{width:100%}}
@@ -493,7 +493,7 @@ main{padding-bottom:0}
 @media (max-width:640px){.langs a[aria-current="page"]{display:none}.langs{font-size:12px}}
 
 /* a translation under Japanese text (English / Chinese page) */
-.trl{color:var(--ink2);font-size:.92em;margin-top:4px;line-height:1.6}
+.trl{color:var(--ink2);font-size:max(13px,.95em);margin-top:4px;line-height:1.65}
 summary .trl{display:block;font-weight:400}
 
 /* shown on the English / Chinese pages only */
@@ -529,7 +529,7 @@ details.rs[open] .rs-sum::after{content:"▴"}
 .rs-facts{list-style:none;padding-left:0!important}
 .rs-facts li{display:grid;grid-template-columns:12em minmax(0,1fr);column-gap:10px;padding:8px 0;border-bottom:1px dashed var(--line);margin:0}
 .rs-facts li:last-child{border-bottom:0}
-.rs-facts .tag{justify-self:start;align-self:start;margin-top:1px;white-space:nowrap}
+.rs-facts .tag{justify-self:start;align-self:start;margin-top:1px;line-height:1.5;padding:3px 8px}
 .rs-src{font-size:12px;color:var(--ink3);margin-top:2px}
 .rs-src a{color:var(--ink);text-decoration-color:var(--sun);text-underline-offset:3px;display:inline-block;padding:4px 0}
 .rs-src a::after{content:" ↗";color:var(--ink3)}
@@ -570,4 +570,35 @@ details.exwrap>summary{padding:10px 0}
   .tl ul,.eps>div,.research li,.pack ul,.prep ul{font-size:14px}
   .val .d,.req,.plan .it,.fb{font-size:13.5px}
   .hint.tiny,.cc,.rs-src{font-size:13px}
+}
+
+/* English / Chinese pages: fonts, line spacing, word breaks; layouts that longer translations break */
+html:lang(zh){--font-display:var(--fl-font-zh,"Host Grotesk","Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif);--font-body:var(--fl-font-zh,"Host Grotesk","Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif)}
+/* the Japanese originals on the Chinese page in a Japanese font (shared characters have Japanese shapes) */
+html:lang(zh) :is([data-noi18n]:not(.langs),.ex-ja,.ex-h,.ex-n s,.ex-n b,.fix span,mark.todo){font-family:"Host Grotesk","Zen Kaku Gothic New","Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif}
+html[lang=en] :is(main,.lp,.modal){font-feature-settings:"palt"}
+html[lang=en] :is(textarea,input){font-feature-settings:normal}
+html[lang=en] body{line-height:1.6}
+html[lang=en] .lp .lead{line-height:1.65}
+html[lang=en] :is(h1,h2,.lead,.vh p,.feat p,.lp-faq p,.modal p,.hint,.trust li,.tabs button,summary){word-break:keep-all;overflow-wrap:anywhere}
+html:not([lang=ja]) .ctrl .tpl span:not(.rec){-webkit-line-clamp:3}
+.trust li{padding-left:1.15em;text-indent:-1.15em}
+.ctrl-row .btn{padding-top:6px;padding-bottom:6px}
+.g2f{align-items:end}
+.demo-bar>span:not(.spacer){grid-column:1}
+.demo-bar>.spacer{display:none}
+.demo-bar>.btn{grid-column:2;grid-row:1/span 2;align-self:center}
+.demo-bar .tiny{font-size:12.5px;color:var(--ink2)}
+.hint.tiny{font-size:12.5px;color:var(--ink2)}
+@media (max-width:720px){
+  .seg.tabs{display:grid;grid-template-columns:1fr 1fr;width:100%}
+  .seg.tabs button{border-left:0;border-top:1px solid var(--line);line-height:1.35;padding:8px 10px}
+  .seg.tabs button:nth-child(even){border-left:1px solid var(--line)}
+  .seg.tabs button:nth-child(-n+2){border-top:0}
+  main .stage .top [data-sf=who]{grid-column:1/-1}
+}
+@media (max-width:640px){
+  .demo-bar{grid-template-columns:1fr}.demo-bar>.btn{grid-column:1;grid-row:auto;justify-self:start}
+  .vh>.btn{flex:1 1 100%}.vh>.spacer{display:none}
+  .hint,.hint.tiny,.box p,.val .d,.req,.plan .it,.intent,.flow>div,.ex-tr ul,.cc{font-size:13.5px}
 }
