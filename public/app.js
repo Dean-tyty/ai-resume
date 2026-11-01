@@ -400,7 +400,7 @@ function openBuy(reason, kind) {
     <p class="hint">1社分 ＝ 1つの応募先。その会社の職務経歴書・履歴書・英文レジュメ・志望動機・面接準備は、何度作り直しても追加料金はかかりません（1日に使える回数には上限があります）。求人票の分析は無料です。</p>
     <ul class="trust buyer"><li>求人ページの URL から求人票を読み込み</li><li>会社の公開情報の調査（出典付き・1社につき${CFG.research || 3}回まで。その会社の1社分に含まれます）</li></ul>
     <p class="hint">買い切り（月額・自動更新なし）。クレジットカードなどで、Stripe の決済画面からお支払いいただけます。応募先を削除しても、使った利用枠は戻りません。</p>
-    <p class="hint"><a href="${h(CFG.terms)}" target="_blank" rel="noopener">利用規約</a>　<a href="https://www.flatland.co.jp/legal/tokushoho/" target="_blank" rel="noopener">特定商取引法に基づく表示</a></p>
+    <p class="hint"><a href="${h(CFG.terms)}" target="_blank" rel="noopener">利用規約</a>　<a href="https://www.flatland.co.jp/legal/tokushoho/" target="_blank" rel="noopener">特定商取引法に基づく表記</a></p>
     <div class="row"><span class="spacer"></span><button class="btn" data-act="closeModal">閉じる</button></div>`);
 }
 async function buy(pack, btn) {
@@ -719,7 +719,7 @@ function researchHTML(c) {
     if (r.hooks.length) s += `<h5>志望動機の材料になりそうなこと</h5><ul>${r.hooks.map((x) => { const f = fact(x.fact); return `<li>${h(x.why)}${f ? `<span class="rs-sub">${h(f.text)}</span>` : ''}</li>`; }).join('')}</ul>`;
     if (r.questions.length) s += `<h5>逆質問の候補</h5><ul>${r.questions.map((q) => `<li><span data-noi18n>${h(q.q)}</span>${trl(q.q_tr)}${FOR[q.for] ? `<span class="rs-sub">${FOR[q.for]}</span>` : ''}</li>`).join('')}</ul>`;
     if (r.check_yourself.length) s += `<h5>自分で確かめたいこと</h5><ul>${r.check_yourself.map((x) => `<li>${h(x.point)}${x.ask ? `<span class="rs-sub"><span>聞き方の例：</span><span data-noi18n>「${h(x.ask)}」</span></span>${trl(x.ask_tr)}` : ''}</li>`).join('')}</ul>`;
-    s += `<details class="mini"><summary>口コミサイトについて</summary><p>口コミサイトは AI の調査に使っていません。匿名の投稿は書き手の職種や時期を確かめられず、AI が要約すると一部の声が事実のように見えるためです。応募や入社を判断する材料として読むのは役立ちます。読むときは、直近2〜3年の投稿か、職種・部署が近いか、同じ点が複数の投稿で繰り返されているかを見てください。面接では口コミを根拠にせず、気になる点は中立な質問に言い換えて、人事面談やオファー面談で確かめましょう。</p></details>`;
+    s += `<details class="rs-more"><summary>口コミサイトについて</summary><p>口コミサイトは AI の調査に使っていません。匿名の投稿は書き手の職種や時期を確かめられず、AI が要約すると一部の声が事実のように見えるためです。応募や入社を判断する材料として読むのは役立ちます。読むときは、直近2〜3年の投稿か、職種・部署が近いか、同じ点が複数の投稿で繰り返されているかを見てください。面接では口コミを根拠にせず、気になる点は中立な質問に言い換えて、人事面談やオファー面談で確かめましょう。</p></details>`;
     s += '</div></div>';
     if (r.caveats.length) s += r.caveats.map((x) => `<p class="hint tiny" style="margin:4px 0 0">※ ${h(x)}</p>`).join('');
     s += '<p class="hint tiny" style="margin:8px 0 0">AI が自動で集めた公開情報です。内容と日付はリンク先で確かめてください。検索に使ったのは会社名・職種・求人票だけです。</p>';
@@ -1153,8 +1153,8 @@ function profileHTML(p) {
   return `<h3>職歴</h3>${careers || '<div class="empty">職歴を読み取れませんでした</div>'}
     <h3>使える事例（${p.episodes.length}件）</h3><div class="eps">${eps}</div>
     ${sk ? `<h3>スキル・ツール・語学</h3><div>${sk}</div>` : ''}
-    ${(p.education || []).length ? `<h3>学歴</h3><div style="font-size:13px">${p.education.map((x) => h(ym(x.date) + '　' + x.school + (x.detail ? '　' + x.detail : ''))).join('<br>')}</div>` : ''}
-    ${p.qualifications.length ? `<h3>資格</h3><div style="font-size:13px">${p.qualifications.map((q) => h(ym(q.date) + '　' + q.name)).join('<br>')}</div>` : ''}
+    ${(p.education || []).length ? `<h3>学歴</h3>${p.education.map((x) => `<div class="dl2"><span>${h(ym(x.date))}</span><span>${h(x.school + (x.detail ? '　' + x.detail : ''))}</span></div>`).join('')}` : ''}
+    ${p.qualifications.length ? `<h3>資格</h3>${p.qualifications.map((q) => `<div class="dl2"><span>${h(ym(q.date))}</span><span>${h(q.name)}</span></div>`).join('')}` : ''}
     ${qs}
     <div class="row"><span class="spacer"></span><button class="btn primary" data-act="step" data-step="2">次へ：応募先を追加 →</button></div>`;
 }
@@ -1534,7 +1534,7 @@ function render4() {
 }
 function stagesHTML(c) {
   const ci = curStage(c);
-  return `<div class="row" style="margin:0"><div><h2>${h(cname(c))} の選考</h2><div class="hint" style="margin:0">${h((c.analysis && c.analysis.position) || '')}　面接が終わったら、聞かれたことと詰まったことを残してください。次のステップの対策に使います。</div></div><span class="spacer"></span>
+  return `<div class="row" style="margin:0"><div><h2>${h(cname(c))} の選考</h2>${c.analysis && c.analysis.position ? `<div class="cc">${h(c.analysis.position)}</div>` : ''}<p class="hint" style="margin:2px 0 0">面接が終わったら、聞かれたことと詰まったことを残してください。次のステップの対策に使います。</p></div><span class="spacer"></span>
     <label style="margin:0">結果</label><select data-c4="result" style="width:auto">${['選考中', '内定', '見送り', '辞退'].map((o) => `<option value="${o}" ${c.result === o ? 'selected' : ''}>${o}</option>`).join('')}</select></div>
   <div class="stages">${c.stages.map((s, i) => {
     const prevLogged = c.stages.slice(0, i).some(hasLog);
@@ -1583,7 +1583,7 @@ function demoState() {
   const co = newCompany({ name: d.jobName, job: d.job, info: d.companyInfo, analysis: normAnalysis(d.analysis), status: 'done', maxPages: 2, theme: 'premium', accent: 'navy', pack: normPack(d.pack), packStatus: 'done' });
   co.doc = Object.assign(E.normalizeDoc(d.doc), { date: today() + '現在', name: d.name });
   if (d.english) { co.en = E.normalizeEn(d.english); st.nameEn = co.en.name; st.nameEnGuess = !!d.english.name_guess; }
-  if (d.research) { co.research = normResearch(d.research); co.analyzedAt = Date.now(); }
+  if (d.research) { co.research = normResearch(d.research); co.analyzedAt = Date.now(); co.rsOpen = true; }
   const base = new Date();
   co.stages = d.stages.map((s) => { const dt = s.offset != null ? new Date(base.getTime() + s.offset * 864e5) : null; return newStage({ name: s.name, status: s.status, date: dt ? iso(dt) : '', time: s.time || '', format: s.format || '', who: s.who || '', log: Object.assign({ asked: '', good: '', bad: '', vibe: '', reverse: '' }, s.log || {}) }); });
   co.explain = Object.assign(normExplain(d.explain), { lang: 'zh' }); co.exStatus = 'done';
@@ -1750,7 +1750,7 @@ async function readyFor(qs) {
 }
 function renderPrices() {
   const el = $('#price .prices'); const packs = CFG.packs || []; if (!el || !packs.length) return;
-  el.innerHTML = `<div class="pc"><span>最初の${CFG.free || 1}社</span><b>無料</b><small>職務経歴書・履歴書・面接準備まで</small></div>` + packs.map((p) => `<div class="pc"><span>${h(p.label)}</span><b>${p.price.toLocaleString('ja-JP')}円</b><small>1社あたり${Math.round(p.price / p.credits).toLocaleString('ja-JP')}円</small></div>`).join('');
+  el.innerHTML = `<div class="pc"><span>最初の${CFG.free || 1}社</span><b>無料</b><small>職務経歴書・履歴書・面接準備まで</small></div>` + packs.map((p) => `<div class="pc"><span>${h(p.label)}</span><b>${p.price.toLocaleString('ja-JP')}円</b><small>1社あたり${Math.round(p.price / p.credits).toLocaleString('ja-JP')}円</small><small class="plus">＋ 求人URLの読み込み・会社の公開情報の調査</small></div>`).join('');
 }
 async function boot() {
   renderPrices();
