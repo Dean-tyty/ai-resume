@@ -5,7 +5,7 @@ import { cpSync, mkdirSync, readFileSync, writeFileSync, rmSync, existsSync } fr
 const root = new URL('../', import.meta.url).pathname;
 const out = root + 'preview/dist/';
 rmSync(out, { recursive: true, force: true }); mkdirSync(out, { recursive: true });
-for (const f of ['app.js', 'app.css', 'engine.js', 'demo.js', 'demo-i18n.js', 'charfix.js', 'i18n.js', 'i18n', 'favicon.svg', 'lib', 'fonts', 'img']) if (existsSync(root + 'public/' + f)) cpSync(root + 'public/' + f, out + f, { recursive: true });
+for (const f of ['app.js', 'app.css', 'engine.js', 'demo.js', 'demo-i18n.js', 'samples.js', 'charfix.js', 'i18n.js', 'i18n', 'favicon.svg', 'lib', 'fonts', 'img']) if (existsSync(root + 'public/' + f)) cpSync(root + 'public/' + f, out + f, { recursive: true });
 const dist = process.env.FLATLAND_DIST || '/home/claude/flatland/dist';
 const kit = existsSync(dist + '/brand/kit/v1/kit.js');
 if (kit) { mkdirSync(out + 'kit'); cpSync(dist + '/brand/kit/v1/kit.js', out + 'kit/kit.js'); cpSync(dist + '/brand/kit/v1/kit.css', out + 'kit/kit.css'); }
