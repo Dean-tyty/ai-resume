@@ -69,7 +69,7 @@ ok((await page.innerText('#acct .credit')).includes('1'), 'sample used no credit
 for (const kind of ['pdf', 'docx']) {
   const [dl] = await Promise.all([page.waitForEvent('download'), page.click(`[data-act=${kind}]`).then(() => page.click(`[data-act=${kind}]`).catch(() => {}))]);
   const p = OUT + 'out.' + kind; await dl.saveAs(p);
-  ok(/^職務経歴書_山田太郎_\d{8}\.(pdf|docx)$/.test(dl.suggestedFilename()), kind + ' downloaded as ' + dl.suggestedFilename());
+  ok(/^職務経歴書_山田太郎_[^_]+_\d{8}\.(pdf|docx)$/.test(dl.suggestedFilename()) && !dl.suggestedFilename().includes('サンプルクラウド'), kind + ' downloaded as ' + dl.suggestedFilename());
 }
 await act('tab', '[data-v=rireki]');
 await page.waitForSelector('#rkPreview canvas', { timeout: 15000 });
@@ -146,6 +146,8 @@ await page.click(C3 + ' [data-act=generate]');
 await page.waitForSelector('.lock-note', { timeout: 30000 });
 await page.waitForFunction(() => !document.querySelector('.pill.run'), null, { timeout: 30000 });
 ok(/あと\s*0/.test(await page.innerText('#acct .credit')), 'second company made as a free preview (still 0)');
+// a number not in the career: saving asks "press again" first, and the save must still resume after paying
+await page.evaluate(() => window.__test.set((st) => { const x = st.companies.find((y) => y.name === '株式会社テスト三号'); x.doc.summary += '（延べ999件）'; }));
 await save('[data-act=pdf]');
 await page.waitForSelector('.packs');
 ok((await page.innerText('#modal')).includes('画面で確認できています'), 'out of credits: purchase dialog says what this company needs');

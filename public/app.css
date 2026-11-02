@@ -679,3 +679,12 @@ fl-header{white-space:nowrap}   /* inherited into the kit's header (its shadow D
 .docgrid.edit .ctrl .dl{max-width:420px}
 .anwrap{margin-top:10px}
 .anwrap>summary{font-size:13.5px;color:var(--ink2);cursor:pointer;padding:6px 0}
+/* step 3 on narrow screens: the company list scrolls with the page (this comes after .side{position:sticky}) */
+@media (max-width:980px){.side{position:static}}
+/* a button asking to be pressed again carries a sentence: it wraps instead of widening the page */
+.btn[data-confirm="1"]{white-space:normal;line-height:1.45;text-align:center}
+.formcopy{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:8px 0 2px}
+.formcopy .hint{flex:1 1 100%}
+.foot-lang{display:flex;gap:6px;justify-content:center;margin:0 0 8px;font-size:12.5px}
+.foot-lang a{color:var(--ink2);text-decoration:none}
+.foot-lang a[aria-current]{color:var(--ink);font-weight:600}
