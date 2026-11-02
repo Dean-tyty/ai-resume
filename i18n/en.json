@@ -753,7 +753,6 @@
  "職務要約の打ち出し方": "How the summary is pitched",
  "自己PRの見出し": "Self-PR headings",
  "この会社向けに作ったところ": "What was tailored for this company",
- "1社分を使うと、この内容に合わせた志望動機（300字・150字）、想定質問9問と回答例、逆質問、選考ごとの面接対策も作れます。": "Using 1 credit also lets you create, to match this, the motivation (300 and 150 characters), 9 likely questions with sample answers, questions to ask, and preparation for each interview round.",
  "転職{0}回": "{0} job changes",
  "回数だけで判断する企業もあります。職務要約で、経験に共通する軸（職種・顧客・身につけた力）を1文で示し、面接では理由を短く前向きに話せるようにします。": "Some companies judge on the number alone. The career summary states in one sentence what your jobs have in common (role, customers, skills gained), and you prepare to explain the reasons briefly and positively in interviews.",
  "在籍1年未満：{0}（{1}か月）": "Less than a year: {0} ({1} months)",
@@ -823,5 +822,7 @@
  "1社あたり980円": "¥980 per company",
  "20社パック": "20-company pack",
  "6,980円": "¥6,980",
- "1社あたり349円": "¥349 per company"
+ "1社あたり349円": "¥349 per company",
+ "1社分を使うと、この内容に合わせた志望動機（300字・150字）、想定質問と回答例（9問前後）、逆質問、選考ごとの面接対策も作れます。": "Using 1 credit also lets you create, to match this, the motivation (300 and 150 characters), likely questions with sample answers (about 9), questions to ask, and preparation for each interview round.",
+ "この例の人物は、経歴を中国語で書いています。書類は日本語で作られ、ステップ3で母語の対訳を見ながら確認できます。": "This person wrote their career notes in Chinese. The documents are made in Japanese, and in step 3 you can check them against a translation in your language."
 }

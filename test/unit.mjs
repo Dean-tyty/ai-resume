@@ -116,6 +116,20 @@ await t('the sample 職務経歴書 names no company, its spoken answers say 御
   assert.ok(!/貴社|御社/.test(txt) && !txt.includes('サンプルクラウド'));
   D.pack.questions.forEach((q) => assert.ok(!q.answer.includes('貴社'), q.q));
 });
+await t('the examples by kind of job change keep the product\'s promises', async () => {
+  const w = {}; new Function('window', readFileSync(new URL('../public/samples.js', import.meta.url), 'utf8'))(w);
+  const nd = (x) => String(x).replace(/[０-９．]/g, (ch) => (ch === '．' ? '.' : String.fromCharCode(ch.charCodeAt(0) - 0xfee0))).replace(/,(?=\d{3})/g, '');
+  for (const [k, d] of Object.entries(w.DEMO_SET)) {
+    const src = nd(d.raw + JSON.stringify(d.intent || {}));
+    const txt = nd(JSON.stringify(d.doc) + JSON.stringify(d.pack.questions) + JSON.stringify(d.pack.motivation));
+    const bad = (txt.match(/\d+(?:\.\d+)?/g) || []).filter((n) => !new RegExp('(^|[^0-9.])' + n.replace(/\./g, '\\.') + '(?![0-9]|\\.[0-9])').test(src));
+    assert.deepEqual([...new Set(bad)], [], k + ': numbers not in the career');
+    const doc = JSON.stringify(d.doc); const co = d.jobName.replace(/（架空）|株式会社/g, '');
+    assert.ok(!/貴社|御社/.test(doc) && !doc.includes(co), k + ': the 職務経歴書 names the company');
+    d.pack.questions.forEach((q) => assert.ok(!q.answer.includes('貴社'), k + ': spoken answer says 貴社'));
+    assert.ok(/（架空）/.test(d.jobName), k + ': company marked fictional');
+  }
+});
 await t('engineer prompt only for engineer data', async () => {
   const eng = PROMPTS.P_GENERATE({ ...ctx, profile: { careers: [{ roles: [{ projects: [{ name: 'x' }] }] }] } }, c);
   assert.ok(eng.includes('エンジニア形式') && eng.includes('skillTable'));

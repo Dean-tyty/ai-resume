@@ -440,7 +440,7 @@ function tailoredHTML(c) {
     d.pr && d.pr.length && UI_LANG === 'ja' ? ['自己PRの見出し', d.pr.map((p) => '「' + p.heading + '」').join('　')] : null,
   ].filter(Boolean);
   if (!rows.length) return '';
-  return `<div class="tailored"><b>この会社向けに作ったところ</b>${rows.map(([k, v]) => `<div><span>${h(k)}</span><span>${h(v)}</span></div>`).join('')}<p class="hint tiny" style="margin:6px 0 0">1社分を使うと、この内容に合わせた志望動機（300字・150字）、想定質問9問と回答例、逆質問、選考ごとの面接対策も作れます。</p></div>`;
+  return `<div class="tailored"><b>この会社向けに作ったところ</b>${rows.map(([k, v]) => `<div><span>${h(k)}</span><span>${h(v)}</span></div>`).join('')}<p class="hint tiny" style="margin:6px 0 0">1社分を使うと、この内容に合わせた志望動機（300字・150字）、想定質問と回答例（9問前後）、逆質問、選考ごとの面接対策も作れます。</p></div>`;
 }
 // kind: 'buyer' (a feature for buyers), 'unlock' (this 応募先's documents need its 1社分), 'preview' (no more
 // free previews), '' (adding credits)
@@ -1199,7 +1199,7 @@ function demoBar() {
   if (!state.demo) return '';
   const bar = hasOwnData(userState)
     ? `<div class="demo-bar"><span>いま表示しているのは<b>サンプル</b>（架空の人物・企業）です。あなたのデータはそのまま残っています。サンプルでの操作は保存されません。</span><span class="spacer"></span><button class="btn primary small" data-act="startOwn">自分のデータに戻る</button></div>`
-    : `<div class="demo-bar"><span>いま表示しているのは<b>サンプル</b>（架空の人物・企業）です。サンプルでの操作は保存されません。各ステップを見たあと、自分の経歴で始められます。${UI_LANG !== 'ja' ? '</span><span class="tiny">このサンプルの人物は日本語で経歴を書いています。英語・中国語で書いても書類は日本語で作られ、ステップ3で母語の対訳を見ながら確認できます。' : ''}</span><span class="spacer"></span><button class="btn primary small" data-act="startOwn">自分の経歴で始める</button></div>`;
+    : `<div class="demo-bar"><span>いま表示しているのは<b>サンプル</b>（架空の人物・企業）です。サンプルでの操作は保存されません。各ステップを見たあと、自分の経歴で始められます。${UI_LANG !== 'ja' ? (state.demoKind === 'eng' ? '</span><span class="tiny">この例の人物は、経歴を中国語で書いています。書類は日本語で作られ、ステップ3で母語の対訳を見ながら確認できます。' : '</span><span class="tiny">このサンプルの人物は日本語で経歴を書いています。英語・中国語で書いても書類は日本語で作られ、ステップ3で母語の対訳を見ながら確認できます。') : ''}</span><span class="spacer"></span><button class="btn primary small" data-act="startOwn">自分の経歴で始める</button></div>`;
   return bar.replace(/<\/div>$/, demoPick() + '</div>');
 }
 
@@ -1796,7 +1796,7 @@ function demoState(kind) {
   const d = alt || window.DEMO; const st = fresh();
   st.demo = true; st.demoKind = alt ? kind : ''; st.name = d.name; st.raw = d.raw; st.profile = normProfile(d.profile); st.intent = Object.assign({}, d.intent || {});
   st.rireki = Object.assign(RK0(), (d.rireki || window.DEMO.rireki) || {});
-  const co = newCompany({ name: d.jobName, job: d.job, info: d.companyInfo, analysis: normAnalysis(d.analysis), status: 'done', maxPages: 2, theme: (alt && d.theme) || 'premium', accent: 'navy', pack: normPack(d.pack), packStatus: 'done' });
+  const co = newCompany({ name: d.jobName, job: d.job, info: d.companyInfo, analysis: normAnalysis(d.analysis), status: 'done', maxPages: (alt && d.maxPages) || 2, theme: (alt && d.theme) || 'premium', accent: 'navy', pack: normPack(d.pack), packStatus: 'done' });
   if (d.rk) co.rk = Object.assign({}, co.rk || {}, { motive: d.rk.motive || '', hope: d.rk.hope || '', status: '' });
   co.doc = Object.assign(E.normalizeDoc(d.doc), { date: today() + '現在', name: d.name });
   if (d.english) { co.en = E.normalizeEn(d.english); st.nameEn = co.en.name; st.nameEnGuess = !!d.english.name_guess; }
