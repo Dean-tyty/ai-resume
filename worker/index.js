@@ -24,7 +24,8 @@ import { body, json, fail, NO_STORE } from './util.js';
 function configJS(env) {
   const cfg = {
     clerkKey: env.CLERK_PUBLISHABLE_KEY || '', dev: env.DEV_AUTH === '1',
-    packs: Object.entries(PACKS).map(([id, p]) => ({ id, ...p })), free: FREE_CREDITS, consent: CONSENT_VERSION,
+    // only the packs that can be paid for (their Stripe Price is set; all of them with the test payment)
+    packs: Object.entries(PACKS).filter(([id]) => env.STRIPE_MOCK === '1' || env['STRIPE_PRICE_' + id.toUpperCase()]).map(([id, p]) => ({ id, ...p })), free: FREE_CREDITS, consent: CONSENT_VERSION,
     terms: PRODUCT.terms, privacy: PRODUCT.privacy, retention: RETENTION_DAYS, research: RESEARCH_PER_COMPANY,
     preview: PREVIEW, freeLife: FREE_LIFE,
   };

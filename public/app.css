@@ -340,7 +340,7 @@ fl-footer:not(:defined){display:block}
 @media (max-width:600px){.lp{padding-top:44px}.lp-feats{grid-template-columns:1fr}.lp-cta .btn{width:100%}}
 .lp h2{font-size:22px;margin:0 0 14px}
 .lp-price{margin-top:64px}
-.prices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;max-width:760px}
+.prices{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;max-width:1100px}
 .pc{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;display:flex;flex-direction:column;gap:2px}
 .pc span{font-size:13px;color:var(--ink2)}
 .pc b{font-size:24px;letter-spacing:.01em}
@@ -499,6 +499,7 @@ summary .trl{display:block;font-weight:400}
 
 /* shown on the English / Chinese pages only */
 html[lang="ja"] .foreign-only{display:none}
+html:not([lang="ja"]) .ja-only{display:none}
 
 /* step 2: a posting from its URL; the company's public information */
 .urlrow{display:flex;gap:8px;align-items:center;margin:4px 0}
@@ -688,3 +689,18 @@ fl-header{white-space:nowrap}   /* inherited into the kit's header (its shadow D
 .foot-lang{display:flex;gap:6px;justify-content:center;margin:0 0 8px;font-size:12.5px}
 .foot-lang a{color:var(--ink2);text-decoration:none}
 .foot-lang a[aria-current]{color:var(--ink);font-weight:600}
+/* examples by kind of job change */
+.case-go{margin-top:8px;font-size:13px}
+.demo-pick{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:4px;grid-column:1/-1}
+.demo-pick .lab{font-size:12.5px;color:var(--ink2);margin-right:2px}
+.demo-pick button{border:1px solid var(--line2);background:var(--paper);border-radius:999px;padding:4px 11px;font-size:12.5px;cursor:pointer;color:var(--ink)}
+.demo-pick button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+/* the posting through a screener's eyes */
+.screenline{margin:0 0 10px;padding:9px 13px;border-radius:10px;background:var(--salt);font-size:13px;line-height:1.6}
+.screenline b{font-weight:600}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:8px 0}
+.cmp h4{margin:0 0 6px;font-size:13px}
+.cmp pre{white-space:pre-wrap;font-family:inherit;font-size:13px;line-height:1.65;margin:0;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--paper);max-height:52vh;overflow:auto}
+.cmp pre.nocopy{-webkit-user-select:none;user-select:none}
+@media (max-width:640px){.cmp{grid-template-columns:1fr}}
+.modal .sheet:has(.cmp){max-width:960px}

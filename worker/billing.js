@@ -1,5 +1,5 @@
 // Payments with Stripe Checkout (the company's Stripe account; this product's own Product, Prices and
-// webhook). Packs and prices: config.js PACKS; the Stripe Price ids: secrets STRIPE_PRICE_P5, STRIPE_PRICE_P10.
+// webhook). Packs and prices: config.js PACKS; the Stripe Price ids: secrets STRIPE_PRICE_P1, _P5, _P10, _P20.
 //
 //   POST /api/checkout {pack, lang}  -> {url} of a Checkout page; Stripe sends the user back to /?paid=<session> (/en/, /zh/ by lang)
 //   POST /api/checkout/confirm {session}  the return page asks at once (the webhook may come a little later)

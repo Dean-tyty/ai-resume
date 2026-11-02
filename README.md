@@ -145,7 +145,7 @@ E2E 需要官网的品牌套件：默认读取官网仓库本机构建的 `dist/
 | `CLERK_SECRET_KEY` | Clerk Dashboard → API Keys（`sk_live_…`） |
 | `STRIPE_SECRET_KEY` | Stripe → 开发者 → API 密钥（建议用只开放 Checkout Sessions 读写的受限密钥） |
 | `STRIPE_WEBHOOK_SECRET` | 下面 Stripe 第 3 步得到的 `whsec_…` |
-| `STRIPE_PRICE_P5` / `STRIPE_PRICE_P10` | 下面 Stripe 第 2 步得到的 `price_…` |
+| `STRIPE_PRICE_P1` / `STRIPE_PRICE_P5` / `STRIPE_PRICE_P10` / `STRIPE_PRICE_P20` | 下面 Stripe 第 2 步得到的 `price_…`（1社 980 円、5社 2,480 円、10社 3,980 円、20社 6,980 円）。没设的档位不会显示在页面上 |
 | `LARK_WEBHOOK` / `LARK_WEBHOOK_SECRET` | 和官网 Worker 相同 |
 | `HASH_SALT` | 随便一串长的随机字符（以后不要改） |
 
@@ -160,7 +160,7 @@ E2E 需要官网的品牌套件：默认读取官网仓库本机构建的 `dist/
 ### 4. Stripe
 
 1. 同一个 Stripe 账号，新建 Product「職務経歴書AI」。
-2. 建两个一次性 Price：5社パック 2,480 JPY、10社パック 3,980 JPY（含税，税务行为选「含税」）。
+2. 建四个一次性 Price：1社分 980 JPY、5社パック 2,480 JPY、10社パック 3,980 JPY、20社パック 6,980 JPY（标价即支付总额；免税事业者不开 Stripe Tax）。只想先卖其中几档时，只设那几档的 `STRIPE_PRICE_…`，页面只显示设了的档位。
 3. Webhook：端点 `https://resume.flatland.co.jp/api/stripe`，事件选 `checkout.session.completed`、`checkout.session.async_payment_succeeded`、`checkout.session.async_payment_failed`、`charge.refunded`。
 4. 想要可报销的发票（インボイス）：取得登录号码后填进 Stripe，并在 Worker 变量里加 `STRIPE_INVOICE=1`（Stripe 对发票另收费）。
 5. 退款：在 Stripe 后台操作后，Lark 会收到通知；对应用户的利用枠需要手动减（D1 控制台：`UPDATE users SET credits = credits - 5 WHERE id = '…'`，用户 ID 在 `purchases` 表里按 Checkout Session 查）。

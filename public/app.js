@@ -1136,6 +1136,7 @@ async function importResume(file) {
   if (st) st.textContent = '';
   if (len(text.replace(/\s/g, '')) < 20) { toast('文字を読み取れませんでした（画像として保存された PDF の可能性があります）。文章をコピーして貼り付けてください'); return; }
   state.raw = state.raw.trim() ? state.raw.trim() + '\n\n' + text : text;
+  state.oldDoc = text.slice(0, 6000);   // the document the user had: shown next to the new one in step 3
   save(); render();
   toast(`${file.name} を読み込みました（${len(text)}字）。内容を確かめて「経歴を整理する」を押してください`);
 }
@@ -1189,11 +1190,17 @@ function creditNote(c) {
     : `<p class="hint credit-note">書類を作って画面で確認するのは無料です。保存・コピーと志望動機・面接準備には、利用枠の購入が必要です（${fromPrice()}）。</p>`;
 }
 function viewHead(title, desc, right) { return `${demoBar()}<div class="vh"><div><div class="eyebrow">STEP ${state.step} / 4</div><h1>${title}</h1><p>${desc}</p></div><span class="spacer"></span>${right || ''}</div>`; }
+function demoPick() {
+  const ks = demoKinds(); if (ks.length < 2) return '';
+  const lab = (k, l) => { const x = k && window.DEMO_SET[k].i18n && window.DEMO_SET[k].i18n[UI_LANG]; return x && x.label ? x.label : l; };
+  return `<div class="demo-pick"><span class="lab">ほかの例：</span>${ks.map(([k, l]) => `<button class="${(state.demoKind || '') === k ? 'on' : ''}" data-act="demo" data-v="${k}">${h(lab(k, l))}</button>`).join('')}</div>`;
+}
 function demoBar() {
   if (!state.demo) return '';
-  return hasOwnData(userState)
+  const bar = hasOwnData(userState)
     ? `<div class="demo-bar"><span>いま表示しているのは<b>サンプル</b>（架空の人物・企業）です。あなたのデータはそのまま残っています。サンプルでの操作は保存されません。</span><span class="spacer"></span><button class="btn primary small" data-act="startOwn">自分のデータに戻る</button></div>`
     : `<div class="demo-bar"><span>いま表示しているのは<b>サンプル</b>（架空の人物・企業）です。サンプルでの操作は保存されません。各ステップを見たあと、自分の経歴で始められます。${UI_LANG !== 'ja' ? '</span><span class="tiny">このサンプルの人物は日本語で経歴を書いています。英語・中国語で書いても書類は日本語で作られ、ステップ3で母語の対訳を見ながら確認できます。' : ''}</span><span class="spacer"></span><button class="btn primary small" data-act="startOwn">自分の経歴で始める</button></div>`;
+  return bar.replace(/<\/div>$/, demoPick() + '</div>');
 }
 
 function render() {
@@ -1249,7 +1256,7 @@ function render1() {
         <label for="in-axis">次の仕事で実現したいこと</label>
         <textarea id="in-axis" rows="2" data-intent="axis" placeholder="例：CSの仕組みづくりをリードしたい／チームを率いたい">${h(state.intent.axis)}</textarea>
         <label for="in-cond">希望条件（年収・勤務地・入社可能時期など）</label>
-        <textarea id="in-cond" rows="2" data-intent="conditions" placeholder="例：年収650万円以上、都内またはリモート、2027年2月以降に入社可能">${h(state.intent.conditions)}</textarea>
+        <textarea id="in-cond" rows="2" data-intent="conditions" placeholder="例：年収650万円以上、都内またはリモート、2027年2月以降に入社可能／平日9:30〜15:30の時短・パート希望">${h(state.intent.conditions)}</textarea>
       </details>
       <div class="row">
         <button class="btn primary" data-act="extract" ${state.profileStatus === 'run' ? 'disabled' : ''}>${p ? '経歴を整理し直す' : '経歴を整理する'}</button>
@@ -1378,7 +1385,9 @@ function analysisHTML(a) {
   const ep = {}; ((state.profile && state.profile.episodes) || []).forEach((e) => { ep[e.id] = e.title; });
   const src = (s) => `<span class="tag ${s === '一般知識' ? 'warn' : 'gray'}">${h(s === '一般知識' ? 'AIの一般知識・要確認' : (s || '—'))}</span>`;
   const mc = { '◎': 'a', '○': 'b', '△': 'c' };
-  return `<div class="an">
+  const must = a.requirements.filter((r) => r.type === '必須'); const weak = must.filter((r) => r.match === '△').length;
+  const line = must.length ? `<p class="screenline"><b>書類選考の目で見ると：</b>必須要件${must.length}件のうち、あなたの経歴で裏付けられるのは${must.length - weak}件${weak ? `、一部だけ合うのが${weak}件です。△の要件は、書類での見せ方（下の「アピールの組み立て」）と面接での答え方で補います` : 'です。書類では、その裏付けを求人の言葉に合わせて前に出します'}。</p>` : '';
+  return `${line}<div class="an">
     <div class="box"><h4>この会社が重視していること</h4>${a.summary ? `<p style="margin:0 0 10px;font-size:12.5px">${h(a.summary)}</p>` : ''}
       ${a.values.map((v) => `<div class="val"><b>${h(v.label)}</b> ${src(v.source)}<div class="d">${h(v.detail)}</div>${v.quote ? `<div class="qt" data-noi18n>「${h(v.quote)}」</div>` : ''}</div>`).join('')}</div>
     <div class="box"><h4>求人の要件とあなたの経歴</h4><p class="hint tiny" style="margin:-4px 0 8px">◎ 十分に合う　○ 合う　△ 一部だけ合う</p><div class="req">${a.requirements.map((r) => `<span class="m ${mc[r.match] || 'b'}">${h(r.match)}</span><div class="t">${h(r.text)} <span class="tag gray">${h(r.type)}</span><div class="ev">${h(r.evidence)}</div></div>`).join('')}</div></div>
@@ -1459,6 +1468,7 @@ function docPaneHTML(c) {
     </div>
     ${UI_LANG !== 'ja' ? exBlock : ''}
     ${c.downloaded && others <= 1 ? `<div class="card nudge"><div><b>1社目の書類ができました</b><div class="hint" style="margin:0">経歴はそのまま使えます。次の会社は求人票を貼るだけです。</div></div><span class="spacer"></span><button class="btn primary" data-act="nextCompany">＋ 次の応募先を追加</button></div>` : ''}
+    ${state.oldDoc && !state.demo ? `<div class="card nudge"><div><b>今までの職務経歴書と比べる</b><div class="hint" style="margin:0">読み込んだ書類と、この会社向けに作った書類を並べて見られます。</div></div><span class="spacer"></span><button class="btn" data-act="compareOld">比べる</button></div>` : ''}
     <div class="card next"><div><b>志望動機・面接準備</b><div class="hint" style="margin:0">この書類と矛盾しない志望動機と想定問答を作ります。</div></div><span class="spacer"></span><button class="btn" data-act="tab" data-v="pack">${c.pack ? '作成済みを見る →' : '作成する →'}</button></div>
     ${UI_LANG === 'ja' ? exBlock : ''}`;
 }
@@ -1522,7 +1532,7 @@ function rirekiHTML(c) {
       </div>
     </div>
     <div class="stack">
-      <div class="card" style="padding:14px 18px"><div class="row" style="margin:0"><b>プレビュー（A4・2枚）</b><span class="spacer"></span><button class="btn primary" data-act="rkPdf">履歴書 PDF をダウンロード</button></div><div id="rkWarn" class="fitbar"></div></div>
+      <div class="card" style="padding:14px 18px"><div class="row" style="margin:0"><b>プレビュー（A4・2枚）</b><span class="spacer"></span><button class="btn primary" data-act="rkPdf">履歴書 PDF をダウンロード</button></div><p class="hint tiny" style="margin:6px 0 0">保存は無料です。手書きを求められていなければ、PDF で提出できます。スマートフォンに保存した PDF は、コンビニのネットプリントで A4 に印刷できます。</p><div id="rkWarn" class="fitbar"></div></div>
       <div class="desk" id="rkPreview">${F.ready ? '' : `<div class="empty">${spin}書体を読み込んでいます…</div>`}</div>
     </div>
   </div>`;
@@ -1764,20 +1774,39 @@ function prepHTML(p, c) {
 }
 
 // ---------------- demo ----------------
-function demoState() {
-  const d = window.DEMO; const st = fresh();
-  st.demo = true; st.name = d.name; st.raw = d.raw; st.profile = normProfile(d.profile); st.intent = Object.assign({}, d.intent || {});
-  st.rireki = Object.assign(RK0(), d.rireki || {});
-  const co = newCompany({ name: d.jobName, job: d.job, info: d.companyInfo, analysis: normAnalysis(d.analysis), status: 'done', maxPages: 2, theme: 'premium', accent: 'navy', pack: normPack(d.pack), packStatus: 'done' });
+// the document the user brought, next to the one made for this company (what changed, before deciding to pay)
+function compareOld(c) {
+  const d = c.doc; const a = c.analysis || {};
+  const must = (a.requirements || []).filter((r) => r.type === '必須');
+  const newText = [d.highlights.length ? '【実績】\n' + d.highlights.map((x) => x.value + '　' + x.label).join('\n') : '', '【職務要約】\n' + d.summary, d.pr.length ? '【自己PR】\n' + d.pr.map((p) => '■' + p.heading).join('\n') : ''].filter(Boolean).join('\n\n');
+  openModal(`<h2 id="modalTitle">今までの書類と、この会社向けの書類</h2>
+    ${must.length ? `<p class="hint">この求人の必須要件：${must.map((r) => `<span class="tag ${r.match === '△' ? 'warn' : 'gray'}">${h(r.match)} ${h(r.text)}</span>`).join(' ')}</p>` : ''}
+    <div class="cmp"><div><h4>今までの書類（読み込んだ文章）</h4><pre data-noi18n>${h(state.oldDoc)}</pre></div><div><h4>この会社向けに作った書類（抜粋）</h4><pre data-noi18n class="${locked(c) ? 'nocopy' : ''}">${h(newText)}</pre></div></div>
+    <p class="hint tiny">今までの書類は、あなたの端末で読み取った文章をそのまま表示しています（レイアウトは含みません）。</p>
+    <div class="row"><span class="spacer"></span><button class="btn" data-act="closeModal">閉じる</button></div>`);
+}
+// the examples (public/samples.js): the built-in one (DEMO) and others by kind of job change; on the English /
+// Chinese page only those written for that page
+function demoKinds() {
+  const set = window.DEMO_SET || {};
+  return [['', 'CS・リーダー候補']].concat(Object.keys(set).filter((k) => UI_LANG === 'ja' || (set[k].i18n && set[k].i18n[UI_LANG])).map((k) => [k, set[k].label]));
+}
+function demoState(kind) {
+  const alt = kind && window.DEMO_SET && window.DEMO_SET[kind];
+  const d = alt || window.DEMO; const st = fresh();
+  st.demo = true; st.demoKind = alt ? kind : ''; st.name = d.name; st.raw = d.raw; st.profile = normProfile(d.profile); st.intent = Object.assign({}, d.intent || {});
+  st.rireki = Object.assign(RK0(), (d.rireki || window.DEMO.rireki) || {});
+  const co = newCompany({ name: d.jobName, job: d.job, info: d.companyInfo, analysis: normAnalysis(d.analysis), status: 'done', maxPages: 2, theme: (alt && d.theme) || 'premium', accent: 'navy', pack: normPack(d.pack), packStatus: 'done' });
+  if (d.rk) co.rk = Object.assign({}, co.rk || {}, { motive: d.rk.motive || '', hope: d.rk.hope || '', status: '' });
   co.doc = Object.assign(E.normalizeDoc(d.doc), { date: today() + '現在', name: d.name });
   if (d.english) { co.en = E.normalizeEn(d.english); st.nameEn = co.en.name; st.nameEnGuess = !!d.english.name_guess; }
   if (d.research) { co.research = normResearch(d.research); co.analyzedAt = Date.now(); co.rsOpen = true; }
   const base = new Date();
-  co.stages = d.stages.map((s) => { const dt = s.offset != null ? new Date(base.getTime() + s.offset * 864e5) : null; return newStage({ name: s.name, status: s.status, date: dt ? iso(dt) : '', time: s.time || '', format: s.format || '', who: s.who || '', log: Object.assign({ asked: '', good: '', bad: '', vibe: '', reverse: '' }, s.log || {}) }); });
-  co.explain = Object.assign(normExplain(d.explain), { lang: 'zh' }); co.exStatus = 'done';
-  const nx = co.stages.findIndex((s) => s.status === '予定'); if (nx >= 0) { co.stages[nx].prep = normPrep(d.prep); co.stages[nx].prepStatus = 'done'; }
-  // the English / Chinese page: the sample as the AI writes it for that page (demo-i18n.js)
-  const X = UI_LANG !== 'ja' && window.DEMO_I18N && window.DEMO_I18N[UI_LANG];
+  co.stages = (d.stages || [{ name: '書類選考', status: '通過', offset: -7 }, { name: '一次面接', status: '予定', offset: 5 }]).map((s) => { const dt = s.offset != null ? new Date(base.getTime() + s.offset * 864e5) : null; return newStage({ name: s.name, status: s.status, date: dt ? iso(dt) : '', time: s.time || '', format: s.format || '', who: s.who || '', log: Object.assign({ asked: '', good: '', bad: '', vibe: '', reverse: '' }, s.log || {}) }); });
+  if (d.explain) { co.explain = Object.assign(normExplain(d.explain), { lang: 'zh' }); co.exStatus = 'done'; }
+  const nx = co.stages.findIndex((s) => s.status === '予定'); if (nx >= 0 && d.prep) { co.stages[nx].prep = normPrep(d.prep); co.stages[nx].prepStatus = 'done'; }
+  // the English / Chinese page: the sample as the AI writes it for that page (demo-i18n.js; samples.js for the others)
+  const X = UI_LANG !== 'ja' && (alt ? d.i18n && d.i18n[UI_LANG] : window.DEMO_I18N && window.DEMO_I18N[UI_LANG]);
   if (X) {
     if (X.analysis) co.analysis = normAnalysis(X.analysis);
     if (X.missing) st.profile.missing = X.missing.map((m) => ({ q: Sx(m.q), why: Sx(m.why) }));
@@ -1897,13 +1926,14 @@ document.addEventListener('click', (e) => {
     case 'unlockOk': closeModal(true); break;
     case 'mask': state.mask = state.mask === false; save(); render(); toast(state.mask ? '顧客名などを伏せて作ります（「AI で作り直す」で反映）' : '顧客名などをそのまま書きます（「AI で作り直す」で反映）'); break;
     case 'readMode': ui.read = b.dataset.v === 'read'; render(); break;
+    case 'compareOld': if (c && c.doc) compareOld(c); break;
     case 'toSave': { const el = $('.ctrl'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); break; }
     case 'abort': { const ctl = controllers[b.dataset.key]; if (ctl) ctl.abort(); break; }
     case 'sel4': state.active4 = b.dataset.id; save(); render(); break;
     case 'addStage': { const x = company(state.active4); x.stages.push(newStage({ name: (UI_LANG === 'en' ? 'Step ' : UI_LANG === 'zh' ? '步骤 ' : 'ステップ') + (x.stages.length + 1) })); save(); render(); break; }
     case 'delStage': { const x = company(state.active4); if (x.stages.length > 1 && confirm2(b, '削除する？')) { x.stages = x.stages.filter((s) => s.id !== b.dataset.sid); save(); render(); } break; }
     case 'prep': { const x = company(state.active4); const i = x.stages.findIndex((s) => s.id === b.dataset.sid); if (i >= 0) makePrep(x, i); break; }
-    case 'demo': if (!state.demo) userState = state; state = demoState(); render(); window.scrollTo(0, 0); break;
+    case 'demo': if (!state.demo) userState = state; ui.lp = false; state = demoState(b.dataset.v || ''); render(); window.scrollTo(0, 0); break;
     case 'startOwn': case 'startFree': { const own = state.demo ? userState : state; state = own && !own.demo ? own : fresh(); userState = null; ui.lp = false; if (!hasOwnData(state)) state.step = 1; save(); render(); window.scrollTo(0, 0); if (state.step === 1) setTimeout(() => { const el = $('#in-raw'); if (el) el.focus(); }, 50); break; }
     case 'reset': if (confirm2(b, 'もう一度押すと消去')) { state = fresh(); userState = null; save(); render(); toast('入力データを消去しました'); } break;
     case 'login': openLogin(); break;

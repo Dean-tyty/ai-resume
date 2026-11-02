@@ -1,5 +1,6 @@
 // Product settings. Prices shown on the page come from here; the amounts actually charged come from the
-// Stripe Prices named in the secrets STRIPE_PRICE_P5 / STRIPE_PRICE_P10 — keep the two in step.
+// Stripe Prices named in the secrets STRIPE_PRICE_<PACK> (STRIPE_PRICE_P1, _P5, _P10, _P20) — keep the two in
+// step. A pack whose secret is not set is not offered (index.js configJS).
 export const PRODUCT = { id: 'resume', name: '職務経歴書AI', terms: 'https://www.flatland.co.jp/legal/terms/resume/', privacy: 'https://www.flatland.co.jp/privacy/' };
 export const CONSENT_VERSION = '2026-11-01';          // bump when the consent text changes: everyone is asked again
 export const FREE_CREDITS = 1;                         // 応募先 a new account can take documents out for, free
@@ -13,9 +14,13 @@ export const PREVIEW = { free: 2, open: 3, requests: 20 };
 // accounts that have never bought: AI requests in all (not per day), by task
 export const FREE_LIFE = { profile: 6, analyze: 10 };
 export const FREE_SLOT_MAX = 40;                       // AI requests the free 応募先 may use in all (buyers: SLOT_MAX)
+// p1: for one or two applications (dearer per company, which also makes the 5社 pack the clear choice);
+// p20: for career changers who apply to 20 or more
 export const PACKS = {
+  p1: { credits: 1, price: 980, label: '1社分' },
   p5: { credits: 5, price: 2480, label: '5社パック', rec: true },
   p10: { credits: 10, price: 3980, label: '10社パック' },
+  p20: { credits: 20, price: 6980, label: '20社パック' },
 };
 // cost guards: AI calls per user per day (all tasks / by task), and per 応募先 per day
 export const LIMITS = { day: 150, profile: 15, analyze: 40, company: 40, research: 10, fetch: 30 };
