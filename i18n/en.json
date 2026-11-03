@@ -878,5 +878,7 @@
  "営業職で業界を変える": "Sales, moving to a new industry",
  "商材や業界が変わっても通じる経験（新規開拓・単価・継続取引など）を、求人の要件ごとに整理します。足りない経験は盛らずに、書類での書き方と面接での答え方を示します。": "It sorts out, requirement by requirement, the experience that carries over when the product or industry changes (new accounts, deal size, repeat business and so on). Experience you lack is not inflated: it shows how to write it in your documents and how to answer in interviews.",
  "退職の行は「一身上の都合により退職」としています（自分の意思で辞めた場合）。経歴に出産・育児や介護のために辞めたと書いてあれば、「出産・育児のため退職」「家族の介護のため退職」としています（書きたくなければ「一身上の都合により退職」に直してかまいません）。会社の倒産・解雇などは「会社都合により退職」、契約が終わった場合は「契約期間満了により退職」に直してください。": "Leaving lines are written as 「一身上の都合により退職」 (when you left of your own accord). If your career notes say you left for childbirth, childcare or caring for family, they read 「出産・育児のため退職」 or 「家族の介護のため退職」 (if you would rather not say, change it back to 「一身上の都合により退職」). If the company closed or let you go, change it to 「会社都合により退職」; if a contract ended, to 「契約期間満了により退職」.",
- "({0})[^。\\n]{0,12}(ため|で|を機に|に専念)[^。\\n]{0,8}(退職|離職|辞め)|(退職|離職|辞め)[^。\\n]{0,4}(理由|のは)[^。\\n]{0,8}({1})": "({0})[^。\\n]{0,12}(ため|で|を機に|に専念)[^。\\n]{0,8}(退職|離職|辞め)|(退職|離職|辞め)[^。\\n]{0,4}(理由|のは)[^。\\n]{0,8}({1})"
+ "({0})[^。\\n]{0,12}(ため|で|を機に|に専念)[^。\\n]{0,8}(退職|離職|辞め)|(退職|離職|辞め)[^。\\n]{0,4}(理由|のは)[^。\\n]{0,8}({1})": "({0})[^。\\n]{0,12}(ため|で|を機に|に専念)[^。\\n]{0,8}(退職|離職|辞め)|(退職|離職|辞め)[^。\\n]{0,4}(理由|のは)[^。\\n]{0,8}({1})",
+ "中国語で書いた例 →": "Example written in Chinese →",
+ "英語で書いた例 →": "Example written in English →"
 }

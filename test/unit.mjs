@@ -118,9 +118,12 @@ await t('the sample 職務経歴書 names no company, its spoken answers say 御
 });
 await t('the examples by kind of job change keep the product\'s promises', async () => {
   const w = {}; new Function('window', readFileSync(new URL('../public/samples.js', import.meta.url), 'utf8'))(w);
+  // the app's own unit forms ($1.2M → 120万 and so on), taken from app.js as it is
+  const app = readFileSync(new URL('../public/app.js', import.meta.url), 'utf8');
+  const unitForms = new Function(app.slice(app.indexOf('function unitForms('), app.indexOf('\n}\n', app.indexOf('function unitForms(')) + 3) + 'return unitForms;')();
   const nd = (x) => String(x).replace(/[０-９．]/g, (ch) => (ch === '．' ? '.' : String.fromCharCode(ch.charCodeAt(0) - 0xfee0))).replace(/,(?=\d{3})/g, '');
   for (const [k, d] of Object.entries(w.DEMO_SET)) {
-    const src = nd(d.raw + JSON.stringify(d.intent || {}));
+    const src = nd(unitForms(d.raw) + ' ' + d.raw + JSON.stringify(d.intent || {}));
     const txt = nd(JSON.stringify(d.doc) + JSON.stringify(d.pack.questions) + JSON.stringify(d.pack.motivation));
     const bad = (txt.match(/\d+(?:\.\d+)?/g) || []).filter((n) => !new RegExp('(^|[^0-9.])' + n.replace(/\./g, '\\.') + '(?![0-9]|\\.[0-9])').test(src));
     assert.deepEqual([...new Set(bad)], [], k + ': numbers not in the career');

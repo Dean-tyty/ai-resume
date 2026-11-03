@@ -691,6 +691,7 @@ fl-header{white-space:nowrap}   /* inherited into the kit's header (its shadow D
 .foot-lang a[aria-current]{color:var(--ink);font-weight:600}
 /* examples by kind of job change */
 .case-go{margin-top:8px;font-size:13px}
+.case-gos{display:flex;flex-wrap:wrap;gap:4px 16px}
 .demo-pick{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:4px;grid-column:1/-1}
 .demo-pick .lab{font-size:12.5px;color:var(--ink2);margin-right:2px}
 .demo-pick button{border:1px solid var(--line2);background:var(--paper);border-radius:999px;padding:4px 11px;font-size:12.5px;cursor:pointer;color:var(--ink)}
