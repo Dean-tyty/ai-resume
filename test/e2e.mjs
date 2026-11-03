@@ -107,6 +107,8 @@ await page.click(C2 + ' [data-act=analyze]');
 await page.waitForSelector(C2 + ' .an', { timeout: 15000 });
 ok((await page.innerText('#acct .credit')).includes('1'), 'analysis is free');
 // buyers' features are not open before a purchase
+ok(!(await page.isVisible(C2 + ' details[data-jobd] [data-cf=job]')), 'the posting folds away after the analysis');
+await page.click(C2 + ' details[data-jobd] > summary');
 ok(await page.isVisible(C2 + ' .urlrow.locked'), 'URL import shown as a buyers\' feature before a purchase');
 ok((await page.innerText(C2 + ' .research')).includes('購入して使う'), 'company research offered to buyers');
 await page.click(C2 + ' .research [data-act=researchExample]');
@@ -204,6 +206,16 @@ ok(await page.isVisible(C4 + ' [data-act=researchBack]'), 'previous result can b
 const fourth = await api('/api/ai', { task: 'research', ctx: {}, c: { id: C4id, name: await page.inputValue(C4 + ' [data-cf=name]'), job: await page.inputValue(C4 + ' [data-cf=job]') } });
 ok(fourth.error && fourth.error.code === 'limit' && fourth.error.scope === 'research', 'server: research limited to 3 per company');
 ok(/あと\s*3/.test(await page.innerText('#acct .credit')), 'credits unchanged by repeated research');
+// a bigger pack within 30 days costs only the difference: bought 5社 (2,480円) -> 20社 for 4,500円, 15 more
+{
+  const meGet = async () => (await (await fetch(BASE + '/api/me', { headers: { authorization: 'Dev ' + user } })).json());
+  const before = await meGet();
+  ok(before.recent && before.recent.credits === 5 && before.recent.amount === 2480, 'recent purchase known (5社, 2,480円)');
+  const r = await api('/api/dev/pay', { pack: 'p20', upgrade: true });
+  const after = await meGet();
+  ok(r.session && after.credits === before.credits + 15 && after.recent.amount === 6980, 'upgrade to 20社 adds 15 for the difference');
+  ok((await api('/api/dev/pay', { pack: 'p10', upgrade: true })).error.code === 'upgrade', 'no "upgrade" to a smaller pack');
+}
 await page.waitForFunction(() => document.querySelector('#sync').textContent === '保存済み', null, { timeout: 8000 });
 
 // another device: the same data from the server

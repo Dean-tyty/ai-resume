@@ -6,8 +6,8 @@
 //   POST /api/stripe                 the webhook (checkout.session.completed / async_payment_succeeded)
 //
 // A pack is added once per Checkout Session whichever of the two arrives first (db.js creditPurchase).
-import { PACKS } from './config.js';
-import { account, creditPurchase, credits } from './db.js';
+import { PACKS, UPGRADE_DAYS } from './config.js';
+import { account, creditPurchase, credits, recentPurchases } from './db.js';
 import { body, fail, json, same, readText } from './util.js';
 import { notify } from './notify.js';
 import { track } from './stats.js';
@@ -25,20 +25,35 @@ async function stripe(env, method, path, params) {
 
 const yen = (n) => Number(n).toLocaleString('ja-JP') + '円';
 
+// After buying a small pack, a bigger one within UPGRADE_DAYS costs only the difference: what was bought in that
+// time counts towards it. { add (credits), amount (yen) } or null when it is not a step up.
+export function upgradeOffer(recent, pack) {
+  const t = PACKS[pack];
+  if (!t || !recent || recent.credits <= 0 || t.credits <= recent.credits || t.price <= recent.amount) return null;
+  return { add: t.credits - recent.credits, amount: t.price - recent.amount };
+}
+
 export async function checkout(request, env, auth) {
   const b = await body(request, 1024);
   const pack = b && PACKS[b.pack] ? b.pack : '';
   if (!pack) return fail(400, 'pack');
+  const offer = b.upgrade ? upgradeOffer(await recentPurchases(env, auth.id, UPGRADE_DAYS), pack) : null;
+  if (b.upgrade && !offer) return fail(400, 'upgrade');
   // back to the page in the user's language: / or /en/ or /zh/
   const lang = ['en', 'zh'].includes(b.lang) ? b.lang : 'ja';
   const origin = new URL(request.url).origin; const home = origin + (lang === 'ja' ? '/' : '/' + lang + '/');
-  if (env.STRIPE_MOCK === '1' && auth.dev) return json({ url: origin + '/api/dev/pay?pack=' + pack + '&lang=' + lang });
+  if (env.STRIPE_MOCK === '1' && auth.dev) return json({ url: origin + '/api/dev/pay?pack=' + pack + '&lang=' + lang + (offer ? '&upgrade=1' : '') });
   const price = env['STRIPE_PRICE_' + pack.toUpperCase()];
   if (!env.STRIPE_SECRET_KEY || !price) return fail(503, 'not_configured');
   const { user } = await account(env, auth);
   const params = {
     mode: 'payment', locale: lang,
-    'line_items[0][price]': price, 'line_items[0][quantity]': '1',
+    ...(offer ? {
+      'line_items[0][price_data][currency]': 'jpy', 'line_items[0][price_data][unit_amount]': String(offer.amount),
+      'line_items[0][price_data][product_data][name]': `職務経歴書AI ${PACKS[pack].label}への切り替え（${offer.add}社分を追加）`,
+      'metadata[upgrade]': '1', 'metadata[add]': String(offer.add), 'metadata[amount]': String(offer.amount),
+    } : { 'line_items[0][price]': price }),
+    'line_items[0][quantity]': '1',
     success_url: home + '?paid={CHECKOUT_SESSION_ID}', cancel_url: home + '?paid=cancel',
     client_reference_id: auth.id, 'metadata[product]': 'resume', 'metadata[user]': auth.id, 'metadata[pack]': pack,
     'payment_intent_data[metadata][product]': 'resume', 'payment_intent_data[metadata][user]': auth.id, 'payment_intent_data[metadata][pack]': pack,
@@ -62,15 +77,19 @@ async function apply(env, s, request, ctx) {
   const user = m.user || s.client_reference_id;
   const pack = m.pack;
   if (s.payment_status !== 'paid' || !user || !PACKS[pack]) return { ok: false };
-  if (s.currency !== 'jpy' || s.amount_total !== PACKS[pack].price) {
-    ctx.waitUntil(notify(env, `支払い額が想定と違うため、利用枠を追加していません（${pack}：${s.amount_total} ${s.currency}、想定 ${PACKS[pack].price} jpy）。Stripe の Price と worker/config.js の PACKS を確認してください。Checkout Session ${s.id}`));
+  // a switch to a bigger pack: the difference, for the credits it adds (both set by checkout above)
+  const up = m.upgrade === '1';
+  const add = up ? Number(m.add) : PACKS[pack].credits; const due = up ? Number(m.amount) : PACKS[pack].price;
+  if (up && !(add > 0 && add < PACKS[pack].credits && due > 0 && due < PACKS[pack].price)) { ctx.waitUntil(notify(env, `差額購入の内容が不正なため、利用枠を追加していません（Checkout Session ${s.id}）。`)); return { ok: false }; }
+  if (s.currency !== 'jpy' || s.amount_total !== due) {
+    ctx.waitUntil(notify(env, `支払い額が想定と違うため、利用枠を追加していません（${pack}${up ? '（差額）' : ''}：${s.amount_total} ${s.currency}、想定 ${due} jpy）。Stripe の Price と worker/config.js の PACKS を確認してください。Checkout Session ${s.id}`));
     return { ok: false };
   }
-  const r = await creditPurchase(env, { session: s.id, user, pack, credits: PACKS[pack].credits, amount: s.amount_total || 0 });
+  const r = await creditPurchase(env, { session: s.id, user, pack: up ? pack + '+' : pack, credits: add, amount: s.amount_total || 0 });
   if (r.added) {
     const who = await env.DB.prepare('SELECT src, lang FROM users WHERE id = ?').bind(user).first().catch(() => null);
     track(env, 'buy', request, who);
-    ctx.waitUntil(notify(env, `ご購入：${PACKS[pack].label}（${yen(s.amount_total || 0)}）`));
+    ctx.waitUntil(notify(env, `ご購入：${PACKS[pack].label}${up ? `への切り替え（差額・${add}社分）` : ''}（${yen(s.amount_total || 0)}）`));
   } else if (!r.ok) {
     ctx.waitUntil(notify(env, `支払いを受けましたが、利用枠を追加できませんでした（アカウントが見つかりません）。Stripe の Checkout Session ${s.id} を確認し、返金などを対応してください。`));
   }
@@ -124,10 +143,11 @@ export async function devPay(request, env, ctx) {
   const pack = url.searchParams.get('pack');
   if (!PACKS[pack]) return new Response('unknown pack', { status: 400 });
   const lang = url.searchParams.get('lang'); const home = ['en', 'zh'].includes(lang) ? '/' + lang + '/' : '/';
+  const up = url.searchParams.get('upgrade') === '1';
   return new Response(`<!doctype html><meta charset="utf-8"><title>テスト決済</title><body style="font-family:sans-serif;padding:40px">
 <h1>テスト決済（開発用）</h1><p>${PACKS[pack].label}を購入したことにします。</p>
 <button id="b">支払う</button> <a href="${home}?paid=cancel">キャンセル</a>
-<script>document.getElementById('b').onclick=async()=>{const u=localStorage.getItem('resume-dev-user')||'';const r=await fetch('/api/dev/pay',{method:'POST',headers:{authorization:'Dev '+u,'content-type':'application/json'},body:JSON.stringify({pack:${JSON.stringify(pack)}})});const j=await r.json();location.href='${home}?paid='+j.session;};</script>`, { headers: { 'content-type': 'text/html; charset=utf-8' } });
+<script>document.getElementById('b').onclick=async()=>{const u=localStorage.getItem('resume-dev-user')||'';const r=await fetch('/api/dev/pay',{method:'POST',headers:{authorization:'Dev '+u,'content-type':'application/json'},body:JSON.stringify({pack:${JSON.stringify(pack)},upgrade:${up}})});const j=await r.json();location.href='${home}?paid='+j.session;};</script>`, { headers: { 'content-type': 'text/html; charset=utf-8' } });
 }
 export async function devPayPost(request, env, ctx, auth) {
   const b = await body(request, 1024);
@@ -135,6 +155,9 @@ export async function devPayPost(request, env, ctx, auth) {
   if (!pack) return fail(400, 'pack');
   await account(env, auth);
   const session = 'cs_test_dev' + crypto.randomUUID().replace(/-/g, '');
-  await apply(env, { id: session, payment_status: 'paid', metadata: { product: 'resume', user: auth.id, pack }, currency: 'jpy', amount_total: PACKS[pack].price }, request, ctx);
+  const offer = b.upgrade ? upgradeOffer(await recentPurchases(env, auth.id, UPGRADE_DAYS), pack) : null;
+  if (b.upgrade && !offer) return fail(400, 'upgrade');
+  const meta = offer ? { upgrade: '1', add: String(offer.add), amount: String(offer.amount) } : {};
+  await apply(env, { id: session, payment_status: 'paid', metadata: { product: 'resume', user: auth.id, pack, ...meta }, currency: 'jpy', amount_total: offer ? offer.amount : PACKS[pack].price }, request, ctx);
   return json({ session });
 }

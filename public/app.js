@@ -53,8 +53,9 @@ function migrate(st) {
   return st;
 }
 function confirm2(b, msg) {
-  if (b.dataset.confirm === '1') { b.dataset.confirm = ''; return true; }
-  const orig = b.textContent; b.dataset.confirm = '1'; b.textContent = msg;
+  // pressed again: the button gets its own label back (it stayed as the question, wide and unwrapped, before)
+  if (b.dataset.confirm === '1') { b.dataset.confirm = ''; if (b.dataset.orig != null) { b.textContent = b.dataset.orig; delete b.dataset.orig; } return true; }
+  const orig = b.textContent; b.dataset.confirm = '1'; b.dataset.orig = orig; b.textContent = msg;
   setTimeout(() => { if (b.isConnected && b.dataset.confirm === '1') { b.dataset.confirm = ''; b.textContent = orig; } }, 3500);
   return false;
 }
@@ -155,7 +156,7 @@ async function refreshMe() {
   const m = await api('GET', '/api/me');
   // paid: has bought credits (URL reading and company research are for them); research: researches used per 応募先
   // slots: 応募先 that have used a credit; previews: made but not yet taken out; free: left of the free trial
-  acct.me = { credits: m.credits, slots: new Set(m.slots), previews: new Set(m.previews || []), free: m.free || null, consent: m.consent, paid: !!m.paid, research: m.research || {} };
+  acct.me = { credits: m.credits, slots: new Set(m.slots), previews: new Set(m.previews || []), free: m.free || null, recent: m.recent || null, consent: m.consent, paid: !!m.paid, research: m.research || {} };
   acctUI(); return acct.me;
 }
 const hasSlot = (c) => !!(acct.me && acct.me.slots.has(c.id));
@@ -329,6 +330,8 @@ function openLogin() {
 async function onUserChange(user) {
   const prev = acct.user;
   if (state && !state.demo) writeLocal();
+  // a save still waiting would otherwise land under the new account (and the pre-login copy would stay behind)
+  clearTimeout(saveT); clearTimeout(pushT);
   // signing out: this account's copy leaves the browser (kept only if it has changes the server lacks)
   if (prev && !user && !acct.dirty) [lsKey(), lsKey() + ':meta', lsKey() + ':backup'].forEach((k) => { try { localStorage.removeItem(k); } catch (e) { /* ignore */ } });
   acct.user = user; acct.me = null; acct.base = 0; acct.dirty = false; acct.conflict = false;
@@ -364,15 +367,18 @@ async function loadAccount() {
   } else {
     state = local || (hasOwnData(guest) ? guest : null) || state && !state.demo && hasOwnData(state) && state || fresh();
     acct.base = 0; acct.dirty = hasOwnData(state);
-    if (state === guest) try { localStorage.removeItem(GUEST); } catch (e) { /* ignore */ }
+    // the pre-login copy has become this account's: it is not offered again later
+    if (guest && (state === guest || JSON.stringify(persistable(guest)) === JSON.stringify(persistable(state)))) try { localStorage.removeItem(GUEST); } catch (e) { /* ignore */ }
   }
   migrate(state); ui.lp = false; writeLocal();
   if (acct.dirty) schedulePush(300);
 }
 function guestChoice(guest) {
+  const n = (s) => (s.companies || []).filter((c) => !c.sample).length; const docs = (s) => (s.companies || []).filter((c) => c.doc && !c.sample).length;
   openModal(`<h2 id="modalTitle">ログイン前に入力した内容があります</h2>
     <p>この端末でログインする前に入力した内容と、アカウントに保存されている内容があります。どちらを使いますか？</p>
-    <div class="row"><button class="btn" data-act="useSaved">アカウントの内容を使う</button><button class="btn primary" data-act="useGuest">ログイン前の内容を使う</button></div>
+    <ul class="hint"><li>アカウントの内容：応募先${n(state)}社（書類${docs(state)}社）</li><li>ログイン前の内容：応募先${n(guest)}社（書類${docs(guest)}社）</li></ul>
+    <div class="row"><button class="btn primary" data-act="useSaved">アカウントの内容を使う</button><button class="btn" data-act="useGuest">ログイン前の内容を使う</button></div>
     <p class="hint">選ばなかった方は削除されます（アカウントの内容を使う場合、ログイン前の内容はこの端末から消えます）。</p>`, { lock: true });
   ui.guest = guest;
 }
@@ -399,10 +405,10 @@ document.addEventListener('keydown', (e) => {
   e.preventDefault(); const b = e.target.closest('[data-cid]') && e.target.closest('[data-cid]').querySelector('[data-act=fetchJob]'); if (b && !b.disabled) b.click();
 });
 // open / closed sections are remembered across re-renders (the posting, the research result)
-document.addEventListener('toggle', (e) => {
-  const d = e.target; if (!d || !d.dataset) return;
+document.addEventListener('click', (e) => {
+  const sm = e.target.closest && e.target.closest('summary'); const d = sm && sm.parentElement; if (!d || d.tagName !== 'DETAILS' || !d.dataset) return;
   const k = d.dataset.jobd ? 'jobOpen' : d.dataset.rs ? 'rsOpen' : d.dataset.an ? 'anOpen' : ''; if (!k) return;
-  const c = company(d.dataset.jobd || d.dataset.rs || d.dataset.an); if (c) c[k] = d.open;
+  const c = company(d.dataset.jobd || d.dataset.rs || d.dataset.an); if (c) c[k] = !d.open;   // the click is about to flip it
 }, true);
 function askConsent() {
   return new Promise((ok) => {
@@ -422,7 +428,7 @@ function askConsent() {
   });
 }
 // the cheapest pack, for "利用枠の購入が必要です（5社 2,480円〜）"
-const fromPrice = () => { const p = (CFG.packs || []).slice().sort((a, b) => a.price - b.price)[0]; return p ? `${p.credits}社 ${p.price.toLocaleString('ja-JP')}円〜` : ''; };
+const fromPrice = () => { const p = (CFG.packs || []).slice().sort((a, b) => a.price - b.price)[0]; return p ? `${p.price.toLocaleString('ja-JP')}円〜` : ''; };
 // a company whose credit is not used yet: what saving and the other tabs will do
 function lockNoteHTML(c) {
   if (!locked(c) || !acct.user || !acct.me) return '';
@@ -431,6 +437,7 @@ function lockNoteHTML(c) {
     ? `<p class="hint tiny lock-note">保存・コピーするか、志望動機・面接準備・英文レジュメを作ると、この会社で1社分を使います（あと${acct.me.credits}社分）。それまでは何度でも画面で確認・修正できます。履歴書の保存は無料です。</p>`
     : `<p class="hint tiny lock-note warn">保存・コピーと、志望動機・面接準備・英文レジュメには、利用枠の購入が必要です（${fromPrice()}）。画面での確認・修正と、履歴書の保存は無料です。<button class="linkbtn" data-act="openBuy" data-why="unlock">利用枠を追加する</button></p>`;
 }
+const docAch = (d) => (d.careers || []).flatMap((x) => x.blocks.flatMap((b) => b.achievements)).slice(0, 3).map((t) => t.slice(0, 26) + (t.length > 26 ? '…' : '')).join(' ／ ');
 // what was made for this company, shown where the user decides to pay for it
 function tailoredHTML(c) {
   const a = c.analysis || {}; const d = c.doc || {};
@@ -440,15 +447,34 @@ function tailoredHTML(c) {
     d.pr && d.pr.length && UI_LANG === 'ja' ? ['自己PRの見出し', d.pr.map((p) => '「' + p.heading + '」').join('　')] : null,
   ].filter(Boolean);
   if (!rows.length) return '';
-  return `<div class="tailored"><b>この会社向けに作ったところ</b>${rows.map(([k, v]) => `<div><span>${h(k)}</span><span>${h(v)}</span></div>`).join('')}<p class="hint tiny" style="margin:6px 0 0">1社分を使うと、この内容に合わせた志望動機（300字・150字）、想定質問と回答例（9問前後）、逆質問、選考ごとの面接対策も作れます。</p></div>`;
+  const other = state.companies.filter((x) => x !== c && x.doc && !x.sample).sort((x, y) => (locked(x) ? 1 : 0) - (locked(y) ? 1 : 0))[0];
+  const first = (t) => { const m = /^[^。]*。?/.exec(t || ''); return (m ? m[0] : '').slice(0, 90); };
+  const vs = other ? [
+    ['職務要約の書き出し', first(other.doc.summary), first(d.summary)],
+    ['自己PRの見出し', (other.doc.pr || []).map((p) => '「' + p.heading + '」').join(''), (d.pr || []).map((p) => '「' + p.heading + '」').join('')],
+    ['実績の並び（最初の3つ）', docAch(other.doc), docAch(d)],
+  ].filter((r) => r[1] && r[2] && r[1] !== r[2]) : [];
+  const vsHTML = vs.length && UI_LANG === 'ja' ? `<div class="vs"><b>「${h(cname(other))}」向けの書類との違い</b>${vs.map(([k, x, y]) => `<div><span>${h(k)}</span><span><small>「${h(cname(other))}」向け</small>${h(x)}</span><span><small>この会社向け</small>${h(y)}</span></div>`).join('')}</div>` : '';
+  return `${vsHTML}<div class="tailored"><b>この会社向けに作ったところ</b>${rows.map(([k, v]) => `<div><span>${h(k)}</span><span>${h(v)}</span></div>`).join('')}<p class="hint tiny" style="margin:6px 0 0">1社分を使うと、この内容に合わせた志望動機（300字・150字）、想定質問と回答例（9問前後）、逆質問、選考ごとの面接対策も作れます。</p></div>`;
+}
+// bought recently: a bigger pack for the difference (worker/billing.js upgradeOffer works out the same)
+function upgradeHTML(packs) {
+  const r = acct.me && acct.me.recent; if (!r || !r.credits) return '';
+  const offers = packs.filter((p) => p.credits > r.credits && p.price > r.amount).map((p) => ({ p, add: p.credits - r.credits, amount: p.price - r.amount }));
+  if (!offers.length) return '';
+  return `<div class="upg"><b>差額で、まとめ買いの料金に切り替えられます</b><p class="hint tiny" style="margin:2px 0 6px">直近${CFG.upgradeDays || 30}日間に購入した${r.credits}社分（${r.amount.toLocaleString('ja-JP')}円）を差し引きます。</p>${offers.map((o) => `<button class="btn" data-act="buy" data-pack="${h(o.p.id)}" data-up="1">${h(o.p.label)}に切り替え：差額${o.amount.toLocaleString('ja-JP')}円で${o.add}社分を追加</button>`).join('')}</div>`;
 }
 // kind: 'buyer' (a feature for buyers), 'unlock' (this 応募先's documents need its 1社分), 'preview' (no more
 // free previews), '' (adding credits)
+const PLAN = [['1', '1〜2社', 1], ['5', '3〜5社', 5], ['10', '6〜10社', 10], ['20', '11社以上', 20]];
 function openBuy(reason, kind, c) {
   const packs = CFG.packs || [];
   const left = acct.me ? acct.me.credits : null;
   if (reason || kind) savePending();
-  const rec = packs.find((p) => p.rec) || null;
+  ui.buyArgs = [reason, kind, c];
+  // the pack that fits the number of companies the user means to apply to (asked once, in this dialog)
+  const want = PLAN.find((x) => x[0] === ui.plan);
+  const rec = (want && packs.slice().sort((a, b) => a.credits - b.credits).find((p) => p.credits >= want[2] - Math.max(0, left || 0))) || packs.find((p) => p.rec) || null;
   const buyer = kind === 'buyer';
   if (kind === 'unlock' && !c) kind = '';
   const title = buyer ? '利用枠を購入する' : kind === 'unlock' ? 'この会社の書類を保存する・面接準備をする' : kind === 'preview' ? '次の応募先の書類を作る' : '利用枠を追加する';
@@ -460,7 +486,9 @@ function openBuy(reason, kind, c) {
     ${reason ? `<p class="status warn">${h(reason)}</p>` : ''}${lead}
     ${buyer ? '<p class="hint" style="margin:0 0 8px">無料の1社分では使えません。購入すると、すでに登録した会社にも使えます。</p>' : ''}
     ${left != null ? `<p>いまの利用枠：<b>あと${left}社分</b></p>` : ''}
+    <div class="plan-q"><span>応募する予定の社数：</span>${PLAN.map(([k, l]) => `<button class="${ui.plan === k ? 'on' : ''}" data-act="plan" data-v="${k}">${l}</button>`).join('')}</div>
     <div class="packs">${packs.map((p) => `<button class="buy-pack ${p === rec ? 'rec' : ''}" data-act="buy" data-pack="${h(p.id)}">${p === rec && packs.length > 1 ? '<span class="badge">おすすめ</span>' : ''}<span class="pl">${h(p.label)}</span><b>${p.price.toLocaleString('ja-JP')}円</b><small>1社あたり${Math.round(p.price / p.credits).toLocaleString('ja-JP')}円</small><span class="go">購入へ進む →</span></button>`).join('')}</div>
+    ${upgradeHTML(packs)}
     ${kind === 'unlock' && c ? `<p class="hint after-pay">お支払いのあと、この画面に戻ります。続けて「${h(cname(c))}」の保存を確認します（1社分を使います）。</p>` : ''}
     ${kind === 'preview' ? '<p class="hint">購入すると、作成済みで保存していない応募先の書類も、そのまま保存できます。新しい応募先の書類も作れます。</p>'
       : '<p class="hint">1社分 ＝ 1つの応募先。その会社の書類を保存・コピーするとき、または志望動機・面接準備などを作るときに1回だけ使います。そのあとは、その会社の職務経歴書・履歴書・英文レジュメ・志望動機・面接準備を何度作り直しても追加料金はかかりません（1日に使える回数には上限があります）。</p>'}
@@ -502,7 +530,7 @@ async function buy(pack, btn) {
   btn.disabled = true; btn.classList.add('wait');
   try {
     await push();
-    const r = await api('POST', '/api/checkout', { pack, lang: UI_LANG });
+    const r = await api('POST', '/api/checkout', { pack, lang: UI_LANG, upgrade: btn.dataset.up === '1' });
     try { sessionStorage.setItem('resume-credits-before', String(acct.me ? acct.me.credits : 0)); } catch (e) { /* compared with the current count */ }
     if (r.url) { location.href = r.url; return; }
     // added without a payment page (the preview)
@@ -620,7 +648,7 @@ function prepDoc(raw) {
   lastFixed = [...new Set([...txt].filter((ch) => map[ch]))].map((ch) => ch + '→' + map[ch]);
   d = E.fixChars(d, map);
   d.date = today() + '現在';
-  d.name = state.name || (state.profile && state.profile.name) || '';
+  d.name = E.fixChars(state.name || (state.profile && state.profile.name) || '', window.CHARFIX || {});
   return d;
 }
 
@@ -1010,7 +1038,7 @@ function parseLines(text) {
 }
 function rkData(c) {
   const r = state.rireki;
-  return Object.assign({}, r, { date: todayIso(), name: state.name, history: parseLines(r.history), licenses: parseLines(r.licenses), motive: c.rk.motive, hope: c.rk.hope });
+  return Object.assign({}, r, { date: todayIso(), name: E.fixChars(state.name || '', window.CHARFIX || {}), history: parseLines(r.history), licenses: parseLines(r.licenses), motive: c.rk.motive, hope: c.rk.hope });
 }
 const photoImgs = {};
 function photoImg(src) { if (!src) return null; if (!photoImgs[src]) { const im = new Image(); im.onload = () => { if (state.step === 3) drawRireki(company(state.active)); }; im.src = src; photoImgs[src] = im; } E.renderCanvas.images = photoImgs; return photoImgs[src]; }
@@ -1242,9 +1270,9 @@ function render1() {
     <div class="card">
       <h2>経歴を入力</h2>
       <p class="hint">今お持ちの職務経歴書をそのまま貼り付けるか、経歴を箇条書きで書いてください。人数・金額・％・期間などの数字が多いほど、仕上がりが良くなります。日本語・中文・English のどれでも入力できます。</p>
-      ${UI_LANG !== 'ja' ? '<p class="hint">母国での経歴も含めて書いてください。日本語力（日本語能力試験のレベル（N1〜N5）、仕事で日本語を使う場面）や話せる言語も書いておくと、書類に反映されます。</p><p class="hint">整理した経歴データ（右側）と書類は日本語で作られます。右側の内容が違っていたら、左の入力を直して「経歴を整理し直す」を押してください。書類はステップ3で母語の対訳を見ながら確認できます。</p>' : (lang === 'zh' ? '<p class="hint native" lang="zh">已识别为中文输入。系统会生成日文的职务经历书和履历书；在第 3 步可以用中文对照确认内容，并查看日文写法的解说和不自然之处。</p>' : lang === 'en' ? '<p class="hint native" lang="en">Your notes are in English. The documents will be written in Japanese; in step 3 you can check them against an English translation, with notes on how Japanese résumés are written.</p>' : '')}
+      ${UI_LANG !== 'ja' ? '<p class="hint">母国での経歴も含めて書いてください。日本語力（日本語能力試験のレベル（N1〜N5）、仕事で日本語を使う場面）や話せる言語も書いておくと、書類に反映されます。</p><p class="hint">整理した経歴データと書類は日本語で作られます。整理された内容が違っていたら、経歴の入力を直して「経歴を整理し直す」を押してください。書類はステップ3で母語の対訳を見ながら確認できます。</p>' : (lang === 'zh' ? '<p class="hint native" lang="zh">已识别为中文输入。系统会生成日文的职务经历书和履历书；在第 3 步可以用中文对照确认内容，并查看日文写法的解说和不自然之处。</p>' : lang === 'en' ? '<p class="hint native" lang="en">Your notes are in English. The documents will be written in Japanese; in step 3 you can check them against an English translation, with notes on how Japanese résumés are written.</p>' : '')}
       <label for="in-name">氏名（書類に記載されます）</label>
-      <input type="text" id="in-name" data-bind="name" value="${h(state.name)}" placeholder="例：佐藤 健太" autocomplete="name">
+      <input type="text" id="in-name" data-bind="name" value="${h(state.name)}" placeholder="例：佐藤 健太" autocomplete="name">${nameHint()}
       ${UI_LANG !== 'ja' ? '<p class="hint tiny">書類に載る氏名です。在留カードと同じ表記で書いてください（漢字の名前は漢字で、アルファベットの名前はアルファベットかカタカナで）。</p>' : ''}
       <div class="importer"><button class="btn small" data-act="pickResume">ファイルから読み込む（Word・PDF）</button><span class="hint tiny">今の職務経歴書や履歴書（英語・中国語のものも可）のファイルから文章を読み取ります。ファイルはこの端末の中で読むだけで、送信しません。</span><span id="importStatus" class="hint tiny"></span></div>
       <label for="in-raw" class="lab-row">経歴・現在の職務経歴書<span class="cc" id="rawCount">${len(state.raw)}字</span></label>
@@ -1274,6 +1302,12 @@ function render1() {
 function ym(s) { const m = /^(\d{4})(?:-(\d{1,2}))?/.exec(s || ''); return m ? (m[1] + '年' + (m[2] ? +m[2] + '月' : '')) : (s || ''); }
 // What screeners look at before reading the words: the number of job changes, short stays, gaps and being out
 // of work now. Worked out from the organised career (no AI, free); the documents' prompts know how to handle each.
+// a name with simplified Chinese characters: the documents' fonts have the Japanese forms (陈→陳)
+function nameHint() {
+  const map = window.CHARFIX || {}; const ch = [...new Set([...(state.name || '')].filter((x) => map[x]))];
+  if (!ch.length) return '';
+  return `<p class="hint tiny namehint" style="margin:4px 0 0">書類の書体は日本の字体のため、${ch.map((x) => `「${x}」は「${map[x]}」`).join('、')}として書きます。在留カードなどの表記と違う場合は、ここで直してください。<button class="linkbtn" data-act="fixName">日本の字体に直す</button></p>`;
+}
 const monthOf = (s, end) => { const m = /^(\d{4})(?:-(\d{1,2}))?/.exec(s || ''); return m ? +m[1] * 12 + (m[2] ? +m[2] : end ? 12 : 1) - 1 : null; };
 const ymText = (n) => (UI_LANG === 'en' ? `${'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ')[n % 12]} ${Math.floor(n / 12)}` : `${Math.floor(n / 12)}年${(n % 12) + 1}月`);
 function screenCheck(p) {
@@ -1381,13 +1415,30 @@ function companyHTML(c) {
     ${creditNote(c)}
   </div>`;
 }
+function oldDocCheck(a) {
+  const t = state.oldDoc || ''; if (!t || !a) return [];
+  const out = [];
+  const miss = (a.keywords || []).filter((k) => k && k.length >= 2 && !t.includes(k));
+  if (miss.length) out.push(['この求人の言葉が出てこない', `${miss.slice(0, 6).join('・')}（求人票で重視されている言葉です）`]);
+  const nums = (nd(t).match(/\d+(?:\.\d+)?\s*(%|％|倍|件|社|名|人|円|万|億|時間|日|か月|ヶ月|ポイント|pt)/g) || []).length;
+  if (nums < 5) out.push(['成果を示す数字が少ない', `数字で規模や成果を示した箇所が${nums}か所です。採用担当者は、規模と成果を数字で見ます。`]);
+  const vague = ['粘り強', '責任感', 'コミュニケーション能力', '協調性', '幅広い', '様々な', '貢献', '頑張', '努力', '真面目', '誠実'].filter((w) => t.includes(w));
+  if (vague.length >= 2) out.push(['抽象的な言葉が目立つ', `${vague.map((w) => '「' + w + '」').join('')}は、具体的な行動と結果がないと伝わりません。`]);
+  const lines = t.split(/\n/).filter((l) => l.trim().length > 6); const res = lines.filter((l) => /改善|削減|向上|増加|拡大|達成|短縮|獲得|表彰|%|％|倍/.test(l)).length;
+  if (lines.length >= 10 && res / lines.length < 0.15) out.push(['業務の説明が中心で、成果が少ない', `${lines.length}行のうち、成果を書いた行は${res}行です。`]);
+  return out;
+}
+function oldDocHTML(a) {
+  const x = oldDocCheck(a); if (!state.oldDoc) return '';
+  return `<div class="olddiag"><b>今の書類を、この求人の目で見ると（無料の診断）</b>${x.length ? `<ul>${x.map(([k, v]) => `<li><b>${h(k)}</b>：${h(v)}</li>`).join('')}</ul><p class="hint tiny" style="margin:4px 0 0">この会社向けに作る書類では、これらを直すように作ります。</p>` : '<p class="hint" style="margin:4px 0 0">求人の言葉・数字・具体性の点で、目立った問題は見つかりませんでした。この会社向けには、実績の選び方と順番を変えて作ります。</p>'}</div>`;
+}
 function analysisHTML(a) {
   const ep = {}; ((state.profile && state.profile.episodes) || []).forEach((e) => { ep[e.id] = e.title; });
   const src = (s) => `<span class="tag ${s === '一般知識' ? 'warn' : 'gray'}">${h(s === '一般知識' ? 'AIの一般知識・要確認' : (s || '—'))}</span>`;
   const mc = { '◎': 'a', '○': 'b', '△': 'c' };
   const must = a.requirements.filter((r) => r.type === '必須'); const weak = must.filter((r) => r.match === '△').length;
   const line = must.length ? `<p class="screenline"><b>書類選考の目で見ると：</b>必須要件${must.length}件のうち、あなたの経歴で裏付けられるのは${must.length - weak}件${weak ? `、一部だけ合うのが${weak}件です。△の要件は、書類での見せ方（下の「アピールの組み立て」）と面接での答え方で補います` : 'です。書類では、その裏付けを求人の言葉に合わせて前に出します'}。</p>` : '';
-  return `${line}<div class="an">
+  return `${line}${oldDocHTML(a)}<div class="an">
     <div class="box"><h4>この会社が重視していること</h4>${a.summary ? `<p style="margin:0 0 10px;font-size:12.5px">${h(a.summary)}</p>` : ''}
       ${a.values.map((v) => `<div class="val"><b>${h(v.label)}</b> ${src(v.source)}<div class="d">${h(v.detail)}</div>${v.quote ? `<div class="qt" data-noi18n>「${h(v.quote)}」</div>` : ''}</div>`).join('')}</div>
     <div class="box"><h4>求人の要件とあなたの経歴</h4><p class="hint tiny" style="margin:-4px 0 8px">◎ 十分に合う　○ 合う　△ 一部だけ合う</p><div class="req">${a.requirements.map((r) => `<span class="m ${mc[r.match] || 'b'}">${h(r.match)}</span><div class="t">${h(r.text)} <span class="tag gray">${h(r.type)}</span><div class="ev">${h(r.evidence)}</div></div>`).join('')}</div></div>
@@ -1448,7 +1499,7 @@ function docPaneHTML(c) {
   return `<div class="card dochead">${head}</div>
     <div class="docgrid ${c.edit ? 'edit' : ''}">
       ${c.edit ? `<div class="card editor" id="editor">${editorHTML(c.doc, c.theme)}</div>` : ''}
-      <div class="readbar"><div class="seg"><button data-act="readMode" data-v="read" class="${readOn() ? 'on' : ''}">文字で読む</button><button data-act="readMode" data-v="a4" class="${readOn() ? '' : 'on'}">A4 で見る</button></div><button class="btn primary small" data-act="toSave">保存・デザイン ↓</button></div>
+      <div class="readbar"><div class="seg">${UI_LANG !== 'ja' ? `<button data-act="readMode" data-v="tr" class="${readOn() && ui.readTr !== false ? 'on' : ''}">対訳で読む</button>` : ''}<button data-act="readMode" data-v="read" class="${readOn() && (UI_LANG === 'ja' || ui.readTr === false) ? 'on' : ''}">文字で読む</button><button data-act="readMode" data-v="a4" class="${readOn() ? '' : 'on'}">A4 で見る</button></div><button class="btn primary small" data-act="toSave">保存・デザイン ↓</button></div>
       <div class="desk" id="preview">${F.ready ? '' : (F.err ? '<div class="empty">書体の読み込みに失敗しました。ページを再読み込みしてください。</div>' : `<div class="empty">${spin}書体を読み込んでいます…</div>`)}</div>
       <aside class="card ctrl">
         <div class="fitbar" id="fitbar">${fitbarHTML(c)}</div>
@@ -1659,9 +1710,15 @@ function readHTML(c) {
   if (d.pr.length) s += `<h4>自己PR</h4>${d.pr.map((p) => `<div class="rd-pr"><b>${t(p.heading)}</b><p>${t(p.body)}</p></div>`).join('')}`;
   return s + '</div><p class="hint tiny" style="margin:8px 4px 0">文字だけの表示です。提出する書類の見た目は「A4 で見る」で確かめてください。</p>';
 }
+// the English / Chinese page: each part of the document with its translation (from 「母語で確認する」)
+function trReadHTML(c) {
+  const x = c.explain;
+  if (!x || !x.sections.length) return `<div class="readv"><p>まだ対訳がありません。「対訳と解説を作る」を押すと、書類の各部分の対訳と書き方の解説を作ります（利用枠は使いません）。</p><button class="btn primary" data-act="explain" ${c.exStatus === 'run' ? 'disabled' : ''}>対訳と解説を作る</button>${c.exStatus === 'run' ? `<div class="status">${spin}${stage('explain', c.exSince)}</div>` : ''}</div>`;
+  return `<div class="readv trv ${locked(c) ? 'nocopy' : ''}">${x.sections.map((t) => `<div class="tr-r"><div class="rd-h" data-noi18n>${h(t.title)}</div><div class="ex-ja" data-noi18n>${h(t.ja)}</div><div class="ex-tr" lang="${x.lang === 'en' ? 'en' : 'zh'}">${h(t.tr)}</div></div>`).join('')}</div>`;
+}
 function drawPreview(c) {
   const box = $('#preview'); if (!box || !F.ready || !c.doc) return;
-  if (readOn()) { box.innerHTML = readHTML(c); box.classList.add('reading'); return; }
+  if (readOn()) { box.innerHTML = UI_LANG !== 'ja' && ui.readTr !== false ? trReadHTML(c) : readHTML(c); box.classList.add('reading'); return; }
   if (box.classList.contains('reading')) { box.classList.remove('reading'); box.innerHTML = ''; }
   const lay = E.layout(c.doc, c.theme, F.meas, opt(c));
   const marks = checkNumbers(docParts(c.doc)).bad;
@@ -1688,7 +1745,7 @@ function drawThumbs(c) {
 
 // ---------------- step 4 ----------------
 function render4() {
-  const list = state.companies.filter((c) => c.doc || (c.stages || []).some(hasLog));
+  const list = state.companies.filter((c) => (c.doc && !locked(c)) || (c.stages || []).some(hasLog));
   if (!list.length) { $('#v4').innerHTML = viewHead('選考管理', '応募先ごとの選考ステップと日程を管理し、面接の記録から次の面接の対策を作ります。') + '<div class="card empty">応募先を追加すると、ここで選考を管理できます。</div>'; return; }
   list.forEach(ensureStages); save();
   if (!company(state.active4) || !list.includes(company(state.active4))) state.active4 = list[0].id;
@@ -1727,7 +1784,7 @@ function nextPrepHTML(c, ci) {
   const st = c.stages || []; const s = st[ci];
   if (!s || ci < 1 || s.prep || s.prepStatus === 'run' || c.result !== '選考中' && c.result) return '';
   if (['不通過', '辞退'].includes(s.status)) return '';
-  return `<div class="fb note nextprep"><span><b>「${h(st[ci - 1].name)}」を通過しました。</b>次の「${h(s.name)}」の対策を作りましょう。これまでの記録と提出した書類から、聞かれそうな質問と答え直し方をまとめます。${locked(c) ? '（この会社で1社分を使います）' : ''}</span><button class="btn primary small" data-act="prep" data-sid="${s.id}">対策を作る</button></div>`;
+  return `<div class="fb note nextprep"><span><b>「${h(st[ci - 1].name)}」を通過しました。</b>${s.date ? `「${h(s.name)}」は${h(s.date.slice(5).replace('-', '/'))}です。` : ''}次の「${h(s.name)}」の対策を作りましょう。これまでの記録と提出した書類から、聞かれそうな質問と答え直し方をまとめます。${locked(c) ? '（この会社で1社分を使います）' : ''}</span><button class="btn primary small" data-act="prep" data-sid="${s.id}">対策を作る</button></div>`;
 }
 function stagesHTML(c) {
   const ci = curStage(c);
@@ -1774,6 +1831,14 @@ function prepHTML(p, c) {
 }
 
 // ---------------- demo ----------------
+document.addEventListener('copy', (e) => {
+  const inDoc = e.target && e.target.closest && e.target.closest('#editor, .readv, .cmp');
+  const c = inDoc && state && company(state.active);
+  if (!c || !locked(c) || !acct.user) return;
+  e.preventDefault();
+  toast('この会社の書類のコピーは、保存と同じく1社分を使います');
+  ensureUnlocked(c);
+});
 // the document the user brought, next to the one made for this company (what changed, before deciding to pay)
 function compareOld(c) {
   const d = c.doc; const a = c.analysis || {};
@@ -1842,7 +1907,7 @@ document.addEventListener('input', (e) => {
     clearTimeout(enT); enT = setTimeout(() => drawEnglish(c), 200); return;
   }
   if (t.dataset.crk) { const c = company(state.active); c.rk[t.dataset.crk] = t.value; save(); const cc = t.previousElementSibling && t.previousElementSibling.querySelector('.cc'); if (cc) cc.textContent = len(t.value) + '字'; clearTimeout(rkT); rkT = setTimeout(() => drawRireki(c), 200); return; }
-  if (t.dataset.bind) { state[t.dataset.bind] = t.value; if (t.dataset.bind === 'raw') { const rc = $('#rawCount'); if (rc) rc.textContent = len(t.value) + '字'; } save(); return; }
+  if (t.dataset.bind) { state[t.dataset.bind] = t.value; if (t.dataset.bind === 'name') { const was = $('.namehint'); if (was) was.remove(); t.insertAdjacentHTML('afterend', nameHint()); } if (t.dataset.bind === 'raw') { const rc = $('#rawCount'); if (rc) rc.textContent = len(t.value) + '字'; } save(); return; }
   if (t.dataset.answer !== undefined) { state.answers = state.answers || {}; state.answers[t.dataset.answer] = t.value; save(); return; }
   if (t.dataset.cf) { const c = company(t.closest('[data-cid]').dataset.cid); c[t.dataset.cf] = t.value; save(); return; }
   if (t.dataset.sf && t.tagName !== 'SELECT') { const [, s] = stageOf(t); if (s) { s[t.dataset.sf] = t.value; save(); } return; }
@@ -1873,7 +1938,7 @@ document.addEventListener('change', (e) => {
 });
 document.addEventListener('click', (e) => {
   const b = e.target.closest('[data-act]'); if (!b) return;
-  if (RESUMABLE.has(b.dataset.act)) { lastAct = Object.assign({}, b.dataset); delete lastAct.confirm; }
+  if (RESUMABLE.has(b.dataset.act)) { lastAct = Object.assign({}, b.dataset); delete lastAct.confirm; delete lastAct.orig; }
   lastFocus = `[data-act="${CSS.escape(b.dataset.act)}"]` + (b.dataset.id ? `[data-id="${CSS.escape(b.dataset.id)}"]` : '');
   const act = b.dataset.act; const c = b.dataset.id ? company(b.dataset.id) : company(state.step === 4 ? state.active4 : state.active);
   switch (act) {
@@ -1916,7 +1981,7 @@ document.addEventListener('click', (e) => {
     case 'pages': c.maxPages = +b.dataset.v; save(); render(); break;
     case 'refit': if (c.dirty && !confirm2(b, '手で直した箇所も詰められます（もう一度押す）')) break; refit(c); break;
     case 'edit': c.edit = !c.edit; render(); break;
-    case 'pdf': case 'docx': { const bad = checkNumbers(docParts(c.doc)).bad.length; if (bad && !confirm2(b, `未確認の数値が${bad}件あります。もう一度押すと保存`)) break; ensureUnlocked(c).then((ok) => { if (ok) download(c, act); }); break; }
+    case 'pdf': case 'docx': { if (c.doc && c.doc.name) c.doc.name = E.fixChars(c.doc.name, window.CHARFIX || {}); const bad = checkNumbers(docParts(c.doc)).bad.length; if (bad && !confirm2(b, `未確認の数値が${bad}件あります。もう一度押すと保存`)) break; ensureUnlocked(c).then((ok) => { if (ok) download(c, act); }); break; }
     case 'pack': makePack(c); break;
     case 'english': makeEnglish(c); break;
     case 'enPdf': case 'enDocx': { const bad = checkNumbers(enParts(E.normalizeEn(enDoc(c)))).bad.length; if (bad && !confirm2(b, `未確認の数値が${bad}件あります。もう一度押すと保存`)) break; ensureUnlocked(c).then((ok) => { if (ok) downloadEnglish(c, act === 'enPdf' ? 'pdf' : 'docx'); }); break; }
@@ -1925,8 +1990,10 @@ document.addEventListener('click', (e) => {
     case 'copyField': { const v = getPath(c.doc, b.dataset.path); ensureUnlocked(c).then((ok) => { if (ok) copy(Array.isArray(v) ? v.map((p) => (p.heading ? '【' + p.heading + '】\n' : '') + p.body).join('\n\n') : v); }); break; }
     case 'unlockOk': closeModal(true); break;
     case 'mask': state.mask = state.mask === false; save(); render(); toast(state.mask ? '顧客名などを伏せて作ります（「AI で作り直す」で反映）' : '顧客名などをそのまま書きます（「AI で作り直す」で反映）'); break;
-    case 'readMode': ui.read = b.dataset.v === 'read'; render(); break;
+    case 'readMode': ui.read = b.dataset.v !== 'a4'; ui.readTr = b.dataset.v === 'tr' ? true : b.dataset.v === 'read' ? false : ui.readTr; render(); break;
     case 'compareOld': if (c && c.doc) compareOld(c); break;
+    case 'fixName': state.name = E.fixChars(state.name, window.CHARFIX || {}); save(); render(); break;
+    case 'plan': ui.plan = b.dataset.v; { const [r, k, x] = ui.buyArgs || ['', '']; openBuy(r, k, x); } break;
     case 'toSave': { const el = $('.ctrl'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); break; }
     case 'abort': { const ctl = controllers[b.dataset.key]; if (ctl) ctl.abort(); break; }
     case 'sel4': state.active4 = b.dataset.id; save(); render(); break;
@@ -1982,7 +2049,7 @@ async function readyFor(qs) {
 }
 function renderPrices() {
   const el = $('#price .prices'); const packs = CFG.packs || []; if (!el || !packs.length) return;
-  el.innerHTML = `<div class="pc"><span>最初の${CFG.free || 1}社</span><b>無料</b><small>職務経歴書・履歴書・面接準備まで</small></div>` + packs.map((p) => `<div class="pc ${p.rec ? 'rec' : ''}">${p.rec ? '<span class="badge">おすすめ</span>' : ''}<span>${h(p.label)}</span><b>${p.price.toLocaleString('ja-JP')}円</b><small>1社あたり${Math.round(p.price / p.credits).toLocaleString('ja-JP')}円</small><small class="plus">＋ 求人URLの読み込み・会社の公開情報の調査</small></div>`).join('');
+  el.innerHTML = `<div class="pc"><span>最初の${CFG.free || 1}社</span><b>無料</b><small>職務経歴書・履歴書・面接準備まで</small></div>` + packs.map((p) => `<div class="pc ${p.rec ? 'rec' : ''}">${p.rec ? '<span class="badge">おすすめ</span>' : ''}<span>${h(p.label)}${p.credits === 1 ? '<em class="pc-for">面接が決まった1社の対策に</em>' : ''}</span><b>${p.price.toLocaleString('ja-JP')}円</b><small>1社あたり${Math.round(p.price / p.credits).toLocaleString('ja-JP')}円</small><small class="plus">＋ 求人URLの読み込み・会社の公開情報の調査</small></div>`).join('');
 }
 async function boot() {
   renderPrices();

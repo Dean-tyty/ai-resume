@@ -22,6 +22,8 @@ export const PACKS = {
   p10: { credits: 10, price: 3980, label: '10社パック' },
   p20: { credits: 20, price: 6980, label: '20社パック' },
 };
+// buying a bigger pack within this many days of the last purchase costs only the difference (billing.js upgradeOffer)
+export const UPGRADE_DAYS = 30;
 // cost guards: AI calls per user per day (all tasks / by task), and per 応募先 per day
 export const LIMITS = { day: 150, profile: 15, analyze: 40, company: 40, research: 10, fetch: 30 };
 // for users who have bought credits only (the cost of web searches): reading a posting from its URL, and

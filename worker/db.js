@@ -231,6 +231,12 @@ export async function deleteUser(env, id) {
     .concat([env.DB.prepare('DELETE FROM users WHERE id = ?').bind(id)]));
 }
 
+// what was bought in the last `days` days: credits and yen (an upgrade's row holds what it added and what it cost)
+export async function recentPurchases(env, id, days) {
+  const r = await env.DB.prepare('SELECT COALESCE(SUM(credits), 0) AS credits, COALESCE(SUM(amount), 0) AS amount FROM purchases WHERE user_id = ? AND credited = 1 AND created_at > ?').bind(id, Date.now() - days * 864e5).first();
+  return { credits: (r && r.credits) || 0, amount: (r && r.amount) || 0 };
+}
+
 // add a paid pack once per Checkout Session (the webhook and the return page may both report it)
 export async function creditPurchase(env, { session, user, pack, credits: n, amount }) {
   const now = Date.now();

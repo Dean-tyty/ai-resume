@@ -11,9 +11,9 @@
 //   DELETE /api/account            delete the account and everything saved
 //   POST   /api/event              steps counted for the weekly report (stats.js)
 // A daily cron deletes data not used for RETENTION_DAYS.
-import { PRODUCT, PACKS, FREE_CREDITS, CONSENT_VERSION, MAX_WORKSPACE, RETENTION_DAYS, RESEARCH_PER_COMPANY, PREVIEW, FREE_LIFE } from './config.js';
+import { PRODUCT, PACKS, FREE_CREDITS, CONSENT_VERSION, MAX_WORKSPACE, RETENTION_DAYS, RESEARCH_PER_COMPANY, PREVIEW, FREE_LIFE, UPGRADE_DAYS } from './config.js';
 import { authenticate, clerkDelete } from './auth.js';
-import { account, slotIds, getWorkspace, putWorkspace, deleteUser, hasPaid, researchCounts, freeLeft, unlockSlot, credits } from './db.js';
+import { account, slotIds, getWorkspace, putWorkspace, deleteUser, hasPaid, researchCounts, freeLeft, unlockSlot, credits, recentPurchases } from './db.js';
 import { fetchJob } from './fetchjob.js';
 import { handleAI } from './ai.js';
 import { checkout, confirm, webhook, devPay, devPayPost } from './billing.js';
@@ -27,7 +27,7 @@ function configJS(env) {
     // only the packs that can be paid for (their Stripe Price is set; all of them with the test payment)
     packs: Object.entries(PACKS).filter(([id]) => env.STRIPE_MOCK === '1' || env['STRIPE_PRICE_' + id.toUpperCase()]).map(([id, p]) => ({ id, ...p })), free: FREE_CREDITS, consent: CONSENT_VERSION,
     terms: PRODUCT.terms, privacy: PRODUCT.privacy, retention: RETENTION_DAYS, research: RESEARCH_PER_COMPANY,
-    preview: PREVIEW, freeLife: FREE_LIFE,
+    preview: PREVIEW, freeLife: FREE_LIFE, upgradeDays: UPGRADE_DAYS,
   };
   return new Response('window.APP_CONFIG = ' + JSON.stringify(cfg) + ';\n', { headers: { 'content-type': 'text/javascript; charset=utf-8', ...NO_STORE } });
 }
@@ -39,7 +39,9 @@ async function me(request, env, auth) {
   // free: what is left of the free trial (accounts that have never bought)
   const [slots, paid, research] = await Promise.all([slotIds(env, auth.id), hasPaid(env, auth.id), researchCounts(env, auth.id)]);
   const free = paid ? null : await freeLeft(env, auth.id);
-  return json({ id: auth.id, credits: user.credits, slots: slots.open, previews: slots.preview, free, paid, research, consent: user.consent === CONSENT_VERSION, created });
+  // bought in the last UPGRADE_DAYS days: a bigger pack costs only the difference (billing.js upgradeOffer)
+  const recent = paid ? await recentPurchases(env, auth.id, UPGRADE_DAYS) : null;
+  return json({ id: auth.id, credits: user.credits, slots: slots.open, previews: slots.preview, free, paid, recent, research, consent: user.consent === CONSENT_VERSION, created });
 }
 
 // the documents of a 応募先 are about to be saved or copied: its credit is used now (once)

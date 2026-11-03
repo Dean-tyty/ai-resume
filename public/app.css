@@ -704,3 +704,35 @@ fl-header{white-space:nowrap}   /* inherited into the kit's header (its shadow D
 .cmp pre.nocopy{-webkit-user-select:none;user-select:none}
 @media (max-width:640px){.cmp{grid-template-columns:1fr}}
 .modal .sheet:has(.cmp){max-width:960px}
+.lock-note .linkbtn,.credit-note .linkbtn{margin-left:.4em}
+/* the purchase dialog: how this company's document differs from the one already made */
+.vs{margin:10px 0 0;padding:10px 14px;border-radius:10px;border:1px solid var(--line);font-size:13px;line-height:1.6}
+.vs>b{display:block;margin-bottom:4px}
+.vs>div{display:grid;grid-template-columns:9em minmax(0,1fr) minmax(0,1fr);gap:2px 12px;padding:6px 0;border-top:1px dashed var(--line2)}
+.vs>div>span:first-child{color:var(--ink2)}
+.vs small{display:block;font-size:11.5px;color:var(--ink3)}
+.vs>div>span:last-child{font-weight:600}
+@media (max-width:560px){.vs>div{grid-template-columns:1fr}}
+.modal .sheet:has(.vs){max-width:720px}
+/* the imported document through the posting's eyes */
+.olddiag{margin:0 0 12px;padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:var(--paper);font-size:13px;line-height:1.65}
+.olddiag ul{margin:6px 0 0;padding-left:1.2em}
+/* which pack: how many companies */
+.plan-q{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:4px 0 2px;font-size:13px}
+.plan-q button{border:1px solid var(--line2);background:var(--paper);border-radius:999px;padding:4px 11px;font-size:12.5px;cursor:pointer;color:var(--ink)}
+.plan-q button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.pc-for{display:block;font-style:normal;font-size:11.5px;color:var(--ok);margin-top:2px}
+/* phones: the translation where the document is read */
+.trv .tr-r{padding:10px 0;border-top:1px dashed var(--line)}
+.trv .tr-r:first-child{border-top:0}
+.trv .ex-ja{font-size:14px;line-height:1.75}
+.trv .ex-tr{font-size:14px;line-height:1.7;color:var(--ink2);margin-top:4px}
+/* phones and narrow screens: the companies as a row that scrolls sideways, above the document */
+@media (max-width:980px){
+  .side{flex-direction:row;overflow-x:auto;gap:6px;padding-bottom:4px;-webkit-overflow-scrolling:touch}
+  .side .lab{display:none}
+  .side .co-it{flex:0 0 auto;max-width:72vw}
+  .side>.btn{flex:0 0 auto;width:auto!important}
+}
+.upg{margin:10px 0 4px;padding:10px 14px;border-radius:10px;border:1px dashed var(--line2);font-size:13px}
+.upg .btn{display:block;width:100%;margin-top:6px;white-space:normal;text-align:left}
