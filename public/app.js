@@ -1008,6 +1008,16 @@ async function downloadEnglish(c, kind) {
 
 // ---------------- 履歴書 ----------------
 const ymJ = (s) => { const m = /^(\d{4})(?:-(\d{1,2}))?/.exec(s || ''); return m ? m[1] + '年' + (m[2] ? +m[2] + '月' : '') : ''; };
+// the leaving line: 一身上の都合 unless the user's own notes say they left for childbirth/childcare or caregiving
+// (said as the reason for leaving, not just mentioned) and half a year or more without a job follows
+function leaveReason(c, cs) {
+  const src = [state.raw || '', Object.values(state.answers || {}).join('\n')].join('\n');
+  const next = cs[cs.indexOf(c) + 1]; const gap = !next || !(monthOf(next.start) - monthOf(c.end, true) < 6);
+  const why = (w) => new RegExp(`(${w})[^。\\n]{0,12}(ため|で|を機に|に専念)[^。\\n]{0,8}(退職|離職|辞め)|(退職|離職|辞め)[^。\\n]{0,4}(理由|のは)[^。\\n]{0,8}(${w})`).test(src);
+  if (gap && why('出産|育児|子育て')) return '出産・育児のため退職';
+  if (gap && why('介護')) return '家族の介護のため退職';
+  return '一身上の都合により退職';
+}
 function genHistory() {
   const p = state.profile || { careers: [], education: [] }; const L = ['学歴'];
   (p.education || []).slice().sort((a, b) => String(a.date).localeCompare(String(b.date))).forEach((e) => L.push(`${ymJ(e.date)}｜${e.school}${e.detail ? '　' + e.detail : ''}`));
@@ -1017,7 +1027,7 @@ function genHistory() {
   cs.forEach((c) => {
     L.push(`${ymJ(c.start)}｜${c.company}　入社`);
     const r0 = c.roles[c.roles.length - 1]; if (r0 && r0.org) L.push(`｜　${r0.org}${r0.title ? '　' + r0.title : ''}`);
-    if (c.end && c.end !== '現在') L.push(`${ymJ(c.end)}｜一身上の都合により退職`);
+    if (c.end && c.end !== '現在') L.push(`${ymJ(c.end)}｜${leaveReason(c, cs)}`);
   });
   if (cs.some((c) => c.end === '現在')) L.push('｜現在に至る');
   L.push('以上');
@@ -1223,11 +1233,13 @@ function demoPick() {
   const lab = (k, l) => { const x = k && window.DEMO_SET[k].i18n && window.DEMO_SET[k].i18n[UI_LANG]; return x && x.label ? x.label : l; };
   return `<div class="demo-pick"><span class="lab">ほかの例：</span>${ks.map(([k, l]) => `<button class="${(state.demoKind || '') === k ? 'on' : ''}" data-act="demo" data-v="${k}">${h(lab(k, l))}</button>`).join('')}</div>`;
 }
+// the examples whose person wrote the notes in another language
+const DEMO_NOTES = { eng: '中国語', mkt: '英語' };
 function demoBar() {
   if (!state.demo) return '';
   const bar = hasOwnData(userState)
     ? `<div class="demo-bar"><span>いま表示しているのは<b>サンプル</b>（架空の人物・企業）です。あなたのデータはそのまま残っています。サンプルでの操作は保存されません。</span><span class="spacer"></span><button class="btn primary small" data-act="startOwn">自分のデータに戻る</button></div>`
-    : `<div class="demo-bar"><span>いま表示しているのは<b>サンプル</b>（架空の人物・企業）です。サンプルでの操作は保存されません。各ステップを見たあと、自分の経歴で始められます。${UI_LANG !== 'ja' ? (state.demoKind === 'eng' ? '</span><span class="tiny">この例の人物は、経歴を中国語で書いています。書類は日本語で作られ、ステップ3で母語の対訳を見ながら確認できます。' : '</span><span class="tiny">このサンプルの人物は日本語で経歴を書いています。英語・中国語で書いても書類は日本語で作られ、ステップ3で母語の対訳を見ながら確認できます。') : ''}</span><span class="spacer"></span><button class="btn primary small" data-act="startOwn">自分の経歴で始める</button></div>`;
+    : `<div class="demo-bar"><span>いま表示しているのは<b>サンプル</b>（架空の人物・企業）です。サンプルでの操作は保存されません。各ステップを見たあと、自分の経歴で始められます。${UI_LANG !== 'ja' ? (DEMO_NOTES[state.demoKind] ? `</span><span class="tiny">この例の人物は、経歴を${DEMO_NOTES[state.demoKind]}で書いています。書類は日本語で作られ、ステップ3で母語の対訳を見ながら確認できます。` : '</span><span class="tiny">このサンプルの人物は日本語で経歴を書いています。英語・中国語で書いても書類は日本語で作られ、ステップ3で母語の対訳を見ながら確認できます。') : ''}</span><span class="spacer"></span><button class="btn primary small" data-act="startOwn">自分の経歴で始める</button></div>`;
   return bar.replace(/<\/div>$/, demoPick() + '</div>');
 }
 
@@ -1560,7 +1572,7 @@ function rirekiHTML(c) {
         <div class="row" style="margin-top:4px">${r.photo ? `<img src="${r.photo}" alt="" class="rk-ph">` : ''}<label class="btn small" style="margin:0;color:var(--ink)">${r.photo ? '写真を変える' : '写真を選ぶ'}<input type="file" id="rkPhoto" accept="image/*" class="hidden"></label>${r.photo ? '<button class="btn ghost small" data-act="rkPhotoDel">写真を外す</button>' : ''}</div>
       </div>
       <div class="card"><h2>学歴・職歴</h2><p class="hint">1行に1項目、「2016年4月｜○○株式会社　入社」の形で書きます。「学歴」「職歴」「以上」だけの行は見出しとして配置されます。経歴データから自動で作っています。</p>
-        <p class="hint tiny">退職の行は「一身上の都合により退職」としています（自分の意思で辞めた場合）。会社の倒産・解雇などは「会社都合により退職」、契約が終わった場合は「契約期間満了により退職」に直してください。出産・育児や介護で辞めた場合は「出産・育児のため退職」「家族の介護のため退職」のように書いてもかまいません（書かなくても問題ありません）。</p>
+        <p class="hint tiny">退職の行は「一身上の都合により退職」としています（自分の意思で辞めた場合）。経歴に出産・育児や介護のために辞めたと書いてあれば、「出産・育児のため退職」「家族の介護のため退職」としています（書きたくなければ「一身上の都合により退職」に直してかまいません）。会社の倒産・解雇などは「会社都合により退職」、契約が終わった場合は「契約期間満了により退職」に直してください。</p>
         <textarea rows="13" data-rk="history">${h(r.history)}</textarea>
         <div class="row"><button class="btn small" data-act="rkGen" data-v="history">経歴データから作り直す</button></div>
         ${UI_LANG !== 'ja' ? '<p class="hint tiny">よく使う決まった言い方：入学・卒業、入社、一身上の都合により退職（自分の意思で辞めたときの一般的な書き方）、現在に至る。海外の学校・会社は正式名称で書き、必要なら国名を添えます。</p>' : ''}
