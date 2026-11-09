@@ -383,6 +383,7 @@ body.noscroll{overflow:hidden}
 .acct [data-act=devLogout]{max-width:180px;overflow:hidden;text-overflow:ellipsis}
 .modal a{color:var(--ink);text-decoration:underline;text-decoration-color:var(--sun);text-underline-offset:4px}
 @media (max-width:560px){.credit .unit{display:none}.credit{padding-left:10px}.acct .pricelink{display:none}.acct [data-act=devLogout]{max-width:70px}}
+@media (max-width:420px){.acct{gap:6px}.acct [data-act=devLogout]{max-width:52px;padding-left:6px;padding-right:6px}}
 .wordpick{display:inline-flex;align-items:stretch}
 .wordpick .btn{border-top-right-radius:0;border-bottom-right-radius:0;border-right:0}
 .wordpick select{width:auto;border-radius:0 999px 999px 0;border:1px solid var(--line2);background:var(--paper);font-size:12px;padding:0 26px 0 10px;color:var(--ink2);cursor:pointer}
@@ -737,3 +738,11 @@ fl-header{white-space:nowrap}   /* inherited into the kit's header (its shadow D
 }
 .upg{margin:10px 0 4px;padding:10px 14px;border-radius:10px;border:1px dashed var(--line2);font-size:13px}
 .upg .btn{display:block;width:100%;margin-top:6px;white-space:normal;text-align:left}
+
+/* the paywall: what this company's interview is likely to press on */
+.asks{margin:10px 0 0;padding:10px 14px;border:1px dashed var(--line2);border-radius:12px;background:#fff;font-size:13px}
+.asks ul{margin:6px 0 0;padding-left:18px}
+.asks li{margin:2px 0}
+.fb .nw{white-space:nowrap}
+.lp-kinds{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline;margin:10px 0 0;font-size:13.5px}
+.lp-kinds>span{color:var(--ink2);font-size:12.5px}

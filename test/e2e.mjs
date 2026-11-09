@@ -153,6 +153,8 @@ await page.evaluate(() => window.__test.set((st) => { const x = st.companies.fin
 await save('[data-act=pdf]');
 await page.waitForSelector('.packs');
 ok((await page.innerText('#modal')).includes('画面で確認できています'), 'out of credits: purchase dialog says what this company needs');
+ok((await page.innerText('#modal')).includes('英語での業務経験'), 'purchase dialog names what this company\'s interview is likely to press on');
+ok((await page.innerText('#modal')).includes('差額で'), 'first purchase: says a small pack can be upgraded later');
 await shot('buy');
 // a fourth company cannot be made before buying (2 free previews)
 ok((await api('/api/ai', { task: 'generate', ctx: { profile: { careers: [] } }, c: { id: 'zzzz9', name: '株式会社テスト九号', job: 'x', analysis: { company: '株式会社テスト九号' } } })).error.code === 'preview_limit', 'server: no third free preview');
