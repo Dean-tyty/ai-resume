@@ -148,6 +148,17 @@ await page.click(C3 + ' [data-act=generate]');
 await page.waitForSelector('.lock-note', { timeout: 30000 });
 await page.waitForFunction(() => !document.querySelector('.pill.run'), null, { timeout: 30000 });
 ok(/あと\s*0/.test(await page.innerText('#acct .credit')), 'second company made as a free preview (still 0)');
+// copying (not saving) opens the purchase dialog too, and that copy is what resumes after paying (not an earlier
+// "作成する", which would regenerate the document)
+await page.click('[data-act=copyField][data-path=summary]');
+await page.waitForSelector('.packs');
+ok((await page.evaluate(() => JSON.parse(sessionStorage.getItem('resume-pending') || '{}').act)) === 'copyField', 'the copy that opened the purchase dialog is what resumes after paying');
+ok(await page.evaluate(() => document.querySelector('.packs').getBoundingClientRect().top < innerHeight * 0.75), 'purchase dialog: prices on the first screen');
+await act('closeModal');
+// step 4 tracks a company whose credit is not used yet (tracking is free)
+await act('step', '[data-step="4"]');
+ok((await page.innerText('#v4')).includes('株式会社テスト三号'), 'step 4 lists a company before its credit is used');
+await act('step', '[data-step="3"]');
 // a number not in the career: saving asks "press again" first, and the save must still resume after paying
 await page.evaluate(() => window.__test.set((st) => { const x = st.companies.find((y) => y.name === '株式会社テスト三号'); x.doc.summary += '（延べ999件）'; }));
 await save('[data-act=pdf]');
@@ -164,6 +175,7 @@ await page.click('#b');
 await page.waitForURL((u) => !u.search.includes('paid') && u.pathname === '/', { timeout: 15000 });
 await page.waitForSelector('[data-act=unlockOk]', { timeout: 30000 });
 ok(/あと\s*5/.test(await page.innerText('#acct .credit')), 'paid pack added; the waiting save asks before using one');
+ok((await page.innerText('#notice')).includes('お支払いが完了'), 'the purchase stays confirmed on the screen');
 {
   const dl = page.waitForEvent('download', { timeout: 20000 });
   await page.click('[data-act=unlockOk]');

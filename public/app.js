@@ -167,13 +167,15 @@ const overPreview = (c) => !!(acct.me && locked(c) && !c.doc && !acct.me.preview
 const previewsLeft = () => (acct.me && acct.me.free ? acct.me.free.previews : Infinity);
 const isPaid = () => !!(acct.me && acct.me.paid);
 const researchLeft = (c) => (CFG.research || 3) - ((acct.me && acct.me.research[c.id]) || 0);
-const RESUMABLE = new Set(['extract', 'analyze', 'generate', 'pack', 'prep', 'rkMotive', 'explain', 'analyzeAll', 'generateAll', 'research', 'fetchJob', 'pdf', 'docx', 'rkPdf', 'enPdf', 'enDocx']);
+const RESUMABLE = new Set(['extract', 'analyze', 'generate', 'pack', 'prep', 'rkMotive', 'explain', 'analyzeAll', 'generateAll', 'research', 'fetchJob', 'pdf', 'docx', 'rkPdf', 'enPdf', 'enDocx', 'copyField', 'copyText']);
 const SHOW_ONLY = new Set();   // after a purchase these would be shown, not started (none now: using a credit is always asked first)
 // made and read on the screen before the 応募先 uses its credit; the others use it (worker/ai.js TASKS)
 const PREVIEW_TASKS = new Set(['generate', 'shorten', 'explain']);
 const UNLOCK_TASKS = new Set(['pack', 'prep', 'rk', 'english', 'research']);
 let lastAct = null;
-function savePending() { try { if (lastAct) sessionStorage.setItem('resume-pending', JSON.stringify(lastAct)); } catch (e) { /* not resumed */ } }
+// the action that led to the login or the purchase; an earlier one is dropped when this one can't be resumed
+// (otherwise a stale "作成する" would run again after the payment)
+function savePending() { try { if (lastAct) sessionStorage.setItem('resume-pending', JSON.stringify(lastAct)); else sessionStorage.removeItem('resume-pending'); } catch (e) { /* not resumed */ } }
 function runPending() {
   let a = null; try { a = JSON.parse(sessionStorage.getItem('resume-pending') || 'null'); sessionStorage.removeItem('resume-pending'); } catch (e) { return false; }
   if (!a || !RESUMABLE.has(a.act)) return false;
@@ -464,7 +466,7 @@ function tailoredHTML(c) {
   // requirements the career only partly meets, then the gaps
   const asks = (a.requirements || []).filter((r) => r.match === '△').map((r) => r.text).slice(0, 2);
   const gap = asks.length ? '' : (a.gaps || [])[0];
-  const askHTML = asks.length || gap ? `<div class="asks"><b>この会社の面接で突っ込まれそうなこと（求人の分析から）</b><ul>${asks.map((t) => `<li>「${h(t)}」の経験（あなたの経歴では一部だけ合う要件です）</li>`).join('')}${gap ? `<li>書類で控えめに書いた点：${h(gap)}</li>` : ''}</ul><p class="hint tiny" style="margin:4px 0 0">1社分を使うと、これらの質問への答え方（経歴にない経験は盛らずに、近い経験でどう答えるか）と回答例を作ります。</p></div>` : '';
+  const askHTML = asks.length || gap ? `<div class="asks"><b>この会社の面接で突っ込まれそうなこと（求人の分析から）</b><ul>${asks.map((t) => `<li>「${h(t)}」（あなたの経歴では一部だけ合う要件です）</li>`).join('')}${gap ? `<li>書類で控えめに書いた点：${h(gap)}</li>` : ''}</ul><p class="hint tiny" style="margin:4px 0 0">1社分を使うと、これらの質問への答え方（経歴にない経験は盛らずに、近い経験でどう答えるか）と回答例を作ります。</p></div>` : '';
   return `${vsHTML}<div class="tailored"><b>この会社向けに作ったところ</b>${rows.map(([k, v]) => `<div><span>${h(k)}</span><span>${h(v)}</span></div>`).join('')}<p class="hint tiny" style="margin:6px 0 0">1社分を使うと、この内容に合わせた志望動機（300字・150字）、想定質問と回答例（9問前後）、逆質問、選考ごとの面接対策も作れます。</p></div>${askHTML}`;
 }
 // bought recently: a bigger pack for the difference (worker/billing.js upgradeOffer works out the same)
@@ -489,23 +491,27 @@ function openBuy(reason, kind, c) {
   const rec = (want && packs.slice().sort((a, b) => a.credits - b.credits).find((p) => p.credits >= want[2] - Math.max(0, left || 0))) || packs.find((p) => p.rec) || null;
   const buyer = kind === 'buyer';
   if (kind === 'unlock' && !c) kind = '';
-  const title = buyer ? '利用枠を購入する' : kind === 'unlock' ? 'この会社の書類を保存する・面接準備をする' : kind === 'preview' ? '次の応募先の書類を作る' : '利用枠を追加する';
-  const lead = kind === 'unlock' && c ? `<p>「${h(cname(c))}」の職務経歴書は、画面で確認できています。<b>保存（PDF・Word）・コピーと、志望動機・面接準備・英文レジュメ</b>には、この会社の1社分が必要です。</p>${tailoredHTML(c)}`
+  // from step 4 (an interview is set or passed): the sheet is about that interview
+  const st = kind === 'unlock' && c && state.step === 4 ? (c.stages || []).find((x) => x.status === '予定') : null;
+  const title = buyer ? '利用枠を購入する' : st ? `「${h(st.name)}」の対策を作る` : kind === 'unlock' ? 'この会社の書類を保存する・面接準備をする' : kind === 'preview' ? '次の応募先の書類を作る' : '利用枠を追加する';
+  const lead = kind === 'unlock' && c ? `<p>「${h(cname(c))}」の職務経歴書は、画面で確認できています。<b>保存（PDF・Word）・コピーと、志望動機・面接準備・英文レジュメ</b>には、この会社の1社分が必要です。</p>`
     : kind === 'preview' ? (acct.me && acct.me.paid
       ? `<p class="status warn">まだ1社分を使っていない応募先が多いため、新しい応募先の書類を作れません（残りの利用枠＋${(CFG.preview && CFG.preview.open) || 3}社まで）。作った会社の書類を保存して1社分を使うか、利用枠を追加してください。</p>`
       : `<p class="status warn">購入前に無料で作成・確認できる応募先は${(CFG.preview && CFG.preview.free) || 2}社までです。</p>${left ? `<p class="hint">残っている無料の1社分は、作成済みの応募先（${state.companies.filter((x) => x.doc && locked(x)).map((x) => '「' + h(cname(x)) + '」').join('') || 'これまでに作った会社'}）の保存に使えます。3社目からの作成には購入が必要です。</p>` : ''}`) : '';
+  // the prices come first (on a phone the sheet is long); what this company's credit gives follows
   openModal(`<h2 id="modalTitle">${title}</h2>
     ${reason ? `<p class="status warn">${h(reason)}</p>` : ''}${lead}
     ${buyer ? '<p class="hint" style="margin:0 0 8px">無料の1社分では使えません。購入すると、すでに登録した会社にも使えます。</p>' : ''}
-    ${left != null ? `<p>いまの利用枠：<b>あと${left}社分</b></p>` : ''}
-    <div class="plan-q"><span>応募する予定の社数：</span>${PLAN.map(([k, l]) => `<button class="${ui.plan === k ? 'on' : ''}" data-act="plan" data-v="${k}">${l}</button>`).join('')}</div>
+    <div class="plan-q"><span>書き分けたい・面接対策をしたい会社：</span>${PLAN.map(([k, l]) => `<button class="${ui.plan === k ? 'on' : ''}" data-act="plan" data-v="${k}">${l}</button>`).join('')}</div>
     <div class="packs">${packs.map((p) => `<button class="buy-pack ${p === rec ? 'rec' : ''}" data-act="buy" data-pack="${h(p.id)}">${p === rec && packs.length > 1 ? '<span class="badge">おすすめ</span>' : ''}<span class="pl">${h(p.label)}</span><b>${p.price.toLocaleString('ja-JP')}円</b><small>1社あたり${Math.round(p.price / p.credits).toLocaleString('ja-JP')}円</small><span class="go">購入へ進む →</span></button>`).join('')}</div>
+    <p class="hint buy-terms">買い切り（月額・自動更新なし）・有効期限なし・購入後の返金不可。お支払いはクレジットカードなど（Stripe の決済画面）。${left != null ? `いまの利用枠：あと${left}社分。` : ''}</p>
     ${upgradeHTML(packs)}
-    ${kind === 'unlock' && c ? `<p class="hint after-pay">お支払いのあと、この画面に戻ります。続けて「${h(cname(c))}」の保存を確認します（1社分を使います）。</p>` : ''}
+    ${kind === 'unlock' && c ? tailoredHTML(c) : ''}
+    ${kind === 'unlock' && c ? `<p class="hint after-pay">お支払いのあと、この画面に戻ります。続けて「${h(cname(c))}」で1社分を使うかを確認します。</p>` : ''}
     ${kind === 'preview' ? '<p class="hint">購入すると、作成済みで保存していない応募先の書類も、そのまま保存できます。新しい応募先の書類も作れます。</p>'
-      : '<p class="hint">1社分 ＝ 1つの応募先。その会社の書類を保存・コピーするとき、または志望動機・面接準備などを作るときに1回だけ使います。そのあとは、その会社の職務経歴書・履歴書・英文レジュメ・志望動機・面接準備を何度作り直しても追加料金はかかりません（1日に使える回数には上限があります）。</p>'}
+      : '<p class="hint">1社分 ＝ 1つの応募先。その会社の書類を保存・コピーするとき、または志望動機・面接準備などを作るときに1回だけ使います。そのあとは、その会社の職務経歴書・履歴書・英文レジュメ・志望動機・面接準備を何度作り直しても追加料金はかかりません（1日に使える回数には上限があります）。最初の1社の書類は、ほかの会社への応募にもそのまま使えます。利用枠は、書き分けたい会社・面接が決まった会社に使ってください。</p>'}
     <ul class="trust buyer"><li>会社の公開情報の調査（出典付き・1社につき${CFG.research || 3}回まで。その会社の1社分に含まれます）</li><li>会社の採用ページの URL から求人票を読み込み（転職サイトの求人は本文を貼り付けてください）</li></ul>
-    <p class="hint">買い切り（月額・自動更新なし）。利用枠に有効期限はありません。表示価格がお支払いの総額です。クレジットカードなどで、Stripe の決済画面からお支払いいただけます。購入後のキャンセル・返金はできません。職務経歴書は、利用枠を使う前に画面で確かめられます。</p>
+    <p class="hint">表示価格がお支払いの総額です。職務経歴書は、利用枠を使う前に画面で確かめられます。</p>
     <p class="hint"><a href="${h(CFG.terms)}" target="_blank" rel="noopener">利用規約</a>　<a href="https://www.flatland.co.jp/legal/tokushoho/" target="_blank" rel="noopener">特定商取引法に基づく表記</a></p>
     <div class="row"><span class="spacer"></span><button class="btn" data-act="closeModal">閉じる</button></div>`);
 }
@@ -546,7 +552,7 @@ async function buy(pack, btn) {
     try { sessionStorage.setItem('resume-credits-before', String(acct.me ? acct.me.credits : 0)); } catch (e) { /* compared with the current count */ }
     if (r.url) { location.href = r.url; return; }
     // added without a payment page (the preview)
-    closeModal(true); await refreshMe(); render(); toast(`利用枠を追加しました（あと${acct.me.credits}社分）`); runPending();
+    closeModal(true); await refreshMe(); render(); runPending(); showNotice(`お支払いが完了し、利用枠を追加しました（あと${acct.me.credits}社分）。`);
   } catch (e) { btn.disabled = false; btn.classList.remove('wait'); toast(e.code === 'not_configured' ? '決済の準備がまだ整っていません' : '決済画面を開けませんでした。もう一度お試しください'); }
 }
 // back from Stripe: /?paid=<session> (or cancel)
@@ -569,7 +575,7 @@ async function paidReturn() {
     await new Promise((ok) => setTimeout(ok, 2500));
   }
   hideNotice();
-  if (done()) { toast(`利用枠を追加しました（あと${acct.me.credits}社分）。求人ページの URL からの読み込みと、会社の公開情報の調査も使えます`); render(); runPending(); }
+  if (done()) { render(); const went = runPending(); showNotice(`お支払いが完了し、利用枠を追加しました（あと${acct.me.credits}社分）。` + (went ? '' : '会社の公開情報の調査と、採用ページ URL の読み込みも使えます。')); }
   else showNotice('お支払いの確認に時間がかかっています。数分後にページを再読み込みしてください。解決しない場合はお問い合わせください。');
 }
 async function deleteAccount() {
@@ -1040,8 +1046,10 @@ function leaveReason(c, cs) {
 // (pay is not usually written there)
 function hopeDraft() {
   const t = ((state.intent && state.intent.conditions) || '').trim(); if (!t || !/[\u3040-\u30ff\u4e00-\u9fff]/.test(t) || /[A-Za-z]{4,}\s+[A-Za-z]{3,}/.test(t)) return '';
-  const parts = t.split(/[、,，／/\n・]+/).map((x) => x.trim().replace(/。$/, '')).filter((x) => x && !/年収|月給|給与|給料|万円|時給/.test(x));
-  return parts.length ? parts.join('\n') : '';
+  // only what belongs in that field (working hours, days, place, start date); pay and notes to oneself are left out
+  const parts = t.split(/[、,，／/\n・。]+/).map((x) => x.trim()).filter((x) => x && /\d\s*時|時短|時間|週\s*\d|曜|平日|土日|勤務地|通勤|在宅|リモート|転勤|入社|扶養内/.test(x) && !/年収|月給|給与|給料|万円|時給|でなくても|どちらでも|こだわら|できれば/.test(x))
+    .map((x) => /希望$/.test(x) ? x.replace(/を?希望$/, '') + 'を希望します。' : /(可能|不可)$/.test(x) ? x + 'です。' : /(です|ます|ません)$/.test(x) ? x + '。' : x + 'を希望します。');
+  return parts.join('\n');
 }
 function genHistory() {
   const p = state.profile || { careers: [], education: [] }; const L = ['学歴'];
@@ -1204,7 +1212,14 @@ async function importResume(file) {
   toast(`${file.name} を読み込みました（${len(text)}字）。内容を確かめて「経歴を整理する」を押してください`);
 }
 
-async function copy(text) { try { await navigator.clipboard.writeText(text); toast('コピーしました'); } catch (e) { toast('コピーできませんでした。テキストを選択してコピーしてください'); } }
+async function copy(text) {
+  try { await navigator.clipboard.writeText(text); toast('コピーしました'); }
+  catch (e) {
+    // some browsers (iPhone Safari) refuse a copy that comes after a wait: offered again behind one tap
+    openModal(`<h2 id="modalTitle">コピーの準備ができました</h2><textarea id="copyBox" rows="8" readonly>${h(text)}</textarea>
+      <div class="row"><span class="spacer"></span><button class="btn" data-act="closeModal">閉じる</button><button class="btn primary" data-act="copyNow">コピーする</button></div>`);
+  }
+}
 
 // ---------------- rendering helpers ----------------
 function showNotice(t) { const n = $('#notice'); n.innerHTML = '<div>' + h(t) + '<button class="x" data-act="hideNotice" aria-label="閉じる">×</button></div>'; n.classList.remove('hidden'); }
@@ -1356,6 +1371,7 @@ function screenCheck(p) {
   const changes = cs.length - 1;
   if (changes >= (age == null ? 4 : age < 30 ? 3 : age < 40 ? 4 : 5)) out.push({ t: `転職${changes}回`, d: '回数だけで判断する企業もあります。職務要約で、経験に共通する軸（職種・顧客・身につけた力）を1文で示し、面接では理由を短く前向きに話せるようにします。' });
   cs.filter((c) => !c.now && c.e - c.s + 1 < 12).forEach((c) => out.push({ t: `在籍1年未満：${c.name}（${c.e - c.s + 1}か月）`, d: '理由を聞かれる前提で、事実を1文で答えられるようにします。書類では弁解せず、その期間にしたことを書きます。' }));
+  cs.filter((c) => c.now && c.e - c.s + 1 < 12).forEach((c) => out.push({ t: `現職が在籍1年未満：${c.name}（${c.e - c.s + 1}か月）`, d: '「入社してすぐ、なぜ辞めるのか」を必ず聞かれます。入社前に聞いていた話との違いなど、事実を1文で答えられるようにし、次は長く働きたい理由を添えます。経歴に理由を書き足すと、面接の答え方に生かせます。' }));
   for (let i = 1; i < cs.length; i++) { const g = cs[i].s - cs[i - 1].e - 1; if (g >= 6) out.push({ t: `職歴の空白：${ymText(cs[i - 1].e + 1)}〜${ymText(cs[i].s - 1)}（${g}か月）`, d: 'その期間の理由としていたこと（育児・介護・療養・学習・資格など）を経歴に書き足すと、書類と面接の答え方に生かせます。書かなければ、AI は理由を作りません。' }); }
   const last = cs[cs.length - 1];
   if (!cs.some((c) => c.now) && cur - last.e >= 3) out.push({ t: `現在、離職して${cur - last.e}か月`, d: '離職後にしていること（学習・資格・家庭の事情など）と、いつから・どんな条件で働けるかを経歴に書き足すと、履歴書の本人希望記入欄と面接の答えに生かせます。' });
@@ -1390,7 +1406,7 @@ function render2() {
   const pending = state.companies.filter((c) => c.job.trim() && !c.analysis && c.status !== 'analyzing').length;
   const ready = state.companies.filter((c) => c.analysis && !c.doc && c.status === 'analyzed').length;
   const hasSample = state.companies.some((c) => c.sample);
-  $('#v2').innerHTML = viewHead('この会社向けの見せ方を決める', '求人票を貼ると、その会社が重視していることと、あなたのどの実績をどう見せるかを整理します。分析は無料。何社でもまとめて扱えます。',
+  $('#v2').innerHTML = viewHead('この会社向けの見せ方を決める', '求人票を貼ると、その会社が重視していることと、あなたのどの実績をどう見せるかを整理します。分析は無料。何社でもまとめて扱えます。' + (acct.me && !acct.me.paid && !state.demo && previewsLeft() <= 0 ? `書類の作成は、購入前は${(CFG.preview && CFG.preview.free) || 2}社までです（分析と選考管理は、何社でも無料）。` : ''),
     `<button class="btn primary" data-act="addCompany">＋ 応募先を追加</button>${hasSample ? '' : '<button class="btn ghost" data-act="sampleJob">サンプル求人で試す（無料）</button>'}`) + `
   ${!state.profile ? '<div class="card" style="margin-bottom:16px;background:var(--warn-soft);border-color:#f0d7a8;color:var(--warn)">先に「経歴」のステップで経歴を整理してください。</div>' : ''}
   ${(pending > 1 || ready > 1 || state.companies.filter((c) => c.batch).length) ? `<div class="row" style="margin:0 0 14px">${batchProgress()}<span class="spacer"></span>
@@ -1790,8 +1806,10 @@ function drawThumbs(c) {
 
 // ---------------- step 4 ----------------
 function render4() {
-  const list = state.companies.filter((c) => (c.doc && !locked(c)) || (c.stages || []).some(hasLog));
-  if (!list.length) { $('#v4').innerHTML = viewHead('選考管理', '応募先ごとの選考ステップと日程を管理し、面接の記録から次の面接の対策を作ります。') + '<div class="card empty">応募先を追加すると、ここで選考を管理できます。</div>'; return; }
+  // every 応募先 with an analysis or a document is tracked (tracking is free); the interview prep uses the
+  // company's 1社分 when it is first made
+  const list = state.companies.filter((c) => c.doc || c.analysis || (c.stages || []).some(hasLog));
+  if (!list.length) { $('#v4').innerHTML = viewHead('選考管理', '応募先ごとの選考ステップと日程を管理し、面接の記録から次の面接の対策を作ります。') + '<div class="card empty">ステップ2で応募先の求人票を分析すると、ここで選考を管理できます（無料）。ほかの会社向けの書類で応募した会社も、求人票を分析しておけば、面接が決まったときに面接対策を作れます。</div>'; return; }
   list.forEach(ensureStages); save();
   if (!company(state.active4) || !list.includes(company(state.active4))) state.active4 = list[0].id;
   const c = company(state.active4);
@@ -1997,6 +2015,7 @@ document.addEventListener('change', (e) => {
 document.addEventListener('click', (e) => {
   const b = e.target.closest('[data-act]'); if (!b) return;
   if (RESUMABLE.has(b.dataset.act)) { lastAct = Object.assign({}, b.dataset); delete lastAct.confirm; delete lastAct.orig; }
+  else if (!b.closest('#modal')) lastAct = null;
   lastFocus = `[data-act="${CSS.escape(b.dataset.act)}"]` + (b.dataset.id ? `[data-id="${CSS.escape(b.dataset.id)}"]` : '');
   const act = b.dataset.act; const c = b.dataset.id ? company(b.dataset.id) : company(state.step === 4 ? state.active4 : state.active);
   switch (act) {
@@ -2045,6 +2064,8 @@ document.addEventListener('click', (e) => {
     case 'english': makeEnglish(c); break;
     case 'enPdf': case 'enDocx': { const bad = checkNumbers(enParts(E.normalizeEn(enDoc(c)))).bad.length; if (bad && !confirm2(b, `未確認の数値が${bad}件あります。もう一度押すと保存`, 15000)) break; ensureUnlocked(c).then((ok) => { if (ok) downloadEnglish(c, act === 'enPdf' ? 'pdf' : 'docx'); }); break; }
     case 'toStages': state.active4 = c.id; state.step = 4; save(); render(); window.scrollTo(0, 0); break;
+    case 'copyNow': { const ta = $('#copyBox'); if (!ta) break; const t = ta.value; ta.focus(); ta.select(); let ok = false; try { ok = document.execCommand('copy'); } catch (e) { /* next */ }
+      (ok ? Promise.resolve() : navigator.clipboard.writeText(t)).then(() => { closeModal(true); toast('コピーしました'); }).catch(() => toast('コピーできませんでした。テキストを選択してコピーしてください')); break; }
     case 'copyText': { const t = b.dataset.text; (c && state.step >= 3 ? ensureUnlocked(c) : Promise.resolve(true)).then((ok) => { if (ok) copy(t); }); break; }
     case 'copyField': { const v = getPath(c.doc, b.dataset.path); ensureUnlocked(c).then((ok) => { if (ok) copy(Array.isArray(v) ? v.map((p) => (p.heading ? '【' + p.heading + '】\n' : '') + p.body).join('\n\n') : v); }); break; }
     case 'unlockOk': closeModal(true); break;

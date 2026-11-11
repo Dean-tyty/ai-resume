@@ -370,7 +370,7 @@ body.noscroll{overflow:hidden}
 .check input{margin-top:5px;width:16px;height:16px;flex:none}
 .packs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0 6px}
 .buy-pack{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:2px;border:1px solid var(--line2);background:#fff;border-radius:14px;padding:14px 16px;cursor:pointer;text-align:left;font:inherit;color:inherit}
-.buy-pack:hover{border-color:var(--ink)}
+@media (hover:hover){.buy-pack:hover{border-color:var(--ink)}}
 .buy-pack.rec{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
 .buy-pack .pl{font-size:13px;color:var(--ink2)}
 .buy-pack b{font-size:22px}
@@ -746,3 +746,5 @@ fl-header{white-space:nowrap}   /* inherited into the kit's header (its shadow D
 .fb .nw{white-space:nowrap}
 .lp-kinds{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline;margin:10px 0 0;font-size:13.5px}
 .lp-kinds>span{color:var(--ink2);font-size:12.5px}
+.buy-terms{margin:8px 0 6px}
+#copyBox{width:100%;font-size:14px}

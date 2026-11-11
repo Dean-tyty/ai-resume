@@ -12,7 +12,7 @@ const withTr = (p, t) => (t ? { ...p, careers: p.careers.map((c, i) => ({ ...c, 
 const mock = {
   profile: { ...profile, name: undefined, missing },
   analyze: D.analysis, generate: D.doc, shorten: D.doc, pack: D.pack, prep: D.prep,
-  rk: { motive: '貴社の「顧客の成果から考える」という価値観に共感し、志望いたしました。【要記入：志望の決め手となった出来事】', hope: '貴社の規定に従います。' },
+  rk: { motive: '勤怠管理SaaSのカスタマーサクセスとして、解約率の改善と導入支援の仕組みづくりに取り組んできました。貴社が顧客の成果を起点に支援体制を広げている点に、この経験を生かせると考え、志望いたしました。【要記入：志望の決め手となった出来事】', hope: '貴社の規定に従います。' },
   english: D.english, research: D.research, sampleJob: D.job,
   explain: { overview: D.explain.overview, sections: D.explain.sections, naturalness: D.explain.naturalness, conventions: D.explain.conventions },
   // the English / Chinese page (ctx.uiLang): the answers as the AI writes them for that page
