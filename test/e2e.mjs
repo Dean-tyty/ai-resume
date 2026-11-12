@@ -69,7 +69,7 @@ ok((await page.innerText('#acct .credit')).includes('1'), 'sample used no credit
 for (const kind of ['pdf', 'docx']) {
   const [dl] = await Promise.all([page.waitForEvent('download'), page.click(`[data-act=${kind}]`).then(() => page.click(`[data-act=${kind}]`).catch(() => {}))]);
   const p = OUT + 'out.' + kind; await dl.saveAs(p);
-  ok(/^職務経歴書_山田太郎_[^_]+_\d{8}\.(pdf|docx)$/.test(dl.suggestedFilename()) && !dl.suggestedFilename().includes('サンプルクラウド'), kind + ' downloaded as ' + dl.suggestedFilename());
+  ok(/^職務経歴書_山田太郎_\d{8}\.(pdf|docx)$/.test(dl.suggestedFilename()) && !dl.suggestedFilename().includes('サンプルクラウド'), kind + ' downloaded as ' + dl.suggestedFilename());
 }
 await act('tab', '[data-v=rireki]');
 await page.waitForSelector('#rkPreview canvas', { timeout: 15000 });
@@ -150,9 +150,10 @@ await page.waitForFunction(() => !document.querySelector('.pill.run'), null, { t
 ok(/あと\s*0/.test(await page.innerText('#acct .credit')), 'second company made as a free preview (still 0)');
 // copying (not saving) opens the purchase dialog too, and that copy is what resumes after paying (not an earlier
 // "作成する", which would regenerate the document)
-await page.click('[data-act=copyField][data-path=summary]');
+await page.click('details.formcopy > summary');
+await page.click('[data-act=copyPart][data-part=summary]');
 await page.waitForSelector('.packs');
-ok((await page.evaluate(() => JSON.parse(sessionStorage.getItem('resume-pending') || '{}').act)) === 'copyField', 'the copy that opened the purchase dialog is what resumes after paying');
+ok((await page.evaluate(() => JSON.parse(sessionStorage.getItem('resume-pending') || '{}').act)) === 'copyPart', 'the copy that opened the purchase dialog is what resumes after paying');
 ok(await page.evaluate(() => document.querySelector('.packs').getBoundingClientRect().top < innerHeight * 0.75), 'purchase dialog: prices on the first screen');
 await act('closeModal');
 // step 4 tracks a company whose credit is not used yet (tracking is free)
@@ -164,7 +165,7 @@ await page.evaluate(() => window.__test.set((st) => { const x = st.companies.fin
 await save('[data-act=pdf]');
 await page.waitForSelector('.packs');
 ok((await page.innerText('#modal')).includes('画面で確認できています'), 'out of credits: purchase dialog says what this company needs');
-ok((await page.innerText('#modal')).includes('英語での業務経験'), 'purchase dialog names what this company\'s interview is likely to press on');
+ok((await page.innerText('#modal')).includes('英語での業務経験') && (await page.innerText('#modal')).includes('聞かれそうな質問'), 'purchase dialog lists questions this company\'s interview is likely to ask');
 ok((await page.innerText('#modal')).includes('差額で'), 'first purchase: says a small pack can be upgraded later');
 await shot('buy');
 // a fourth company cannot be made before buying (2 free previews)
@@ -220,15 +221,28 @@ ok(await page.isVisible(C4 + ' [data-act=researchBack]'), 'previous result can b
 const fourth = await api('/api/ai', { task: 'research', ctx: {}, c: { id: C4id, name: await page.inputValue(C4 + ' [data-cf=name]'), job: await page.inputValue(C4 + ' [data-cf=job]') } });
 ok(fourth.error && fourth.error.code === 'limit' && fourth.error.scope === 'research', 'server: research limited to 3 per company');
 ok(/あと\s*3/.test(await page.innerText('#acct .credit')), 'credits unchanged by repeated research');
-// a bigger pack within 30 days costs only the difference: bought 5社 (2,480円) -> 20社 for 4,500円, 15 more
+// a bigger pack within 30 days costs only the difference: bought 5社 (2,480円) -> 10社 for 1,500円, 5 more
 {
   const meGet = async () => (await (await fetch(BASE + '/api/me', { headers: { authorization: 'Dev ' + user } })).json());
   const before = await meGet();
   ok(before.recent && before.recent.credits === 5 && before.recent.amount === 2480, 'recent purchase known (5社, 2,480円)');
-  const r = await api('/api/dev/pay', { pack: 'p20', upgrade: true });
+  const r = await api('/api/dev/pay', { pack: 'p10', upgrade: true });
   const after = await meGet();
-  ok(r.session && after.credits === before.credits + 15 && after.recent.amount === 6980, 'upgrade to 20社 adds 15 for the difference');
+  ok(r.session && after.credits === before.credits + 5 && after.recent.amount === 3980, 'upgrade to 10社 adds 5 for the difference');
   ok((await api('/api/dev/pay', { pack: 'p10', upgrade: true })).error.code === 'upgrade', 'no "upgrade" to a smaller pack');
+  // a purchase with no credit used since can be refunded within 7 days (its credits are taken back); once only
+  const me2 = await meGet();
+  ok(me2.refunds.length === 1 && me2.refunds[0].credits === 5 && me2.refunds[0].up, 'the unused upgrade can be refunded; the used 5社 pack cannot');
+  const rf = await api('/api/refund', { session: me2.refunds[0].session });
+  const me3 = await meGet();
+  ok(rf.ok && me3.credits === me2.credits - 5 && !me3.refunds.length, 'refund: credits taken back');
+  ok((await api('/api/refund', { session: me2.refunds[0].session })).error.code === 'not_refundable', 'refund only once');
+}
+// the pricing test's variant b (test logins "vb_…"): documents free, the credit is for 志望動機・面接準備
+{
+  const vb = 'vb_' + Date.now().toString(36);
+  const me = await (await fetch(BASE + '/api/me', { headers: { authorization: 'Dev ' + vb } })).json();
+  ok(me.variant === 'b', 'variant b given to a test login');
 }
 await page.waitForFunction(() => document.querySelector('#sync').textContent === '保存済み', null, { timeout: 8000 });
 

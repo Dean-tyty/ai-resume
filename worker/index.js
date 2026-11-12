@@ -11,12 +11,12 @@
 //   DELETE /api/account            delete the account and everything saved
 //   POST   /api/event              steps counted for the weekly report (stats.js)
 // A daily cron deletes data not used for RETENTION_DAYS.
-import { PRODUCT, PACKS, FREE_CREDITS, CONSENT_VERSION, MAX_WORKSPACE, RETENTION_DAYS, RESEARCH_PER_COMPANY, PREVIEW, FREE_LIFE, UPGRADE_DAYS } from './config.js';
+import { PRODUCT, PACKS, FREE_CREDITS, CONSENT_VERSION, MAX_WORKSPACE, RETENTION_DAYS, RESEARCH_PER_COMPANY, PREVIEW, FREE_LIFE, UPGRADE_DAYS, REFUND_DAYS } from './config.js';
 import { authenticate, clerkDelete } from './auth.js';
-import { account, slotIds, getWorkspace, putWorkspace, deleteUser, hasPaid, researchCounts, freeLeft, unlockSlot, credits, recentPurchases } from './db.js';
+import { account, slotIds, getWorkspace, putWorkspace, deleteUser, hasPaid, researchCounts, freeLeft, unlockSlot, credits, recentPurchases, refundable } from './db.js';
 import { fetchJob } from './fetchjob.js';
 import { handleAI } from './ai.js';
-import { checkout, confirm, webhook, devPay, devPayPost } from './billing.js';
+import { checkout, confirm, webhook, devPay, devPayPost, refund } from './billing.js';
 import { beacon, track, pageOf } from './stats.js';
 import { notify } from './notify.js';
 import { body, json, fail, NO_STORE } from './util.js';
@@ -27,7 +27,9 @@ function configJS(env) {
     // only the packs that can be paid for (their Stripe Price is set; all of them with the test payment)
     packs: Object.entries(PACKS).filter(([id]) => env.STRIPE_MOCK === '1' || env['STRIPE_PRICE_' + id.toUpperCase()]).map(([id, p]) => ({ id, ...p })), free: FREE_CREDITS, consent: CONSENT_VERSION,
     terms: PRODUCT.terms, privacy: PRODUCT.privacy, retention: RETENTION_DAYS, research: RESEARCH_PER_COMPANY,
-    preview: PREVIEW, freeLife: FREE_LIFE, upgradeDays: UPGRADE_DAYS,
+    preview: PREVIEW, freeLife: FREE_LIFE, upgradeDays: UPGRADE_DAYS, refundDays: REFUND_DAYS,
+    // payment methods turned on in the Stripe dashboard, as the page names them (var PAY_METHODS, e.g. "card,wallet,paypay,konbini")
+    payMethods: String(env.PAY_METHODS || 'card').split(',').map((x) => x.trim()).filter((x) => ['card', 'wallet', 'paypay', 'konbini'].includes(x)),
   };
   return new Response('window.APP_CONFIG = ' + JSON.stringify(cfg) + ';\n', { headers: { 'content-type': 'text/javascript; charset=utf-8', ...NO_STORE } });
 }
@@ -41,7 +43,9 @@ async function me(request, env, auth) {
   const free = paid ? null : await freeLeft(env, auth.id);
   // bought in the last UPGRADE_DAYS days: a bigger pack costs only the difference (billing.js upgradeOffer)
   const recent = paid ? await recentPurchases(env, auth.id, UPGRADE_DAYS) : null;
-  return json({ id: auth.id, credits: user.credits, slots: slots.open, previews: slots.preview, free, paid, recent, research, consent: user.consent === CONSENT_VERSION, created });
+  // purchases that can still be refunded (no credit used since, within REFUND_DAYS)
+  const refunds = paid ? (await refundable(env, auth.id, REFUND_DAYS)).map((p) => ({ session: p.session, pack: p.pack.replace('+', ''), up: p.pack.endsWith('+'), credits: p.credits, amount: p.amount, until: p.created_at + REFUND_DAYS * 864e5 })) : [];
+  return json({ id: auth.id, credits: user.credits, slots: slots.open, previews: slots.preview, free, paid, recent, refunds, research, variant: user.variant || '', consent: user.consent === CONSENT_VERSION, created });
 }
 
 // the documents of a 応募先 are about to be saved or copied: its credit is used now (once)
@@ -129,6 +133,7 @@ const API_AUTH = {
   'POST /api/fetch-job': (r, env, ctx, a) => fetchJob(r, env, a),
   'POST /api/checkout': (r, env, ctx, a) => checkout(r, env, a),
   'POST /api/checkout/confirm': (r, env, ctx, a) => confirm(r, env, ctx, a),
+  'POST /api/refund': (r, env, ctx, a) => refund(r, env, ctx, a),
   'DELETE /api/account': (r, env, ctx, a) => deleteAccount(env, ctx, a),
   'POST /api/dev/pay': (r, env, ctx, a) => (env.STRIPE_MOCK === '1' && a.dev ? devPayPost(r, env, ctx, a) : fail(404, 'not_found')),
 };

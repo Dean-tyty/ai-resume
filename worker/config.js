@@ -1,5 +1,5 @@
 // Product settings. Prices shown on the page come from here; the amounts actually charged come from the
-// Stripe Prices named in the secrets STRIPE_PRICE_<PACK> (STRIPE_PRICE_P1, _P5, _P10, _P20) — keep the two in
+// Stripe Prices named in the secrets STRIPE_PRICE_<PACK> (STRIPE_PRICE_P1, _P5, _P10) — keep the two in
 // step. A pack whose secret is not set is not offered (index.js configJS).
 export const PRODUCT = { id: 'resume', name: '職務経歴書AI', terms: 'https://www.flatland.co.jp/legal/terms/resume/', privacy: 'https://www.flatland.co.jp/privacy/' };
 export const CONSENT_VERSION = '2026-11-01';          // bump when the consent text changes: everyone is asked again
@@ -14,14 +14,17 @@ export const PREVIEW = { free: 2, open: 3, requests: 20 };
 // accounts that have never bought: AI requests in all (not per day), by task
 export const FREE_LIFE = { profile: 6, analyze: 10 };
 export const FREE_SLOT_MAX = 40;                       // AI requests the free 応募先 may use in all (buyers: SLOT_MAX)
-// p1: for one or two applications (dearer per company, which also makes the 5社 pack the clear choice);
-// p20: for career changers who apply to 20 or more
+// p1: the one company with an interview (dearer per company, which also makes the 5社 pack the clear choice)
 export const PACKS = {
   p1: { credits: 1, price: 980, label: '1社分' },
   p5: { credits: 5, price: 2480, label: '5社パック', rec: true },
   p10: { credits: 10, price: 3980, label: '10社パック' },
-  p20: { credits: 20, price: 6980, label: '20社パック' },
 };
+// a purchase can be refunded within this many days when no credit has been used since (billing.js refund)
+export const REFUND_DAYS = 7;
+// The pricing test, set by the secret/var AB_DOCS_FREE (0–100, default 0 = off): that share of new accounts gets
+// variant 'b', where saving and copying a 職務経歴書 needs no credit and the credit is for 志望動機・面接準備・
+// 履歴書の志望動機・英文レジュメ・会社調査 only. Variant shows in /api/me and in the stats (blob 7).
 // buying a bigger pack within this many days of the last purchase costs only the difference (billing.js upgradeOffer)
 export const UPGRADE_DAYS = 30;
 // cost guards: AI calls per user per day (all tasks / by task), and per 応募先 per day

@@ -95,6 +95,11 @@ window.DEMO = {
       { text: 'CRM運用経験', type: '歓迎', match: '○', evidence: 'Salesforce・HubSpot' },
       { text: '英語での業務経験', type: '歓迎', match: '△', evidence: 'メールでの海外パートナー対応' },
     ],
+    conditions: [
+      { item: '年収', posting: '記載なし', wish: '650万円以上', match: '?' },
+      { item: '勤務地', posting: '記載なし', wish: '都内またはリモート併用', match: '?' },
+      { item: '入社時期', posting: '記載なし', wish: '2027年2月以降', match: '?' },
+    ],
     plan: [
       { value: '属人化させない仕組み', episode_ids: ['E1', 'E2', 'E3'], angle: '個別対応の限界を、スコア・標準化という「仕組み」で越えた点を前面に' },
       { value: 'データによるKPI改善', episode_ids: ['E1', 'E4'], angle: '指標の設計→運用→数値改善の流れを具体的な数字で示す' },

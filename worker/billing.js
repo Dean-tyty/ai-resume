@@ -1,13 +1,14 @@
 // Payments with Stripe Checkout (the company's Stripe account; this product's own Product, Prices and
-// webhook). Packs and prices: config.js PACKS; the Stripe Price ids: secrets STRIPE_PRICE_P1, _P5, _P10, _P20.
+// webhook). Packs and prices: config.js PACKS; the Stripe Price ids: secrets STRIPE_PRICE_P1, _P5, _P10.
+//   POST /api/refund {session}        a purchase with no credit used since, within REFUND_DAYS: refunded, its credits taken back
 //
 //   POST /api/checkout {pack, lang}  -> {url} of a Checkout page; Stripe sends the user back to /?paid=<session> (/en/, /zh/ by lang)
 //   POST /api/checkout/confirm {session}  the return page asks at once (the webhook may come a little later)
 //   POST /api/stripe                 the webhook (checkout.session.completed / async_payment_succeeded)
 //
 // A pack is added once per Checkout Session whichever of the two arrives first (db.js creditPurchase).
-import { PACKS, UPGRADE_DAYS } from './config.js';
-import { account, creditPurchase, credits, recentPurchases } from './db.js';
+import { PACKS, UPGRADE_DAYS, REFUND_DAYS } from './config.js';
+import { account, creditPurchase, credits, recentPurchases, takeBack, refundDone } from './db.js';
 import { body, fail, json, same, readText } from './util.js';
 import { notify } from './notify.js';
 import { track } from './stats.js';
@@ -87,7 +88,7 @@ async function apply(env, s, request, ctx) {
   }
   const r = await creditPurchase(env, { session: s.id, user, pack: up ? pack + '+' : pack, credits: add, amount: s.amount_total || 0 });
   if (r.added) {
-    const who = await env.DB.prepare('SELECT src, lang FROM users WHERE id = ?').bind(user).first().catch(() => null);
+    const who = await env.DB.prepare('SELECT src, lang, variant FROM users WHERE id = ?').bind(user).first().catch(() => null);
     track(env, 'buy', request, who);
     ctx.waitUntil(notify(env, `ご購入：${PACKS[pack].label}${up ? `への切り替え（差額・${add}社分）` : ''}（${yen(s.amount_total || 0)}）`));
   } else if (!r.ok) {
@@ -112,6 +113,37 @@ export async function confirm(request, env, ctx, auth) {
   }
 }
 
+// a refund the user asks for: the purchase must be within REFUND_DAYS with no credit used since (db.js refundable);
+// its credits are taken first, then Stripe refunds the payment in full; if Stripe refuses (some payment methods
+// cannot be refunded automatically), the credits go back and the owner is told
+export async function refund(request, env, ctx, auth) {
+  const b = await body(request, 1024);
+  const id = b && typeof b.session === 'string' && /^cs_[A-Za-z0-9_]{10,200}$/.test(b.session) ? b.session : '';
+  if (!id) return fail(400, 'session');
+  await account(env, auth);
+  const t = await takeBack(env, auth.id, id, REFUND_DAYS);
+  if (!t.ok) return fail(409, 'not_refundable', { credits: await credits(env, auth.id) });
+  const row = await env.DB.prepare('SELECT pack, amount FROM purchases WHERE session = ?').bind(id).first();
+  const what = `${(PACKS[String(row.pack).replace('+', '')] || {}).label || row.pack}（${yen(row.amount)}）`;
+  try {
+    if (!(env.STRIPE_MOCK === '1' && auth.dev && id.startsWith('cs_test_dev'))) {
+      const s = await stripe(env, 'GET', 'checkout/sessions/' + encodeURIComponent(id));
+      const pi = typeof s.payment_intent === 'string' ? s.payment_intent : s.payment_intent && s.payment_intent.id;
+      if (!pi) throw new Error('no payment_intent');
+      await stripe(env, 'POST', 'refunds', { payment_intent: pi, 'metadata[product]': 'resume', 'metadata[user]': auth.id, 'metadata[session]': id });
+    }
+    await refundDone(env, auth.id, id, true);
+    track(env, 'refund', request);
+    ctx.waitUntil(notify(env, `返金しました（購入後${REFUND_DAYS}日以内・未使用）：${what}。利用枠は減らし済みです。`));
+    return json({ ok: true, credits: await credits(env, auth.id) });
+  } catch (e) {
+    console.error('refund', String(e.message || e));
+    await refundDone(env, auth.id, id, false, t.credits);
+    ctx.waitUntil(notify(env, `返金の依頼がありましたが、自動で返金できませんでした：${what}（Checkout Session ${id}）。Stripe で確認し、返金したら D1 の purchases.refunded を 1 にし、利用枠を減らしてください。`));
+    return fail(502, 'refund_error', { credits: await credits(env, auth.id) });
+  }
+}
+
 // Stripe-Signature: t=<time>,v1=<HMAC-SHA256 of "<time>.<body>" with the endpoint's signing secret>
 export async function verifyStripe(payload, header, secret, now = Date.now() / 1000) {
   const parts = Object.create(null); const v1 = [];
@@ -133,7 +165,7 @@ export async function webhook(request, env, ctx) {
   const s = ev.data && ev.data.object;
   if ((ev.type === 'checkout.session.completed' || ev.type === 'checkout.session.async_payment_succeeded') && s) await apply(env, s, request, ctx);
   else if (ev.type === 'checkout.session.async_payment_failed') ctx.waitUntil(notify(env, 'コンビニ払いなどの支払いが期限切れ・失敗になりました（利用枠は追加していません）。'));
-  else if (ev.type === 'charge.refunded') ctx.waitUntil(notify(env, '返金がありました。必要なら該当ユーザーの利用枠を減らしてください（D1 の purchases で Checkout Session を確認）。'));
+  else if (ev.type === 'charge.refunded') ctx.waitUntil(notify(env, '返金がありました。アプリの「返金する」からの返金なら、利用枠は減らし済みです。Stripe の管理画面から返金した場合は、該当ユーザーの利用枠を減らし、D1 の purchases.refunded を 1 にしてください。'));
   return new Response('ok');
 }
 

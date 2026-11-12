@@ -685,8 +685,6 @@ fl-header{white-space:nowrap}   /* inherited into the kit's header (its shadow D
 @media (max-width:980px){.side{position:static}}
 /* a button asking to be pressed again carries a sentence: it wraps instead of widening the page */
 .btn[data-confirm="1"]{white-space:normal;line-height:1.45;text-align:center}
-.formcopy{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:8px 0 2px}
-.formcopy .hint{flex:1 1 100%}
 .foot-lang{display:flex;gap:6px;justify-content:center;margin:0 0 8px;font-size:12.5px}
 .foot-lang a{color:var(--ink2);text-decoration:none}
 .foot-lang a[aria-current]{color:var(--ink);font-weight:600}
@@ -748,3 +746,29 @@ fl-header{white-space:nowrap}   /* inherited into the kit's header (its shadow D
 .lp-kinds>span{color:var(--ink2);font-size:12.5px}
 .buy-terms{margin:8px 0 6px}
 #copyBox{width:100%;font-size:14px}
+.refunds{margin:4px 0 8px;font-size:13px}
+.refunds>div{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:8px 10px;border:1px solid var(--line2);border-radius:10px;margin:4px 0}
+.conds{margin:0 0 12px;padding:10px 14px;border:1px solid var(--line2);border-radius:12px;font-size:13px}
+.conds.bad{border-color:#d9a08b;background:#fff8f5}
+.conds>.tiny{display:block;margin:2px 0 6px;color:#9a3b1c}
+.conds .req{margin-top:6px}
+.req .m.x{background:#fbe3dc;color:#9a3b1c}
+.formcopy{margin:10px 0 4px;font-size:13px}
+.formcopy>summary{cursor:pointer;font-weight:600}
+.fc-row{display:flex;flex-wrap:wrap;gap:6px}
+.card.general{border-style:dashed}
+.gtitle{font-size:15px}
+.chead .anon{display:inline-flex;gap:4px;align-items:center;font-size:12.5px;color:var(--ink2);white-space:nowrap;margin:0}
+.chead .anon input{width:auto;margin:0}
+@media (max-width:600px){
+  .prices{gap:8px}
+  .pc{display:grid;grid-template-columns:1fr auto;align-items:center;padding:12px 14px;gap:0 10px}
+  .pc>span{grid-column:1}.pc>b{grid-column:2;grid-row:1 / span 2;font-size:20px}
+  .pc>small{grid-column:1}.pc small.plus{grid-column:1 / -1;margin-top:2px}
+  .pc .badge{position:absolute;top:-9px;right:12px}
+  .pc-for{display:block}
+}
+.rubyopt{display:inline-flex;gap:6px;align-items:center;font-size:12.5px;color:var(--ink2);margin:4px 0}
+.rubyopt input{width:auto;margin:0}
+.easytx{line-height:2.1}
+.easytx rt{font-size:.6em;color:var(--ink2)}

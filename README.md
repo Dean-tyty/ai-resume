@@ -15,7 +15,7 @@
 | AI | Anthropic Claude API（提示词只在服务器上） | `worker/ai.js`、`worker/prompts.js` |
 | 支付 | Stripe Checkout + Webhook | `worker/billing.js` |
 | 通知 | 官网同一个 Lark 机器人（只发购买和异常） | `worker/notify.js` |
-| 统计 | 官网同一个 Analytics Engine（`flatland_events`）。blob3 = 页面语言（ja/en/zh），blob4 = 路径，blob5 = 首次来访的来源（utm_source 或来源网站的域名，空 = 直接访问）；账号记下首次来源和语言（`users.src`、`users.lang`），购买事件用它 | `worker/stats.js` |
+| 统计 | 官网同一个 Analytics Engine（`flatland_events`）。blob3 = 页面语言（ja/en/zh），blob4 = 路径，blob5 = 首次来访的来源（utm_source 或来源网站的域名，空 = 直接访问），blob6 = 国家，blob7 = 定价实验的分组（空 = 实验关闭，a / b）；账号记下首次来源、语言和分组（`users.src`、`users.lang`、`users.variant`），购买事件用它 | `worker/stats.js` |
 | 外观 | 官网品牌套件 v1（`<fl-header>`、`<fl-footer>`），加载失败时显示页面自带的页眉页脚 | `public/index.html` |
 | 多语言 | `/en/`、`/zh/` 两个页面由日文页面生成；之后 app 画出的日文界面文字由 `public/i18n.js` 按词典替换 | `i18n/`、`tools/make-lang-pages.mjs` |
 
@@ -30,8 +30,10 @@
 - 页面上的「サンプル求人で試す」：用示例求人分析和生成都不扣枠（服务器按求人票内容判断，`worker/mock.json` 的 `sampleJobHash`）。
 - 1 社分只能用于一家公司：第一次成功时记住公司名，之后同一个应募先换成别的公司会被拒绝（去掉「株式会社」、括号、空格后比较，一方包含另一方就算同一家）。
 - 新账号送 1 社分（同一个邮箱只送一次：删除账号再注册不会再送；保存的是邮箱的不可逆哈希）。注册时读不到邮箱的账号先不送，等之后能读到邮箱时再判断。
-- 价格：5 社 2,480 円（推荐，`PACKS` 里的 `rec`）、10 社 3,980 円。株式会社フラットランド是消费税免税事业者：页面上不写「税込」，写「表示価格がお支払いの総額です」，不发适格请求书（インボイス）。将来登记为适格请求书发行事业者时，这些文字和条款要一起改。
-- 不退款（条款草稿第 4 条）：购买后不能取消、退款，用掉的枠也不退（法律规定的情况和本公司原因导致不能使用的除外）。用户在扣枠前可以先在页面上看职务经历书，扣枠前会弹出确认。改价格时，`worker/config.js` 的 `PACKS` 和 Stripe 的 Price 要一起改：支付金额和 `PACKS` 不一致时不加枠，并发 Lark 通知。
+- 价格：1 社 980 円、5 社 2,480 円（推荐，`PACKS` 里的 `rec`）、10 社 3,980 円（20 社包已取消：模拟中几乎没人选，利润也最薄）。株式会社フラットランド是消费税免税事业者：页面上不写「税込」，写「表示価格がお支払いの総額です」，不发适格请求书（インボイス）。将来登记为适格请求书发行事业者时，这些文字和条款要一起改。
+- 退款（条款草稿第 4 条第 6 项）：购买后 7 天内、且购买后一次利用枠都没用过（`users.last_use` 早于购买时间，且剩余枠还够扣），用户可以在购买画面点「返金する」自行全额退款（`POST /api/refund`：先扣枠，再调 Stripe 退款；Stripe 拒绝时把枠加回去，并发 Lark 通知手动处理）。其他情况不退款。注意（推断，需专业确认）：未使用余额超过 1,000 万日元、成为資金決済法上的前払式支払手段発行者后，原则上禁止退款（払戻し），届时要重新评估这条。用户在扣枠前可以先在页面上看职务经历书，扣枠前会弹出确认。改价格时，`worker/config.js` 的 `PACKS` 和 Stripe 的 Price 要一起改：支付金额和 `PACKS` 不一致时不加枠，并发 Lark 通知。
+- 定价实验（变量 `AB_DOCS_FREE`，0–100，默认 0 = 关闭）：这个比例的新账号分到 b 组，职务经历书的保存、复制不用利用枠，利用枠只用于志望動機・面接準備・履歴書の志望動機・英文レジュメ・公司调查；其余为 a 组（现行规则）。分组记在 `users.variant`，`/api/me` 返回，统计 blob7 区分。看 14 天内的购买率再决定是否全面切换（`AB_DOCS_FREE=100`）。
+- 支付方式：Checkout 不指定支付方式，Stripe 后台打开的方式都会显示（Apple Pay・Google Pay、コンビニ払い、PayPay 需要在后台开通，PayPay 要审核）。开通后在变量 `PAY_METHODS` 里写上（如 `card,wallet,paypay,konbini`），购买画面会显示这些名字。
 - 成本保护（`worker/config.js` 的 `LIMITS`、变量 `AI_DAILY_LIMIT`）：每人每天 AI 150 次、整理经历 15 次、分析 40 次、每个应募先每天 40 次、每个应募先累计 150 次；全站每天 3000 次（到 80% 和 100% 时 Lark 通知）。
 
 ### 只给购买过的用户（成本控制）
@@ -133,7 +135,7 @@ E2E 需要官网的品牌套件：默认读取官网仓库本机构建的 `dist/
 
 1. D1：「存储和数据库」→「D1」→「创建」，名字 `resume`。把 Database ID 填进 `wrangler.jsonc` 的 `database_id`。然后建表：
    `npx wrangler d1 execute resume --remote --file=schema.sql`
-   （已经建过表的数据库，再执行一次：`npx wrangler d1 execute resume --remote --command "ALTER TABLE slots ADD COLUMN research INTEGER NOT NULL DEFAULT 0"`；2026-11-02 之前建的库，还要执行 `schema.sql` 开头注释里的 3 条 ALTER：`slots.unlocked`、`users.src`、`users.lang`）
+   （已经建过表的数据库，再执行一次：`npx wrangler d1 execute resume --remote --command "ALTER TABLE slots ADD COLUMN research INTEGER NOT NULL DEFAULT 0"`；2026-11-02 之前建的库，还要执行 `schema.sql` 开头注释里的 3 条 ALTER：`slots.unlocked`、`users.src`、`users.lang`；2026-11-13 之前建的库，再执行 3 条：`users.last_use`、`users.variant`、`purchases.refunded`）
 2. Worker：「Workers 和 Pages」→「创建」→「导入 Git 存储库」→ 选上面的仓库。部署命令 `npx wrangler deploy`。
 3. 子域名：Worker →「设置」→「域和路由」→「添加」→「自定义域」→ `resume.flatland.co.jp`。
 4. 「变量和机密」里加下面的机密（类型选「密钥」）。
@@ -145,7 +147,7 @@ E2E 需要官网的品牌套件：默认读取官网仓库本机构建的 `dist/
 | `CLERK_SECRET_KEY` | Clerk Dashboard → API Keys（`sk_live_…`） |
 | `STRIPE_SECRET_KEY` | Stripe → 开发者 → API 密钥（建议用只开放 Checkout Sessions 读写的受限密钥） |
 | `STRIPE_WEBHOOK_SECRET` | 下面 Stripe 第 3 步得到的 `whsec_…` |
-| `STRIPE_PRICE_P1` / `STRIPE_PRICE_P5` / `STRIPE_PRICE_P10` / `STRIPE_PRICE_P20` | 下面 Stripe 第 2 步得到的 `price_…`（1社 980 円、5社 2,480 円、10社 3,980 円、20社 6,980 円）。没设的档位不会显示在页面上 |
+| `STRIPE_PRICE_P1` / `STRIPE_PRICE_P5` / `STRIPE_PRICE_P10` | 下面 Stripe 第 2 步得到的 `price_…`（1社 980 円、5社 2,480 円、10社 3,980 円）。没设的档位不会显示在页面上 |
 | `LARK_WEBHOOK` / `LARK_WEBHOOK_SECRET` | 和官网 Worker 相同 |
 | `HASH_SALT` | 随便一串长的随机字符（以后不要改） |
 
@@ -160,10 +162,10 @@ E2E 需要官网的品牌套件：默认读取官网仓库本机构建的 `dist/
 ### 4. Stripe
 
 1. 同一个 Stripe 账号，新建 Product「職務経歴書AI」。
-2. 建四个一次性 Price：1社分 980 JPY、5社パック 2,480 JPY、10社パック 3,980 JPY、20社パック 6,980 JPY（标价即支付总额；免税事业者不开 Stripe Tax）。只想先卖其中几档时，只设那几档的 `STRIPE_PRICE_…`，页面只显示设了的档位。
+2. 建三个一次性 Price：1社分 980 JPY、5社パック 2,480 JPY、10社パック 3,980 JPY（标价即支付总额；免税事业者不开 Stripe Tax）。只想先卖其中几档时，只设那几档的 `STRIPE_PRICE_…`，页面只显示设了的档位。
 3. Webhook：端点 `https://resume.flatland.co.jp/api/stripe`，事件选 `checkout.session.completed`、`checkout.session.async_payment_succeeded`、`checkout.session.async_payment_failed`、`charge.refunded`。
 4. 想要可报销的发票（インボイス）：取得登录号码后填进 Stripe，并在 Worker 变量里加 `STRIPE_INVOICE=1`（Stripe 对发票另收费）。
-5. 退款：在 Stripe 后台操作后，Lark 会收到通知；对应用户的利用枠需要手动减（D1 控制台：`UPDATE users SET credits = credits - 5 WHERE id = '…'`，用户 ID 在 `purchases` 表里按 Checkout Session 查）。
+5. 退款：用户在页面上自助退款时，枠已自动扣掉、`purchases.refunded = 1`。在 Stripe 后台手动退款时，Lark 会收到通知，对应用户的利用枠需要手动减（D1 控制台：`UPDATE users SET credits = credits - 5 WHERE id = '…'`，再把 `purchases.refunded` 设为 1；用户 ID 在 `purchases` 表里按 Checkout Session 查）。受限密钥需要再开放 Refunds 的写权限。
 
 ### 5. 官网登记
 

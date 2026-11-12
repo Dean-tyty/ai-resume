@@ -5,6 +5,10 @@
 --   ALTER TABLE slots ADD COLUMN unlocked INTEGER NOT NULL DEFAULT 1;
 --   ALTER TABLE users ADD COLUMN src TEXT NOT NULL DEFAULT '';
 --   ALTER TABLE users ADD COLUMN lang TEXT NOT NULL DEFAULT '';
+-- A database made before 2026-11-13 (refunds, the pricing test), run once:
+--   ALTER TABLE users ADD COLUMN last_use INTEGER NOT NULL DEFAULT 0;
+--   ALTER TABLE users ADD COLUMN variant TEXT NOT NULL DEFAULT '';
+--   ALTER TABLE purchases ADD COLUMN refunded INTEGER NOT NULL DEFAULT 0;
 CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY,                -- Clerk user id (sub)
   email TEXT NOT NULL DEFAULT '',     -- for the Stripe checkout form; cleared when the data expires
@@ -14,6 +18,8 @@ CREATE TABLE IF NOT EXISTS users (
   free_pending INTEGER NOT NULL DEFAULT 0, -- 1: the email could not be read at sign-up; the free credit is decided later
   src TEXT NOT NULL DEFAULT '',       -- where the first visit came from (utm_source or the referring site's host), for the weekly report
   lang TEXT NOT NULL DEFAULT '',      -- the page the account was made on: ja / en / zh
+  last_use INTEGER NOT NULL DEFAULT 0, -- when a credit was last used (a purchase made after it can be refunded)
+  variant TEXT NOT NULL DEFAULT '',   -- the pricing test: '' (off), 'a', 'b' (documents free; config.js AB)
   created_at INTEGER NOT NULL,
   seen_at INTEGER NOT NULL
 );
@@ -42,6 +48,7 @@ CREATE TABLE IF NOT EXISTS purchases (-- kept when an account is deleted (accoun
   credits INTEGER NOT NULL,
   amount INTEGER NOT NULL,            -- yen, tax included
   credited INTEGER NOT NULL DEFAULT 0,
+  refunded INTEGER NOT NULL DEFAULT 0, -- 1: refunded (billing.js refund); 2: being refunded
   created_at INTEGER NOT NULL
 );
 CREATE TABLE IF NOT EXISTS freebies ( -- addresses that have had the free 応募先 (a one-way hash, not the address)

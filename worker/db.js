@@ -50,11 +50,21 @@ export async function account(env, auth, { create = true } = {}) {
     else { credits = 0; pending = 1; }
   }
   const m = auth.meta || {};
-  await env.DB.prepare('INSERT OR IGNORE INTO users (id, email, credits, free_pending, src, lang, created_at, seen_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)').bind(auth.id, email, credits, pending, m.src || '', m.lang || '', now, now).run();
+  await env.DB.prepare('INSERT OR IGNORE INTO users (id, email, credits, free_pending, src, lang, variant, created_at, seen_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)').bind(auth.id, email, credits, pending, m.src || '', m.lang || '', variantFor(env, auth), now, now).run();
   // an address that has had the free 応募先 before: no free previews either
   if (!credits && !pending && !auth.dev) await noFreePreviews(env, auth.id);
   u = await env.DB.prepare('SELECT * FROM users WHERE id = ?').bind(auth.id).first();
   return { user: u, created: true };
+}
+
+// the pricing test (config.js AB): new accounts get 'b' (documents free, the credit is for 志望動機・面接準備 and the
+// rest) at the rate set in AB_DOCS_FREE (0–100), the others 'a'. '' when the test is off. Local test logins whose
+// name starts with "vb_" (id dev_vb_…) are always 'b'.
+export function variantFor(env, auth) {
+  if (auth.dev && /^dev_vb_/.test(auth.id)) return 'b';
+  const pct = Math.max(0, Math.min(100, Number(env.AB_DOCS_FREE) || 0));
+  if (!pct) return '';
+  return crypto.getRandomValues(new Uint32Array(1))[0] % 100 < pct ? 'b' : 'a';
 }
 
 const noFreePreviews = (env, id) => env.DB.prepare(`INSERT INTO usage (user_id, day, kind, n) VALUES (?, 'life', 'previews', ?)
@@ -62,7 +72,7 @@ const noFreePreviews = (env, id) => env.DB.prepare(`INSERT INTO usage (user_id, 
 
 // has bought credits at least once (the features that cost web searches are for them)
 export async function hasPaid(env, id) {
-  return !!(await env.DB.prepare('SELECT 1 AS x FROM purchases WHERE user_id = ? AND credited = 1 LIMIT 1').bind(id).first());
+  return !!(await env.DB.prepare('SELECT 1 AS x FROM purchases WHERE user_id = ? AND credited = 1 AND refunded = 0 LIMIT 1').bind(id).first());
 }
 // one more company research for a 応募先 that holds a credit; false when it has had max already
 export async function takeResearch(env, id, cid, max) {
@@ -127,8 +137,8 @@ async function creditSlot(env, id, cid) {
     env.DB.prepare(`INSERT INTO slots (user_id, company_id, claim, unlocked, n, busy, label, created_at)
       SELECT ?1, ?2, ?3, 1, 0, 1, '', ?4 WHERE (SELECT credits FROM users WHERE id = ?1) > 0
       AND NOT EXISTS (SELECT 1 FROM slots WHERE user_id = ?1 AND company_id = ?2)`).bind(id, cid, claim, Date.now()),
-    env.DB.prepare(`UPDATE users SET credits = credits - 1 WHERE id = ?1
-      AND EXISTS (SELECT 1 FROM slots WHERE user_id = ?1 AND company_id = ?2 AND claim = ?3)`).bind(id, cid, claim),
+    env.DB.prepare(`UPDATE users SET credits = credits - 1, last_use = ?4 WHERE id = ?1
+      AND EXISTS (SELECT 1 FROM slots WHERE user_id = ?1 AND company_id = ?2 AND claim = ?3)`).bind(id, cid, claim, Date.now()),
   ]);
   const s = await env.DB.prepare('SELECT claim FROM slots WHERE user_id = ? AND company_id = ?').bind(id, cid).first();
   if (!s) return { state: 'none' };
@@ -151,8 +161,8 @@ export async function unlockSlot(env, id, cid) {
   await env.DB.batch([
     env.DB.prepare(`UPDATE slots SET unlocked = 1, claim = ?3 WHERE user_id = ?1 AND company_id = ?2 AND unlocked = 0
       AND (SELECT credits FROM users WHERE id = ?1) > 0`).bind(id, cid, t),
-    env.DB.prepare(`UPDATE users SET credits = credits - 1 WHERE id = ?1
-      AND EXISTS (SELECT 1 FROM slots WHERE user_id = ?1 AND company_id = ?2 AND claim = ?3)`).bind(id, cid, t),
+    env.DB.prepare(`UPDATE users SET credits = credits - 1, last_use = ?4 WHERE id = ?1
+      AND EXISTS (SELECT 1 FROM slots WHERE user_id = ?1 AND company_id = ?2 AND claim = ?3)`).bind(id, cid, t, Date.now()),
   ]);
   const a = await env.DB.prepare('SELECT unlocked, claim FROM slots WHERE user_id = ? AND company_id = ?').bind(id, cid).first();
   return a && a.unlocked ? { ok: true, used: a.claim === t } : { ok: false };
@@ -233,8 +243,42 @@ export async function deleteUser(env, id) {
 
 // what was bought in the last `days` days: credits and yen (an upgrade's row holds what it added and what it cost)
 export async function recentPurchases(env, id, days) {
-  const r = await env.DB.prepare('SELECT COALESCE(SUM(credits), 0) AS credits, COALESCE(SUM(amount), 0) AS amount FROM purchases WHERE user_id = ? AND credited = 1 AND created_at > ?').bind(id, Date.now() - days * 864e5).first();
+  const r = await env.DB.prepare('SELECT COALESCE(SUM(credits), 0) AS credits, COALESCE(SUM(amount), 0) AS amount FROM purchases WHERE user_id = ? AND credited = 1 AND refunded = 0 AND created_at > ?').bind(id, Date.now() - days * 864e5).first();
   return { credits: (r && r.credits) || 0, amount: (r && r.amount) || 0 };
+}
+
+// purchases that can still be refunded: within REFUND_DAYS, not refunded, no credit used since, and the credits
+// still on the account (billing.js refund)
+export async function refundable(env, id, days) {
+  const u = await env.DB.prepare('SELECT credits, last_use FROM users WHERE id = ?').bind(id).first();
+  if (!u) return [];
+  const r = await env.DB.prepare(`SELECT session, pack, credits, amount, created_at FROM purchases WHERE user_id = ? AND credited = 1 AND refunded = 0
+    AND created_at > ? AND created_at > ? ORDER BY created_at DESC`).bind(id, Date.now() - days * 864e5, u.last_use || 0).all();
+  // newest first: each must still be covered by the credits left after the newer ones
+  let left = u.credits; const out = [];
+  for (const p of r.results || []) { if (p.credits > left) break; left -= p.credits; out.push(p); }
+  return out;
+}
+// take a purchase's credits back for its refund: { ok } (refunded = 2 while the refund is being made)
+export async function takeBack(env, id, session, days) {
+  const ok = (await refundable(env, id, days)).some((p) => p.session === session);
+  if (!ok) return { ok: false };
+  const p = await env.DB.prepare('SELECT credits, created_at FROM purchases WHERE session = ? AND user_id = ?').bind(session, id).first();
+  const res = await env.DB.batch([
+    env.DB.prepare('UPDATE purchases SET refunded = 2 WHERE session = ? AND user_id = ? AND refunded = 0').bind(session, id),
+    env.DB.prepare(`UPDATE users SET credits = credits - ?1 WHERE id = ?2 AND credits >= ?1 AND last_use < ?3
+      AND EXISTS (SELECT 1 FROM purchases WHERE session = ?4 AND refunded = 2)`).bind(p.credits, id, p.created_at, session),
+  ]);
+  if (!res[1].meta.changes) { await env.DB.prepare('UPDATE purchases SET refunded = 0 WHERE session = ? AND refunded = 2').bind(session).run(); return { ok: false }; }
+  return { ok: true, credits: p.credits };
+}
+// the refund was made (done) or could not be made (the credits go back)
+export async function refundDone(env, id, session, done, n) {
+  if (done) await env.DB.prepare('UPDATE purchases SET refunded = 1 WHERE session = ? AND refunded = 2').bind(session).run();
+  else await env.DB.batch([
+    env.DB.prepare('UPDATE purchases SET refunded = 0 WHERE session = ? AND refunded = 2').bind(session),
+    env.DB.prepare('UPDATE users SET credits = credits + ? WHERE id = ?').bind(n, id),
+  ]);
 }
 
 // add a paid pack once per Checkout Session (the webhook and the return page may both report it)

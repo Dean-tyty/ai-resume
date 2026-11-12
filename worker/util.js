@@ -56,6 +56,8 @@ export const BOT = /bot|crawl|spider|slurp|headless|lighthouse|preview|monitor/i
 
 // the same company? Names compared without legal forms, brackets, spaces and case; one may contain the other
 // (「サンプルクラウド」 and 「株式会社サンプルクラウド（架空）」 match). Unknown on either side counts as the same.
-export const normCo = (s) => String(s || '').normalize('NFKC').toLowerCase()
+// A posting whose company is not named yet (社名非公開, through a headhunter) counts as unknown, so the credit
+// follows it when the name comes out.
+export const normCo = (s) => /^社名非公開/.test(String(s || '').trim()) ? '' : String(s || '').normalize('NFKC').toLowerCase()
   .replace(/[(（][^)）]*[)）]/g, '').replace(/株式会社|有限会社|合同会社|一般社団法人|㈱|inc\b\.?|co\.,?|ltd\.?|corporation|corp\.?|[\s・,.、。\-]/g, '');
 export function sameCompany(a, b) { a = normCo(a); b = normCo(b); return !a || !b || a.includes(b) || b.includes(a); }

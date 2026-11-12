@@ -1080,7 +1080,7 @@ window.DEMO_SET = {
         "最后用工作之外学习Go和AWS收尾"
        ],
        "answer": "王磊と申します。中国の大学で情報系を学んだ後、2018年に来日し、2020年に独立系SIerのサンプルソリューションズに新卒で入社しました。6年余り、物流と金融の業務システムをJavaで開発し、詳細設計から運用・保守までを担当してきました。2023年からは倉庫管理システムのリーダーとして、メンバー3名と夜間バッチの性能改善やテストの自動化に取り組んでいます。業務外ではGoとAWSで個人開発をしています。本日はよろしくお願いいたします。",
-       "answer_easy": "王磊です。中国の大学で、情報系を勉強しました。2018年に日本に来て、2020年からSIerで働いています。物流と金融のシステムを、Javaで作ってきました。2023年からはリーダーです。3人のメンバーと、バッチを速くしたり、テストを自動にしたりしました。今はGoも勉強しています。",
+       "answer_easy": "王磊《わんれい》です。中国《ちゅうごく》の大学《だいがく》で、情報系《じょうほうけい》を勉強《べんきょう》しました。2018年《ねん》に日本《にほん》に来《き》て、2020年《ねん》からSIerで働《はたら》いています。物流《ぶつりゅう》と金融《きんゆう》のシステムを、Javaで作《つく》ってきました。2023年《ねん》からはリーダーです。3人《にん》のメンバーと、バッチを速《はや》くしたり、テストを自動《じどう》にしたりしました。今《いま》はGoも勉強《べんきょう》しています。",
        "answer_tr": "我叫王磊。在中国的大学学习计算机专业后，2018年来到日本，2020年作为应届毕业生加入独立的系统集成商（SIer）サンプルソリューションズ。6年多来，我一直用Java开发物流和金融行业的业务系统，负责从详细设计到运维的工作。2023年起担任仓库管理系统的组长，和3名成员一起优化夜间批处理的性能、推进测试自动化。工作之余，我在用Go和AWS做个人开发。今天请多关照。"
       },
       {
@@ -1093,7 +1093,7 @@ window.DEMO_SET = {
         "希望看着用户的反应持续改进，用上物流知识和Go"
        ],
        "answer": "受託開発では、仕様が決まった後の詳細設計からの担当が中心で、リリース後に使う方の反応を見ながら改善を続ける機会は多くありませんでした。倉庫管理システムでは、夜間バッチの遅れが朝の倉庫の作業に響いていたのを直し、システムの改善が現場の仕事に直結することを実感しました。自社サービスで物流の課題に長く向き合い、Goを使って設計から運用までを担いたいと考え、転職を決めました。",
-       "answer_easy": "今の仕事は受託開発です。仕様が決まってから、開発に入ることが多いです。使う人の反応を見て、改善を続けることは、あまりできません。倉庫のシステムで、遅いバッチを直しました。そのとき、システムが現場の仕事を変えると感じました。自社のサービスで、物流の問題に長く取り組みたいです。",
+       "answer_easy": "今《いま》の仕事《しごと》は受託開発《じゅたくかいはつ》です。仕様《しよう》が決《き》まってから、開発《かいはつ》に入《はい》ることが多《おお》いです。使《つか》う人《ひと》の反応《はんのう》を見《み》て、改善《かいぜん》を続《つづ》けることは、あまりできません。倉庫《そうこ》のシステムで、遅《おそ》いバッチを直《なお》しました。そのとき、システムが現場《げんば》の仕事《しごと》を変《か》えると感《かん》じました。自社《じしゃ》のサービスで、物流《ぶつりゅう》の問題《もんだい》に長《なが》く取《と》り組《く》みたいです。",
        "answer_tr": "在外包开发中，我主要是在需求确定之后从详细设计开始参与，很少有机会在上线后根据用户的反应持续改进。在仓库管理系统项目中，我解决了夜间批处理拖慢早上仓库作业的问题，切身体会到系统的改进会直接改变现场的工作。我希望在自研产品中长期面对物流的问题，用Go负责从设计到运维的全过程，因此决定换工作。"
       },
       {
@@ -1106,7 +1106,7 @@ window.DEMO_SET = {
         "懂物流业务，有助于理解现场人员说的话"
        ],
        "answer": "御社が中小の運送会社向けに、配車・運行管理のサービスを自社で開発されている点に惹かれました。私は6年余り物流の業務システムに関わり、倉庫管理システムでは出荷指示の夜間バッチを最長4時間から1.5時間に短縮しました。求人票にある配車計算や請求のバッチ処理の性能改善は、この経験をそのまま生かせる仕事だと考えています。物流の業務を知っていることも、現場の方のお話を理解するうえで役立つと思います。",
-       "answer_easy": "御社は、中小の運送会社のために、配車のサービスを自社で開発しています。そこに惹かれました。私は物流のシステムに長く関わってきました。倉庫のバッチを、4時間から1.5時間に短くしました。求人票にあるバッチの改善で、この経験を生かせると思います。",
+       "answer_easy": "御社《おんしゃ》は、中小《ちゅうしょう》の運送会社《うんそうがいしゃ》のために、配車《はいしゃ》のサービスを自社《じしゃ》で開発《かいはつ》しています。そこに惹《ひ》かれました。私《わたし》は物流《ぶつりゅう》のシステムに長《なが》く関《かか》わってきました。倉庫《そうこ》のバッチを、4時間《じかん》から1.5時間《じかん》に短《みじか》くしました。求人票《きゅうじんひょう》にあるバッチの改善《かいぜん》で、この経験《けいけん》を生《い》かせると思《おも》います。",
        "answer_tr": "贵公司为中小型运输公司自主开发车辆调度和运输管理服务，这一点很吸引我。我参与物流业务系统6年多，在仓库管理系统中把出货指示的夜间批处理从最长4小时缩短到了1.5小时。招聘启事中提到的车辆调度计算、账单等批处理的性能优化，正是能直接用上这段经验的工作。我了解物流业务，这对理解现场人员的需求也会有帮助。"
       },
       {
@@ -1119,7 +1119,7 @@ window.DEMO_SET = {
         "弥补方式：有和银行确认需求的经验，今后想从需求阶段参与"
        ],
        "answer": "強みは、遅さや障害の原因を、数字で確かめてから直すことです。夜間バッチでは実行計画で遅いSQLを特定し、障害はそのたびに振り返りを書いてチームで共有し、月約6件から約2件に減らしました。弱みは、受託開発のため要件定義や基本設計の経験が少ないことです。銀行の担当者との仕様確認を担当した経験を土台に、今後は要件を決める段階から関わっていきたいと考えています。",
-       "answer_easy": "強みは、原因を数字で確かめてから直すことです。障害が起きるたびに、振り返りを書いて、チームで共有しました。障害は、月に約6件から約2件に減りました。弱みは、要件定義や基本設計の経験が少ないことです。これからは、要件を決める段階から関わりたいです。",
+       "answer_easy": "強《つよ》みは、原因《げんいん》を数字《すうじ》で確《たし》かめてから直《なお》すことです。障害《しょうがい》が起《お》きるたびに、振《ふ》り返《かえ》りを書《か》いて、チームで共有《きょうゆう》しました。障害《しょうがい》は、月《つき》に約《やく》6件《けん》から約《やく》2件《けん》に減《へ》りました。弱《よわ》みは、要件定義《ようけんていぎ》や基本設計《きほんせっけい》の経験《けいけん》が少《すく》ないことです。これからは、要件《ようけん》を決《き》める段階《だんかい》から関《かか》わりたいです。",
        "answer_tr": "我的优势是先用数字确认性能慢或故障的原因，再动手解决。夜间批处理是用执行计划找出了慢SQL；故障则是每次都写复盘并在团队中共享，把故障从每月约6件降到了约2件。不足是因为做外包开发，需求定义和概要设计的经验较少。我负责过和银行人员确认需求的工作，希望以此为基础，今后从确定需求的阶段就参与进来。"
       },
       {
@@ -1132,7 +1132,7 @@ window.DEMO_SET = {
         "其他公司的情况如实说，不要断言“第一志愿”"
        ],
        "answer": "希望年収は600万円以上を考えておりますが、お任せいただく役割や責任の範囲に応じて、ご相談させていただければと思います。入社は2027年1月以降であれば可能です。他社の選考状況は【要記入：現在の選考状況（社数・段階）】です。その中でも、自社サービスで物流の課題に長く関われる点で、御社には強く惹かれております。",
-       "answer_easy": "年収は600万円以上を希望します。ただ、仕事の内容によって、ご相談させてください。入社は2027年1月から可能です。ほかの会社の選考は【要記入：現在の選考状況（社数・段階）】です。物流のサービスを自社で作っている点に、強く惹かれています。",
+       "answer_easy": "年収《ねんしゅう》は600万円以上《まんえんいじょう》を希望《きぼう》します。ただ、仕事《しごと》の内容《ないよう》によって、ご相談《そうだん》させてください。入社《にゅうしゃ》は2027年《ねん》1月《がつ》から可能《かのう》です。ほかの会社《かいしゃ》の選考《せんこう》は【要記入《ようきにゅう》：現在《げんざい》の選考状況《せんこうじょうきょう》（社数《しゃすう》・段階《だんかい》）】です。物流《ぶつりゅう》のサービスを自社《じしゃ》で作《つく》っている点《てん》に、強《つよ》く惹《ひ》かれています。",
        "answer_tr": "期望年薪在600万日元以上，但希望能根据负责的工作和职责范围与贵公司商量。2027年1月以后可以入职。在其他公司的应聘进展是【要記入：目前在其他公司的应聘进展（几家、到哪一轮）】。其中，贵公司能让我通过自研产品长期参与解决物流问题，这一点特别吸引我。"
       },
       {
@@ -1145,7 +1145,7 @@ window.DEMO_SET = {
         "分工：方案由自己提出，和1名成员一起实现"
        ],
        "answer": "出荷指示の夜間バッチが最長4時間かかり、朝の倉庫の作業開始に間に合わないことがよくありました。まず実行計画を見て時間のかかっているSQLを特定し、索引を見直しました。そのうえでSpring Batchのパーティション機能を使って処理を並列にし、1.5時間に短縮しました。改善策は私が提案し、実装はメンバー1名と一緒に進めました。",
-       "answer_easy": "出荷のバッチが、長いときは4時間かかっていました。朝の作業に間に合わないことが、よくありました。まず、実行計画で遅いSQLを見つけて、索引を直しました。次に、処理を並列にしました。それで、1.5時間になりました。方法は私が提案して、メンバー1人と作りました。",
+       "answer_easy": "出荷《しゅっか》のバッチが、長《なが》いときは4時間《じかん》かかっていました。朝《あさ》の作業《さぎょう》に間《ま》に合《あ》わないことが、よくありました。まず、実行計画《じっこうけいかく》で遅《おそ》いSQLを見《み》つけて、索引《さくいん》を直《なお》しました。次《つぎ》に、処理《しょり》を並列《へいれつ》にしました。それで、1.5時間《じかん》になりました。方法《ほうほう》は私《わたし》が提案《ていあん》して、メンバー1人《ひとり》と作《つく》りました。",
        "answer_tr": "出货指示的夜间批处理最长要跑4小时，经常赶不上早上仓库开工。我先看执行计划，找出耗时长的SQL，调整了索引。然后用Spring Batch的分区功能把处理改成并行，缩短到了1.5小时。改进方案是我提出的，实现是我和1名成员一起完成的。"
       },
       {
@@ -1158,7 +1158,7 @@ window.DEMO_SET = {
         "SQL调优和测试自动化的经验，换了语言也用得上"
        ],
        "answer": "Goの実務経験はまだなく、業務外で約1年、個人開発で学んできました。GoとPostgreSQLで家計簿のWeb APIを作り、AWSのECS FargateとRDSで動かし、CIはGitHub Actionsで回しています。AWSの実務はCloudWatchでのログ調査までです。SQLのチューニングやテストの自動化は、言語が変わっても生かせると考えています。入社後は既存のコードを読みながら、小さな改修から担当させていただきたいです。",
-       "answer_easy": "Goは、仕事ではまだ使っていません。1年くらい、自分でWeb APIを作って勉強しています。AWSのECSとRDSで動かしています。仕事でのAWSは、ログを見る作業だけです。SQLやテストの自動化の経験は、Goでも使えると思います。最初は、小さな修正から始めたいです。",
+       "answer_easy": "Goは、仕事《しごと》ではまだ使《つか》っていません。1年《ねん》くらい、自分《じぶん》でWeb APIを作《つく》って勉強《べんきょう》しています。AWSのECSとRDSで動《うご》かしています。仕事《しごと》でのAWSは、ログを見《み》る作業《さぎょう》だけです。SQLやテストの自動化《じどうか》の経験《けいけん》は、Goでも使《つか》えると思《おも》います。最初《さいしょ》は、小《ちい》さな修正《しゅうせい》から始《はじ》めたいです。",
        "answer_tr": "我还没有Go的实际工作经验，是在工作之余通过个人开发学了大约1年。我用Go和PostgreSQL写了一个记账用的Web API，跑在AWS的ECS Fargate和RDS上，CI用GitHub Actions。工作中用到的AWS只限于用CloudWatch查日志。不过，SQL调优和测试自动化的经验，我认为换了语言也同样能用上。入职后，我希望一边阅读现有代码，一边从小的修改开始负责。"
       },
       {
@@ -1171,7 +1171,7 @@ window.DEMO_SET = {
         "如实说明敬语邮件发送前会再检查"
        ],
        "answer": "大学で情報系を学び、日本でソフトウェア開発の仕事をしたいと考えて、2018年に来日しました。日本語学校で学び、2019年に日本語能力試験のN2に合格しています。入社してからの業務はすべて日本語で、銀行の担当者との仕様確認や、物流会社のお客様との週1回の定例会議も日本語で対応してきました。敬語を使うメールは、今も送る前に何度か読み返すようにしています。",
-       "answer_easy": "大学で情報系を勉強して、日本で開発の仕事をしたいと思いました。2018年に日本に来て、2019年にN2に合格しました。今の仕事は全部日本語です。お客様との会議も、日本語でしています。敬語のメールは、送る前に何回も確認しています。",
+       "answer_easy": "大学《だいがく》で情報系《じょうほうけい》を勉強《べんきょう》して、日本《にほん》で開発《かいはつ》の仕事《しごと》をしたいと思《おも》いました。2018年《ねん》に日本《にほん》に来《き》て、2019年《ねん》にN2に合格《ごうかく》しました。今《いま》の仕事《しごと》は全部日本語《ぜんぶにほんご》です。お客様《きゃくさま》との会議《かいぎ》も、日本語《にほんご》でしています。敬語《けいご》のメールは、送《おく》る前《まえ》に何回《なんかい》も確認《かくにん》しています。",
        "answer_tr": "我在大学学的是计算机，想在日本从事软件开发工作，于2018年来到日本。在日语学校学习后，2019年通过了日语能力考试N2。入职以来，工作全部用日语进行，和银行人员确认需求、和物流公司客户每周1次的例会，也都是用日语完成的。用敬语写的邮件，我现在发送前仍会反复读几遍。"
       },
       {
@@ -1184,7 +1184,7 @@ window.DEMO_SET = {
         "面试前先看一下在留卡，确认到期日"
        ],
        "answer": "在留資格は「技術・人文知識・国際業務」で、在留期限は【要記入：在留期限（年月）】です。2018年に来日して8年になり、2020年からは日本の会社でシステムエンジニアとして働いてきました。今後もずっと日本で働いていくつもりです。御社でも、物流のサービスを長く育てていく仕事に、腰を据えて取り組みたいと考えております。",
-       "answer_easy": "在留資格は「技術・人文知識・国際業務」です。在留期限は【要記入：在留期限（年月）】です。2020年から、日本の会社でエンジニアとして働いています。これからも、日本で長く働くつもりです。御社でも、長く働きたいと思っています。",
+       "answer_easy": "在留資格《ざいりゅうしかく》は「技術《ぎじゅつ》・人文知識《じんぶんちしき》・国際業務《こくさいぎょうむ》」です。在留期限《ざいりゅうきげん》は【要記入《ようきにゅう》：在留期限《ざいりゅうきげん》（年月《ねんがつ》）】です。2020年《ねん》から、日本《にほん》の会社《かいしゃ》でエンジニアとして働《はたら》いています。これからも、日本《にほん》で長《なが》く働《はたら》くつもりです。御社《おんしゃ》でも、長《なが》く働《はたら》きたいと思《おも》っています。",
        "answer_tr": "我的在留资格是“技术・人文知识・国际业务”，在留到期日是【要記入：在留到期日（年月）】。我2018年来到日本，已经8年了，2020年起在日本的公司担任系统工程师。今后也打算一直在日本工作。在贵公司，我也希望踏踏实实地参与到长期培育物流服务的工作中。"
       }
      ],
@@ -1214,6 +1214,89 @@ window.DEMO_SET = {
       "why": "日本企业会确认你入职后能否独立用日语推进工作"
      }
     ],
+    "explain": {
+     "lang": "zh",
+     "overview": "这是一份按日本IT工程师惯例写的职务经历书：先是职务概要和技术技能表，再按项目（新的在前）列出每个项目的期间、角色、规模、负责的开发阶段和开发环境，最后是可发挥的经验、资格和自我PR。日本的招聘方会看你负责过哪些开发阶段、成果有没有具体数字，以及实务经验和个人开发是否分开写清楚。",
+     "sections": [
+      {
+       "title": "職務要約",
+       "ja": "独立系SIerのサンプルソリューションズ株式会社で6年余り、物流・金融業界向け業務システムの受託開発に携わっています。",
+       "tr": "在独立系SIer（系统集成商）サンプルソリューションズ株式会社，6年多来一直参与面向物流和金融行业的业务系统受托开发。",
+       "notes": [
+        "职务概要用「です・ます」体。开头一句先交代公司类型（「独立系SIer」：不隶属于硬件厂商或大企业集团的系统集成商）、年数（「6年余り」＝6年多）和领域（「受託開発」＝承接客户委托的系统开发），招聘方读这一句就能定位你的背景。",
+        "「携わっています」和「従事しています」一样，表示现在仍在做这项工作。后面几句再写本人的角色（「リーダーとしてメンバー3名をまとめています」）和主动提出的改进（「自ら提案して」），由整体到个人逐步聚焦。"
+       ]
+      },
+      {
+       "title": "職務経歴（倉庫管理システム）",
+       "ja": "遅いSQLを実行計画で特定し、索引見直しと並列化を提案・実装。出荷指示の夜間バッチを最長4時間から1.5時間に短縮",
+       "tr": "通过执行计划找出慢SQL，提出并实施了调整索引和并行化的方案。出货指示的夜间批处理从最长4小时缩短到1.5小时。",
+       "notes": [
+        "成果条目用体言止め，以名词结尾（「提案・実装」「短縮」），不用「です・ます」。「提案・実装」用中点把两个动作并列，说明方案是你提出的，也是你动手实现的。",
+        "“原因→做法→结果”的顺序，再加上前后对比的数字，正是招聘方想看的。「最長」（最长）让数字更准确：4小时是最慢的时候，不是平均值。"
+       ]
+      },
+      {
+       "title": "職務経歴（融資審査システム）",
+       "ja": "銀行側担当者との仕様確認（日本語で対応）",
+       "tr": "与银行方面的负责人确认需求规格（用日语沟通）",
+       "notes": [
+        "业务内容的条目和成果一样，用简短的名词结尾（体言止め）。这一条写的是职责，不是成果。",
+        "对母语不是日语的求职者来说，「日本語で対応」（用日语沟通）这个补充很有说服力：它说明你在实际工作中直接用日语和客户确认规格，比只写JLPT等级更能让招聘方放心。"
+       ]
+      },
+      {
+       "title": "職務経歴（配送管理システム）",
+       "ja": "一次対応の手順書を作り、新人も対応できる形に整備",
+       "tr": "编写了故障初步处理（一次対応）的操作手册，整理成新人也能照着处理的形式。",
+       "notes": [
+        "「一次対応」是IT行业的通用说法，指故障发生时的第一线处理（这里对应同一项目职责中的「夜間バッチ障害の一次対応」）。用行业通用词，招聘方一眼就能看懂。",
+        "这一条没有数字也没关系：没有数据时不要硬编。用「新人も対応できる形に」把效果写具体就够了。这是你在这家公司参与的第一个项目，作为成员也主动改进了团队的做法，招聘方会注意到这一点。"
+       ]
+      },
+      {
+       "title": "自己PR（遅い原因を確かめてから直す）",
+       "ja": "遅い箇所を数字で確かめてから直す進め方は、使う言語や基盤が変わっても生かせます。",
+       "tr": "先用数字确认慢在哪里再动手修改，这种做法即使使用的语言或基础设施变了，也同样能发挥作用。",
+       "notes": [
+        "自我PR用「です・ます」。这一项按招聘方熟悉的顺序写：当时的情况（夜间批处理赶不上仓库早上开工）、你的做法（执行计划→索引→并行化），最后用这一句说明为什么换了公司也能发挥。",
+        "「使う言語や基盤が変わっても」提前回答了招聘方的疑问：你的实务经验都是Java，这个强项是否离不开这一种技术。"
+       ]
+      },
+      {
+       "title": "自己PR（品質をチームの仕組みにする）",
+       "ja": "障害のたびに振り返りの文書を書いてチームで読み合わせ、繰り返し起きている原因をレビュー用のチェックリストにしました。",
+       "tr": "每次出故障后，我都写复盘文档并和团队一起通读确认，把反复出现的原因整理成评审用的检查清单。",
+       "notes": [
+        "「読み合わせ」指大家一起把文档从头到尾读一遍、边读边确认，是日本职场常见的做法。和「チェックリストにしました」放在一起，说明你把教训变成了全队都能用的机制，正好对应标题「品質をチームの仕組みにする」（让质量成为团队的机制）。",
+        "具体数字（故障从每月约6件降到约2件）已经写在职历栏里，自我PR重点写做法，不再重复罗列。"
+       ]
+      }
+     ],
+     "naturalness": [
+      {
+       "ja": "1回3日→半日に短縮",
+       "issue": "另外两条成果都用「AからBに」写变化，这一条却用了箭头，而且「1回3日」没说清是什么要花3天。写明是每次运行的所需时间，并统一成「から〜に」，读起来更清楚。",
+       "suggestion": "1回あたりの所要時間を3日から半日に短縮"
+      },
+      {
+       "ja": "Q&A表（約120件）で、",
+       "issue": "「Q&A表で」只说了“用Q&A表”，没写你用它做了什么。写明把规格的确认事项整理进Q&A表，本人的动作就清楚了，这正是招聘方在成果栏里要看的。",
+       "suggestion": "仕様の確認事項をQ&A表（約120件）に整理し、"
+      },
+      {
+       "ja": "振り返りをレビュー用チェックリストにして",
+       "issue": "严格来说，变成检查清单的不是复盘本身，而是复盘中找到的原因（自我PR里写的也是「繰り返し起きている原因をレビュー用のチェックリストにしました」）。这样写更准确。",
+       "suggestion": "振り返りで挙がった原因をレビュー用チェックリストにして"
+      }
+     ],
+     "conventions": [
+      "IT工程师的职务经历书通常按项目写：在公司信息（事业内容、员工人数、雇用形态）下面，按新的在前列出每个项目的期间、概要、角色、规模、负责的开发阶段（担当工程）和开发环境。招聘方会仔细看担当工程：你负责的阶段从「詳細設計」（详细设计）开始，只写实际负责过的阶段，面试时也照实说明。",
+      "职务概要和自我PR用「です・ます」；各项目下的业务内容和成果条目用体言止め。同一栏里不要混用两种文体。",
+      "技术技能表要像这份文件一样，把实务经验和个人开发分开写（Go：「独学。個人開発でWeb APIを設計・実装」；AWS：「実務はログ調査」）。日本的招聘方会区分「実務経験」（工作中的经验）和自学，夸大的部分在技术面试里很快就会露出来。日语也一样：N2加上「業務はすべて日本語」，比只写等级更有说服力。",
+      "书面语里称对方公司为「貴社」，面试时口头说「御社」。文末写「以上」表示结束。"
+     ]
+    },
     "label": "IT 工程师（用中文写经历）"
    },
    "en": {
@@ -1397,7 +1480,7 @@ window.DEMO_SET = {
         "Close with your Go and AWS study outside work"
        ],
        "answer": "王磊と申します。中国の大学で情報系を学んだ後、2018年に来日し、2020年に独立系SIerのサンプルソリューションズに新卒で入社しました。6年余り、物流と金融の業務システムをJavaで開発し、詳細設計から運用・保守までを担当してきました。2023年からは倉庫管理システムのリーダーとして、メンバー3名と夜間バッチの性能改善やテストの自動化に取り組んでいます。業務外ではGoとAWSで個人開発をしています。本日はよろしくお願いいたします。",
-       "answer_easy": "王磊です。中国の大学で、情報系を勉強しました。2018年に日本に来て、2020年からSIerで働いています。物流と金融のシステムを、Javaで作ってきました。2023年からはリーダーです。3人のメンバーと、バッチを速くしたり、テストを自動にしたりしました。今はGoも勉強しています。",
+       "answer_easy": "王磊《わんれい》です。中国《ちゅうごく》の大学《だいがく》で、情報系《じょうほうけい》を勉強《べんきょう》しました。2018年《ねん》に日本《にほん》に来《き》て、2020年《ねん》からSIerで働《はたら》いています。物流《ぶつりゅう》と金融《きんゆう》のシステムを、Javaで作《つく》ってきました。2023年《ねん》からはリーダーです。3人《にん》のメンバーと、バッチを速《はや》くしたり、テストを自動《じどう》にしたりしました。今《いま》はGoも勉強《べんきょう》しています。",
        "answer_tr": "My name is Wang Lei. After studying computer science at a university in China, I came to Japan in 2018 and joined Sample Solutions, an independent systems integrator, as a new graduate in 2020. For more than 6 years I have developed business systems for logistics and finance in Java, handling everything from detailed design to operations and maintenance. Since 2023 I have been the leader on a warehouse management system, working with 3 members on nightly batch performance and test automation. Outside work, I build personal projects with Go and AWS. Thank you for having me today."
       },
       {
@@ -1410,7 +1493,7 @@ window.DEMO_SET = {
         "You want to keep improving based on how users respond, and use your logistics knowledge and Go"
        ],
        "answer": "受託開発では、仕様が決まった後の詳細設計からの担当が中心で、リリース後に使う方の反応を見ながら改善を続ける機会は多くありませんでした。倉庫管理システムでは、夜間バッチの遅れが朝の倉庫の作業に響いていたのを直し、システムの改善が現場の仕事に直結することを実感しました。自社サービスで物流の課題に長く向き合い、Goを使って設計から運用までを担いたいと考え、転職を決めました。",
-       "answer_easy": "今の仕事は受託開発です。仕様が決まってから、開発に入ることが多いです。使う人の反応を見て、改善を続けることは、あまりできません。倉庫のシステムで、遅いバッチを直しました。そのとき、システムが現場の仕事を変えると感じました。自社のサービスで、物流の問題に長く取り組みたいです。",
+       "answer_easy": "今《いま》の仕事《しごと》は受託開発《じゅたくかいはつ》です。仕様《しよう》が決《き》まってから、開発《かいはつ》に入《はい》ることが多《おお》いです。使《つか》う人《ひと》の反応《はんのう》を見《み》て、改善《かいぜん》を続《つづ》けることは、あまりできません。倉庫《そうこ》のシステムで、遅《おそ》いバッチを直《なお》しました。そのとき、システムが現場《げんば》の仕事《しごと》を変《か》えると感《かん》じました。自社《じしゃ》のサービスで、物流《ぶつりゅう》の問題《もんだい》に長《なが》く取《と》り組《く》みたいです。",
        "answer_tr": "In contract development, I have mostly worked from detailed design onward, after the specifications were fixed, and had few chances to keep improving a system based on how users responded after release. On the warehouse management system, I fixed a nightly batch whose delays were holding up the warehouse's morning work, and saw first-hand that improving a system directly changes the work on the ground. I decided to change jobs because I want to work on logistics problems over the long term in an in-house product, and take on everything from design to operations using Go."
       },
       {
@@ -1423,7 +1506,7 @@ window.DEMO_SET = {
         "Knowing logistics helps you understand what people on the ground tell you"
        ],
        "answer": "御社が中小の運送会社向けに、配車・運行管理のサービスを自社で開発されている点に惹かれました。私は6年余り物流の業務システムに関わり、倉庫管理システムでは出荷指示の夜間バッチを最長4時間から1.5時間に短縮しました。求人票にある配車計算や請求のバッチ処理の性能改善は、この経験をそのまま生かせる仕事だと考えています。物流の業務を知っていることも、現場の方のお話を理解するうえで役立つと思います。",
-       "answer_easy": "御社は、中小の運送会社のために、配車のサービスを自社で開発しています。そこに惹かれました。私は物流のシステムに長く関わってきました。倉庫のバッチを、4時間から1.5時間に短くしました。求人票にあるバッチの改善で、この経験を生かせると思います。",
+       "answer_easy": "御社《おんしゃ》は、中小《ちゅうしょう》の運送会社《うんそうがいしゃ》のために、配車《はいしゃ》のサービスを自社《じしゃ》で開発《かいはつ》しています。そこに惹《ひ》かれました。私《わたし》は物流《ぶつりゅう》のシステムに長《なが》く関《かか》わってきました。倉庫《そうこ》のバッチを、4時間《じかん》から1.5時間《じかん》に短《みじか》くしました。求人票《きゅうじんひょう》にあるバッチの改善《かいぜん》で、この経験《けいけん》を生《い》かせると思《おも》います。",
        "answer_tr": "What drew me to your company is that you build your own dispatch and fleet management service for small and mid-sized trucking companies. I have worked on logistics business systems for more than 6 years, and on a warehouse management system I cut the nightly shipping-instruction batch from up to 4 hours to 1.5 hours. The performance work on batch processing such as dispatch calculations and billing that your posting mentions is work where I can use this experience directly. I think knowing how logistics works will also help me understand what people in the field tell me."
       },
       {
@@ -1436,7 +1519,7 @@ window.DEMO_SET = {
         "How you make up for it: confirming specifications with the bank; from now on, getting involved from the requirements stage"
        ],
        "answer": "強みは、遅さや障害の原因を、数字で確かめてから直すことです。夜間バッチでは実行計画で遅いSQLを特定し、障害はそのたびに振り返りを書いてチームで共有し、月約6件から約2件に減らしました。弱みは、受託開発のため要件定義や基本設計の経験が少ないことです。銀行の担当者との仕様確認を担当した経験を土台に、今後は要件を決める段階から関わっていきたいと考えています。",
-       "answer_easy": "強みは、原因を数字で確かめてから直すことです。障害が起きるたびに、振り返りを書いて、チームで共有しました。障害は、月に約6件から約2件に減りました。弱みは、要件定義や基本設計の経験が少ないことです。これからは、要件を決める段階から関わりたいです。",
+       "answer_easy": "強《つよ》みは、原因《げんいん》を数字《すうじ》で確《たし》かめてから直《なお》すことです。障害《しょうがい》が起《お》きるたびに、振《ふ》り返《かえ》りを書《か》いて、チームで共有《きょうゆう》しました。障害《しょうがい》は、月《つき》に約《やく》6件《けん》から約《やく》2件《けん》に減《へ》りました。弱《よわ》みは、要件定義《ようけんていぎ》や基本設計《きほんせっけい》の経験《けいけん》が少《すく》ないことです。これからは、要件《ようけん》を決《き》める段階《だんかい》から関《かか》わりたいです。",
        "answer_tr": "My strength is that I confirm the cause of slowness or failures with numbers before fixing them. For the nightly batch, I used the execution plan to find the slow SQL; for incidents, I wrote a review each time and shared it with the team, and we went from about 6 incidents a month to about 2. My weakness is that, because I work in contract development, I have little experience with requirements definition and basic design. Building on my experience confirming specifications with the bank's staff, I want to get involved from the stage where requirements are decided."
       },
       {
@@ -1449,7 +1532,7 @@ window.DEMO_SET = {
         "Be honest about other companies; do not claim it is your \"first choice\""
        ],
        "answer": "希望年収は600万円以上を考えておりますが、お任せいただく役割や責任の範囲に応じて、ご相談させていただければと思います。入社は2027年1月以降であれば可能です。他社の選考状況は【要記入：現在の選考状況（社数・段階）】です。その中でも、自社サービスで物流の課題に長く関われる点で、御社には強く惹かれております。",
-       "answer_easy": "年収は600万円以上を希望します。ただ、仕事の内容によって、ご相談させてください。入社は2027年1月から可能です。ほかの会社の選考は【要記入：現在の選考状況（社数・段階）】です。物流のサービスを自社で作っている点に、強く惹かれています。",
+       "answer_easy": "年収《ねんしゅう》は600万円以上《まんえんいじょう》を希望《きぼう》します。ただ、仕事《しごと》の内容《ないよう》によって、ご相談《そうだん》させてください。入社《にゅうしゃ》は2027年《ねん》1月《がつ》から可能《かのう》です。ほかの会社《かいしゃ》の選考《せんこう》は【要記入《ようきにゅう》：現在《げんざい》の選考状況《せんこうじょうきょう》（社数《しゃすう》・段階《だんかい》）】です。物流《ぶつりゅう》のサービスを自社《じしゃ》で作《つく》っている点《てん》に、強《つよ》く惹《ひ》かれています。",
        "answer_tr": "I am hoping for an annual salary of 6 million yen or more, but I would be glad to discuss it in light of the role and responsibilities you would give me. I can start in January 2027 or later. My status with other companies is 【要記入：where you are with other companies (how many, and at what stage)】. Among them, I am strongly drawn to your company because I could work on logistics problems over the long term through an in-house product."
       },
       {
@@ -1462,7 +1545,7 @@ window.DEMO_SET = {
         "Your role: you proposed it, and implemented it with 1 team member"
        ],
        "answer": "出荷指示の夜間バッチが最長4時間かかり、朝の倉庫の作業開始に間に合わないことがよくありました。まず実行計画を見て時間のかかっているSQLを特定し、索引を見直しました。そのうえでSpring Batchのパーティション機能を使って処理を並列にし、1.5時間に短縮しました。改善策は私が提案し、実装はメンバー1名と一緒に進めました。",
-       "answer_easy": "出荷のバッチが、長いときは4時間かかっていました。朝の作業に間に合わないことが、よくありました。まず、実行計画で遅いSQLを見つけて、索引を直しました。次に、処理を並列にしました。それで、1.5時間になりました。方法は私が提案して、メンバー1人と作りました。",
+       "answer_easy": "出荷《しゅっか》のバッチが、長《なが》いときは4時間《じかん》かかっていました。朝《あさ》の作業《さぎょう》に間《ま》に合《あ》わないことが、よくありました。まず、実行計画《じっこうけいかく》で遅《おそ》いSQLを見《み》つけて、索引《さくいん》を直《なお》しました。次《つぎ》に、処理《しょり》を並列《へいれつ》にしました。それで、1.5時間《じかん》になりました。方法《ほうほう》は私《わたし》が提案《ていあん》して、メンバー1人《ひとり》と作《つく》りました。",
        "answer_tr": "The nightly shipping-instruction batch took up to 4 hours and often did not finish before the warehouse started work in the morning. First I looked at the execution plan, found the SQL that was taking the time, and revised the indexes. Then I used Spring Batch's partitioning to run the processing in parallel, which brought it down to 1.5 hours. I proposed the fix and implemented it together with 1 team member."
       },
       {
@@ -1475,7 +1558,7 @@ window.DEMO_SET = {
         "Your SQL tuning and test automation experience carries over to a new language"
        ],
        "answer": "Goの実務経験はまだなく、業務外で約1年、個人開発で学んできました。GoとPostgreSQLで家計簿のWeb APIを作り、AWSのECS FargateとRDSで動かし、CIはGitHub Actionsで回しています。AWSの実務はCloudWatchでのログ調査までです。SQLのチューニングやテストの自動化は、言語が変わっても生かせると考えています。入社後は既存のコードを読みながら、小さな改修から担当させていただきたいです。",
-       "answer_easy": "Goは、仕事ではまだ使っていません。1年くらい、自分でWeb APIを作って勉強しています。AWSのECSとRDSで動かしています。仕事でのAWSは、ログを見る作業だけです。SQLやテストの自動化の経験は、Goでも使えると思います。最初は、小さな修正から始めたいです。",
+       "answer_easy": "Goは、仕事《しごと》ではまだ使《つか》っていません。1年《ねん》くらい、自分《じぶん》でWeb APIを作《つく》って勉強《べんきょう》しています。AWSのECSとRDSで動《うご》かしています。仕事《しごと》でのAWSは、ログを見《み》る作業《さぎょう》だけです。SQLやテストの自動化《じどうか》の経験《けいけん》は、Goでも使《つか》えると思《おも》います。最初《さいしょ》は、小《ちい》さな修正《しゅうせい》から始《はじ》めたいです。",
        "answer_tr": "I have no professional experience with Go yet; I have been learning it for about a year through a personal project outside work. I built a household-budget Web API with Go and PostgreSQL, run it on AWS ECS Fargate and RDS, and use GitHub Actions for CI. At work, my use of AWS has gone only as far as investigating logs in CloudWatch. That said, I believe my experience with SQL tuning and test automation carries over even when the language changes. After joining, I would like to read the existing code and start with small changes."
       },
       {
@@ -1488,7 +1571,7 @@ window.DEMO_SET = {
         "Say honestly that you re-read formal (keigo) emails before sending"
        ],
        "answer": "大学で情報系を学び、日本でソフトウェア開発の仕事をしたいと考えて、2018年に来日しました。日本語学校で学び、2019年に日本語能力試験のN2に合格しています。入社してからの業務はすべて日本語で、銀行の担当者との仕様確認や、物流会社のお客様との週1回の定例会議も日本語で対応してきました。敬語を使うメールは、今も送る前に何度か読み返すようにしています。",
-       "answer_easy": "大学で情報系を勉強して、日本で開発の仕事をしたいと思いました。2018年に日本に来て、2019年にN2に合格しました。今の仕事は全部日本語です。お客様との会議も、日本語でしています。敬語のメールは、送る前に何回も確認しています。",
+       "answer_easy": "大学《だいがく》で情報系《じょうほうけい》を勉強《べんきょう》して、日本《にほん》で開発《かいはつ》の仕事《しごと》をしたいと思《おも》いました。2018年《ねん》に日本《にほん》に来《き》て、2019年《ねん》にN2に合格《ごうかく》しました。今《いま》の仕事《しごと》は全部日本語《ぜんぶにほんご》です。お客様《きゃくさま》との会議《かいぎ》も、日本語《にほんご》でしています。敬語《けいご》のメールは、送《おく》る前《まえ》に何回《なんかい》も確認《かくにん》しています。",
        "answer_tr": "I studied computer science at university and came to Japan in 2018 because I wanted to work in software development here. I studied at a Japanese language school and passed the Japanese-Language Proficiency Test at N2 in 2019. Since joining my company, all my work has been in Japanese, including confirming specifications with the bank's staff and the weekly meeting with our logistics client. I still re-read emails written in formal Japanese several times before I send them."
       },
       {
@@ -1501,7 +1584,7 @@ window.DEMO_SET = {
         "Check the expiry date on your residence card before the interview"
        ],
        "answer": "在留資格は「技術・人文知識・国際業務」で、在留期限は【要記入：在留期限（年月）】です。2018年に来日して8年になり、2020年からは日本の会社でシステムエンジニアとして働いてきました。今後もずっと日本で働いていくつもりです。御社でも、物流のサービスを長く育てていく仕事に、腰を据えて取り組みたいと考えております。",
-       "answer_easy": "在留資格は「技術・人文知識・国際業務」です。在留期限は【要記入：在留期限（年月）】です。2020年から、日本の会社でエンジニアとして働いています。これからも、日本で長く働くつもりです。御社でも、長く働きたいと思っています。",
+       "answer_easy": "在留資格《ざいりゅうしかく》は「技術《ぎじゅつ》・人文知識《じんぶんちしき》・国際業務《こくさいぎょうむ》」です。在留期限《ざいりゅうきげん》は【要記入《ようきにゅう》：在留期限《ざいりゅうきげん》（年月《ねんがつ》）】です。2020年《ねん》から、日本《にほん》の会社《かいしゃ》でエンジニアとして働《はたら》いています。これからも、日本《にほん》で長《なが》く働《はたら》くつもりです。御社《おんしゃ》でも、長《なが》く働《はたら》きたいと思《おも》っています。",
        "answer_tr": "My residence status is \"Engineer/Specialist in Humanities/International Services\" (技術・人文知識・国際業務), and my period of stay runs until 【要記入：your period-of-stay expiry date (year and month)】. I came to Japan in 2018, 8 years ago, and have worked as a systems engineer at a Japanese company since 2020. I intend to keep working in Japan from now on, and at your company too I want to commit to the long-term work of growing a logistics service."
       }
      ],
@@ -1531,6 +1614,89 @@ window.DEMO_SET = {
       "why": "Japanese employers check whether you can carry your work forward in Japanese on your own"
      }
     ],
+    "explain": {
+     "lang": "en",
+     "overview": "This is a career history (職務経歴書) in the format commonly used by IT engineers in Japan: a career summary and a technical skills table come first, then each project at the company, newest first, with its period, role, team size, phases and development environment, followed by transferable skills, qualifications and self-PR. Japanese recruiters look at which development phases you handled, whether your results have concrete numbers, and whether work experience and personal projects are kept apart.",
+     "sections": [
+      {
+       "title": "職務要約",
+       "ja": "独立系SIerのサンプルソリューションズ株式会社で6年余り、物流・金融業界向け業務システムの受託開発に携わっています。",
+       "tr": "For a little over 6 years, I have been involved in contract development of business systems for the logistics and finance industries at サンプルソリューションズ株式会社, an independent SIer.",
+       "notes": [
+        "The career summary is written in です・ます and opens with the essentials: the type of company (独立系SIer, a system integrator that is not part of a hardware maker's or a user company's group), how long (6年余り, \"a little over 6 years\") and the field (受託開発, development commissioned by clients). A recruiter can place your background from this one sentence.",
+        "「携わっています」 (\"have been involved in\"), like 「従事しています」, shows that you are still doing this work now. The next sentences narrow down to your own role (「リーダーとしてメンバー3名をまとめています」) and what you proposed yourself (「自ら提案して」)."
+       ]
+      },
+      {
+       "title": "職務経歴（倉庫管理システム）",
+       "ja": "遅いSQLを実行計画で特定し、索引見直しと並列化を提案・実装。出荷指示の夜間バッチを最長4時間から1.5時間に短縮",
+       "tr": "Identified the slow SQL using execution plans, and proposed and implemented revised indexes and parallel processing. Cut the nightly shipping-instruction batch from up to 4 hours to 1.5 hours",
+       "notes": [
+        "Achievements are written in 体言止め, ending on nouns (提案・実装, \"proposal and implementation\"; 短縮, \"reduction\") without です・ます. The 中黒 in 「提案・実装」 joins two roles and shows that you both proposed the fix and built it.",
+        "The order cause → action → result, with a before-and-after number, is what recruiters look for. 「最長」 (\"up to\") keeps the number accurate: 4 hours was the worst case, not the average."
+       ]
+      },
+      {
+       "title": "職務経歴（融資審査システム）",
+       "ja": "銀行側担当者との仕様確認（日本語で対応）",
+       "tr": "Confirming specifications with the bank's staff (handled in Japanese)",
+       "notes": [
+        "Duty bullets are short noun phrases (体言止め), like the achievements. This one describes your job, not a result.",
+        "For a candidate whose first language is not Japanese, the note 「日本語で対応」 (\"handled in Japanese\") is strong evidence: it shows you confirmed specifications with a client in Japanese in real work, which tells a recruiter more than the JLPT level alone."
+       ]
+      },
+      {
+       "title": "職務経歴（配送管理システム）",
+       "ja": "一次対応の手順書を作り、新人も対応できる形に整備",
+       "tr": "Wrote a procedure manual for first-line response and put it in a form that new members could also follow",
+       "notes": [
+        "「一次対応」 is the standard IT term for the first-line response to an incident (here, the 「夜間バッチ障害の一次対応」 in this project's duties). Using the usual industry terms lets recruiters read your work at a glance.",
+        "There is no number here, and that is fine: when you don't have one, don't make one up. 「新人も対応できる形に」 (\"so that new members could also handle it\") states the effect concretely instead, and shows that even as a member on your first project at the company, you improved how the team works."
+       ]
+      },
+      {
+       "title": "自己PR（遅い原因を確かめてから直す）",
+       "ja": "遅い箇所を数字で確かめてから直す進め方は、使う言語や基盤が変わっても生かせます。",
+       "tr": "This way of working, confirming the slow parts with numbers before fixing them, can be put to use even when the language or platform changes.",
+       "notes": [
+        "Self-PR is written in です・ます. This item follows a pattern recruiters know well: the situation (the batch didn't finish before the warehouse started work), what you did (execution plan → indexes → parallel processing), and, in this last sentence, why it carries over to a new job.",
+        "「使う言語や基盤が変わっても」 (\"even when the language or platform changes\") answers in advance a question a recruiter will have, since your work experience is in Java: whether this strength depends on that one technology."
+       ]
+      },
+      {
+       "title": "自己PR（品質をチームの仕組みにする）",
+       "ja": "障害のたびに振り返りの文書を書いてチームで読み合わせ、繰り返し起きている原因をレビュー用のチェックリストにしました。",
+       "tr": "After each incident, I wrote a retrospective document and read it through with the team, and turned the causes that kept recurring into a checklist for reviews.",
+       "notes": [
+        "「読み合わせ」 means reading a document through together as a group, a common practice in Japanese workplaces. Together with 「チェックリストにしました」 (\"turned into a checklist\"), it shows that you turned lessons into something the whole team uses, which is what the heading 「品質をチームの仕組みにする」 (\"making quality part of how the team works\") promises.",
+        "The numbers (incidents down from about 6 to about 2 a month) are already in the work history, so the self-PR focuses on how you did it rather than listing them again."
+       ]
+      }
+     ],
+     "naturalness": [
+      {
+       "ja": "1回3日→半日に短縮",
+       "issue": "The other two achievements write changes as 「AからBに」 (\"from A to B\"), but this one uses an arrow, and 「1回3日」 (\"one run 3 days\") doesn't say what took 3 days. Saying it is the time per run, in the same 「から〜に」 form, reads more clearly.",
+       "suggestion": "1回あたりの所要時間を3日から半日に短縮"
+      },
+      {
+       "ja": "Q&A表（約120件）で、",
+       "issue": "「Q&A表で」 (\"with a Q&A table\") doesn't say what you did with the table. Saying that you organized the points to confirm about the specifications in it makes your own action clear, which is what a recruiter looks for in an achievement.",
+       "suggestion": "仕様の確認事項をQ&A表（約120件）に整理し、"
+      },
+      {
+       "ja": "振り返りをレビュー用チェックリストにして",
+       "issue": "Strictly, it was not the retrospectives themselves that became a checklist but the causes found in them (your self-PR says so: 「繰り返し起きている原因をレビュー用のチェックリストにしました」). Saying this makes the bullet more precise.",
+       "suggestion": "振り返りで挙がった原因をレビュー用チェックリストにして"
+      }
+     ],
+     "conventions": [
+      "IT engineers usually write a project-based career history: under the company's details (business, number of employees, type of employment), each project gets its period, overview, role, team size, phases (担当工程) and development environment, newest first. Recruiters read the phases closely; yours start from 詳細設計 (detailed design), so list only the phases you actually handled and explain them as they are in the interview.",
+      "Write the career summary and the self-PR in です・ます, and the duty and achievement bullets under each project in 体言止め. Don't mix the two styles within one section.",
+      "In the technical skills table, keep work experience and personal projects apart, as this document does (Go: 「独学。個人開発でWeb APIを設計・実装」; AWS: 「実務はログ調査」). Japanese recruiters treat 実務経験 (experience at work) and self-study differently, and anything overstated comes out quickly in a technical interview. The same goes for Japanese: N2 plus 「業務はすべて日本語」 (\"all my work is in Japanese\") says more than the level alone.",
+      "In writing, call the company you are applying to 「貴社」; when speaking in an interview, say 「御社」. Write 「以上」 at the end to mark the end of the document."
+     ]
+    },
     "label": "IT engineer (notes in Chinese)"
    }
   },
@@ -2362,7 +2528,7 @@ window.DEMO_SET = {
         "最后补充日语是N3、12月考N2"
        ],
        "answer": "エミリー・カーターと申します。アメリカの大学でマーケティングを学び、米国のEC企業で6年間、検索広告とメールマーケティングを担当しました。2023年に来日し、現在はサンプルクラフトジャパンで、日本の包丁や食器を米国・英国・豪州に販売する英語のECサイトのマーケティングを、同僚と2名で担当しています。日本語はN3で、今年12月にN2を受験します。本日はよろしくお願いいたします。",
-       "answer_easy": "エミリー・カーターです。アメリカのEC企業で、6年間、広告とメールの仕事をしました。2023年に日本に来ました。今は、日本の包丁や食器を海外に売るサイトで、マーケティングをしています。チームは2人です。日本語はN3です。12月にN2を受けます。よろしくお願いいたします。",
+       "answer_easy": "エミリー・カーターです。アメリカのEC企業《きぎょう》で、6年間《ねんかん》、広告《こうこく》とメールの仕事《しごと》をしました。2023年《ねん》に日本《にほん》に来《き》ました。今《いま》は、日本《にほん》の包丁《ほうちょう》や食器《しょっき》を海外《かいがい》に売《う》るサイトで、マーケティングをしています。チームは2人《ふたり》です。日本語《にほんご》はN3です。12月《がつ》にN2を受《う》けます。よろしくお願《ねが》いいたします。",
        "answer_tr": "我叫Emily Carter。我在美国的大学学习市场营销，之后在美国的一家电商公司负责了6年搜索广告和邮件营销。2023年来到日本，现在在サンプルクラフトジャパン和1位同事2人负责一个英文电商网站的营销，这个网站面向美国、英国和澳大利亚销售日本的刀具和餐具。我的日语是N3，今年12月会参加N2考试。今天请多关照。"
       },
       {
@@ -2375,7 +2541,7 @@ window.DEMO_SET = {
         "想在做产品的公司内部，思考怎样把商品介绍给海外客户"
        ],
        "answer": "現職では、広告の予算やブランドの方針をシンガポールの本社が決めており、私の仕事は決まった予算の中での配分と、施策の実行が中心です。同僚と工房を訪ねて作り手の話をメールにしたところ、その中の1通が、2025年でいちばん反応のよいメールになりました。商品をつくる会社の中で、海外のお客様への伝え方をブランドの方と一緒に考えたいと思い、転職を決めました。日本語を毎日使って働きたいという思いもあります。",
-       "answer_easy": "今の会社では、広告の予算やブランドの方針は、シンガポールの本社が決めます。私の仕事は、決まった予算で施策を実行することが中心です。作り手の話をメールにしたとき、とても反応がよかったです。商品を作る会社で、伝え方から考えたいと思いました。日本語を毎日使って、働きたいとも思っています。",
+       "answer_easy": "今《いま》の会社《かいしゃ》では、広告《こうこく》の予算《よさん》やブランドの方針《ほうしん》は、シンガポールの本社《ほんしゃ》が決《き》めます。私《わたし》の仕事《しごと》は、決《き》まった予算《よさん》で施策《しさく》を実行《じっこう》することが中心《ちゅうしん》です。作《つく》り手《て》の話《はなし》をメールにしたとき、とても反応《はんのう》がよかったです。商品《しょうひん》を作《つく》る会社《かいしゃ》で、伝《つた》え方《かた》から考《かんが》えたいと思《おも》いました。日本語《にほんご》を毎日使《まいにちつか》って、働《はたら》きたいとも思《おも》っています。",
        "answer_tr": "在现在的公司，广告预算和品牌方针由新加坡总部决定，我的工作主要是在既定预算内做分配、执行各项措施。我和同事走访工坊，把制作者的故事写成邮件，其中1封成了2025年效果最好的邮件。我希望在做产品的公司内部，和品牌团队一起思考怎样把商品介绍给海外客户，因此决定换工作。我也希望在每天都用日语的环境中工作。"
       },
       {
@@ -2388,7 +2554,7 @@ window.DEMO_SET = {
         "把写商品页面的经验，用在用英语介绍泡茶方法和产地上"
        ],
        "answer": "御社が日本茶のD2Cブランドとして、英語圏向けのサイトを開設されている点に惹かれました。現職では、包丁の手入れガイドを特典にした登録ポップアップを設け、メール会員を2年で約8,000人から21,000人に増やしました。求人票にある会員登録の導線づくりやシナリオ配信は、この経験をそのまま生かせる仕事です。お茶の淹れ方や産地の話を英語で伝えることにも、商品ページを書き直してきた経験が役立つと考えています。",
-       "answer_easy": "御社は日本茶のブランドで、英語のサイトも作っています。そこに惹かれました。今の会社で、メールの登録を増やす工夫をしました。会員は、2年で約8,000人から21,000人になりました。求人票にあるメールの仕事で、この経験を生かせます。お茶の淹れ方や産地の話を、英語で伝えたいです。",
+       "answer_easy": "御社《おんしゃ》は日本茶《にほんちゃ》のブランドで、英語《えいご》のサイトも作《つく》っています。そこに惹《ひ》かれました。今《いま》の会社《かいしゃ》で、メールの登録《とうろく》を増《ふ》やす工夫《くふう》をしました。会員《かいいん》は、2年《ねん》で約《やく》8,000人《にん》から21,000人《にん》になりました。求人票《きゅうじんひょう》にあるメールの仕事《しごと》で、この経験《けいけん》を生《い》かせます。お茶《ちゃ》の淹《い》れ方《かた》や産地《さんち》の話《はなし》を、英語《えいご》で伝《つた》えたいです。",
        "answer_tr": "吸引我的是，贵公司作为日本茶的D2C品牌，开设了面向英语圈的网站。在现在的公司，我设置了以刀具保养指南为赠品的注册弹窗，2年内把邮件会员从约8,000人增加到21,000人。招聘启事中提到的会员注册路径和自动化邮件，正是可以直接用上这段经验的工作。我认为改写商品页面的经验，也能用在用英语介绍泡茶方法和产地故事上。"
       },
       {
@@ -2401,7 +2567,7 @@ window.DEMO_SET = {
         "弥补方式：按国家、按渠道分配预算是你自己决定的"
        ],
        "answer": "強みは、試した結果を、チームが使える形で残すことです。米国の会社ではメールのA/Bテストを年に約50件行い、効いたことと効かなかったことを手順書にまとめて共有しました。弱みは、予算や方針を決める立場の経験が少ないことです。現職では予算は本社が決めますが、その中での国別・チャネル別の配分は私が決めています。この経験を土台に、計画の段階から関わっていきたいと考えています。",
-       "answer_easy": "強みは、テストの結果を残して、チームで使えるようにすることです。前の会社で、メールのテストを1年に約50回しました。結果は手順書にまとめました。弱みは、予算を決める仕事の経験が少ないことです。今は、決まった予算を国ごとに分けています。これからは、計画から関わりたいです。",
+       "answer_easy": "強《つよ》みは、テストの結果《けっか》を残《のこ》して、チームで使《つか》えるようにすることです。前《まえ》の会社《かいしゃ》で、メールのテストを1年《ねん》に約《やく》50回《かい》しました。結果《けっか》は手順書《てじゅんしょ》にまとめました。弱《よわ》みは、予算《よさん》を決《き》める仕事《しごと》の経験《けいけん》が少《すく》ないことです。今《いま》は、決《き》まった予算《よさん》を国《くに》ごとに分《わ》けています。これからは、計画《けいかく》から関《かか》わりたいです。",
        "answer_tr": "我的优点是把测试过的结果整理成团队能用的形式。在美国的公司，我每年做约50次邮件A/B测试，把有效和无效的做法整理成手册，和团队共享。缺点是在决定预算和方针方面经验较少。现在的公司预算由总部决定，但按国家、按渠道怎么分配是由我决定的。我希望以此为基础，今后从制定计划的阶段就参与进来。"
       },
       {
@@ -2414,7 +2580,7 @@ window.DEMO_SET = {
         "如实说明其他公司的情况，不要说“第一志愿”"
        ],
        "answer": "希望年収は650万円以上を考えておりますが、お任せいただく役割に応じて、ご相談させていただければと思います。現職の退職には2か月前の申し出が必要なため、入社は2027年2月以降であれば可能です。他社の選考状況は【要記入：現在の選考状況（社数・段階）】です。その中でも、日本のブランドの海外ECを社内から育てられる点で、御社に強く惹かれております。",
-       "answer_easy": "年収は650万円以上を希望します。仕事の内容によって、ご相談させてください。今の会社には、2か月前に伝える必要があります。入社は2027年2月からできます。ほかの会社の選考は【要記入：現在の選考状況（社数・段階）】です。御社に、強く惹かれています。",
+       "answer_easy": "年収《ねんしゅう》は650万円以上《まんえんいじょう》を希望《きぼう》します。仕事《しごと》の内容《ないよう》によって、ご相談《そうだん》させてください。今《いま》の会社《かいしゃ》には、2か月前《げつまえ》に伝《つた》える必要《ひつよう》があります。入社《にゅうしゃ》は2027年《ねん》2月《がつ》からできます。ほかの会社《かいしゃ》の選考《せんこう》は【要記入《ようきにゅう》：現在《げんざい》の選考状況《せんこうじょうきょう》（社数《しゃすう》・段階《だんかい》）】です。御社《おんしゃ》に、強《つよ》く惹《ひ》かれています。",
        "answer_tr": "期望年薪为650万日元以上，但也希望能根据所负责的职务再商量。现在的公司需要提前2个月提出辞职，所以2027年2月以后可以入职。其他公司的应聘进展是【要記入：目前的应聘情况（公司数、阶段）】。在这些公司中，能在公司内部培育日本品牌的海外电商这一点，让我特别被贵公司吸引。"
       },
       {
@@ -2427,7 +2593,7 @@ window.DEMO_SET = {
         "改写前后各3个月对比，CVR 1.8%→2.6%：准确说明对比条件"
        ],
        "answer": "作り手からの商品情報は日本語で届くため、まず日本人の同僚と一緒に読み込み、内容を確かめました。そのうえで、使い方、手入れの方法、誰が作ったかを、英語で書き直しました。2024年に約300件を改稿し、改稿したページのCVRは、改稿前の3か月の1.8%から、改稿後の3か月で2.6%に上がりました。日本語の読み込みは同僚の力を借り、英語の文章は私が担当しています。",
-       "answer_easy": "作り手の情報は、日本語で届きます。まず、同僚と一緒に読みました。それから、使い方や手入れの方法、作った人のことを英語で書きました。2024年に、約300ページを書き直しました。購入率は、1.8%から2.6%に上がりました。日本語は同僚に手伝ってもらい、英語は私が書いています。",
+       "answer_easy": "作《つく》り手《て》の情報《じょうほう》は、日本語《にほんご》で届《とど》きます。まず、同僚《どうりょう》と一緒《いっしょ》に読《よ》みました。それから、使《つか》い方《かた》や手入《てい》れの方法《ほうほう》、作《つく》った人《ひと》のことを英語《えいご》で書《か》きました。2024年《ねん》に、約《やく》300ページを書《か》き直《なお》しました。購入率《こうにゅうりつ》は、1.8%から2.6%に上《あ》がりました。日本語《にほんご》は同僚《どうりょう》に手伝《てつだ》ってもらい、英語《えいご》は私《わたし》が書《か》いています。",
        "answer_tr": "制作者提供的商品信息是日语的，所以我先和日本同事一起读，确认内容。然后用英语重写了使用方法、保养方法和制作者的介绍。2024年改写了约300个页面，改写后页面的CVR从改写前3个月的1.8%，提高到改写后3个月的2.6%。日语资料的理解靠同事帮忙，英文文案由我负责。"
       },
       {
@@ -2440,7 +2606,7 @@ window.DEMO_SET = {
         "入职后向商品企划部门学习，用英语整理需要传达的要点"
        ],
        "answer": "日本茶や食品を販売した経験はありません。これまで扱ってきたのは、米国ではキッチン用品と生活雑貨、現職では日本の包丁や食器、文具です。ただ、使い方や手入れの方法、作り手のことを英語で伝える仕事は、お茶の淹れ方や産地の話を伝えることに近いと考えています。入社後は、まず商品企画の方にお茶の基本を教わり、海外のお客様が知りたい点を英語で整理するところから始めたいです。",
-       "answer_easy": "日本茶や食品を売った経験は、ありません。今までは、包丁や食器などを売ってきました。でも、使い方や作った人の話を英語で伝える仕事は、お茶でも同じだと思います。入社したら、まず商品企画の方に、お茶のことを教えていただきたいです。",
+       "answer_easy": "日本茶《にほんちゃ》や食品《しょくひん》を売《う》った経験《けいけん》は、ありません。今《いま》までは、包丁《ほうちょう》や食器《しょっき》などを売《う》ってきました。でも、使《つか》い方《かた》や作《つく》った人《ひと》の話《はなし》を英語《えいご》で伝《つた》える仕事《しごと》は、お茶《ちゃ》でも同《おな》じだと思《おも》います。入社《にゅうしゃ》したら、まず商品企画《しょうひんきかく》の方《かた》に、お茶《ちゃ》のことを教《おし》えていただきたいです。",
        "answer_tr": "我没有销售日本茶或食品的经验。我经手过的商品，在美国是厨房用品和生活杂货，在现在的公司是日本的刀具、餐具和文具。不过，用英语介绍使用方法、保养方法和制作者，我认为和介绍泡茶方法、产地故事很接近。入职后，我想先向商品企划的同事学习茶的基础知识，再用英语整理海外客户想了解的内容。"
       },
       {
@@ -2453,7 +2619,7 @@ window.DEMO_SET = {
         "把用日语完成的工作（内部聊天、在例会上汇报）和需要同事帮忙的工作分开说"
        ],
        "answer": "米国の会社で日本製の包丁の広告を担当したことがきっかけで、日本の工芸品に興味を持ち、2023年に来日しました。日本語はN3で、求人票の目安のN2にはまだ届いていませんが、12月に受験します。現職では、社内のチャットと週1回の定例会議は日本語で、自分の数字も日本語で報告しています。作り手との細かい話し合いは同僚に助けてもらい、長いメールは翻訳ツールで書いて、同僚に確認してもらっています。",
-       "answer_easy": "前の会社で、日本の包丁の広告を担当しました。それで日本の工芸品が好きになり、2023年に日本に来ました。日本語はN3で、12月にN2を受けます。今の会社では、チャットと毎週の会議は日本語です。自分の数字も、日本語で報告しています。むずかしい話し合いは、同僚に手伝ってもらっています。",
+       "answer_easy": "前《まえ》の会社《かいしゃ》で、日本《にほん》の包丁《ほうちょう》の広告《こうこく》を担当《たんとう》しました。それで日本《にほん》の工芸品《こうげいひん》が好《す》きになり、2023年《ねん》に日本《にほん》に来《き》ました。日本語《にほんご》はN3で、12月《がつ》にN2を受《う》けます。今《いま》の会社《かいしゃ》では、チャットと毎週《まいしゅう》の会議《かいぎ》は日本語《にほんご》です。自分《じぶん》の数字《すうじ》も、日本語《にほんご》で報告《ほうこく》しています。むずかしい話《はな》し合《あ》いは、同僚《どうりょう》に手伝《てつだ》ってもらっています。",
        "answer_tr": "在美国公司负责日本刀具的广告，让我对日本的工艺品产生了兴趣，于是2023年来到日本。我的日语是N3，还没达到招聘启事中N2的参考标准，但12月会参加考试。在现在的公司，内部聊天和每周1次的例会都用日语，我也用日语汇报自己负责的数据。和制作者的细节沟通由同事帮忙，较长的邮件我先用翻译工具写，再请同事检查。"
       },
       {
@@ -2466,7 +2632,7 @@ window.DEMO_SET = {
         "事先确认换工作后是否需要向入管局申报"
        ],
        "answer": "在留資格は「技術・人文知識・国際業務」で、在留期限は2028年8月です。2023年に来日してから、東京の会社でマーケティングの仕事をしてきました。これからも日本で長く働いていきたいと考えています。日本語も、毎日の仕事の中で使いながら伸ばしていくつもりです。御社でも、英語圏のお客様を増やしていく仕事に、腰を据えて取り組みたいと考えております。",
-       "answer_easy": "在留資格は「技術・人文知識・国際業務」です。期限は2028年8月です。2023年から、東京の会社で働いています。これからも、日本で長く働きたいです。日本語も、仕事で使いながら勉強を続けます。御社でも、長く働きたいと思っています。",
+       "answer_easy": "在留資格《ざいりゅうしかく》は「技術《ぎじゅつ》・人文知識《じんぶんちしき》・国際業務《こくさいぎょうむ》」です。期限《きげん》は2028年《ねん》8月《がつ》です。2023年《ねん》から、東京《とうきょう》の会社《かいしゃ》で働《はたら》いています。これからも、日本《にほん》で長《なが》く働《はたら》きたいです。日本語《にほんご》も、仕事《しごと》で使《つか》いながら勉強《べんきょう》を続《つづ》けます。御社《おんしゃ》でも、長《なが》く働《はたら》きたいと思《おも》っています。",
        "answer_tr": "我的在留资格是“技术・人文知识・国际业务”，在留期限到2028年8月。2023年来到日本后，我一直在东京的公司从事市场营销工作。今后也想在日本长期工作，日语也打算在每天的工作中边用边提高。在贵公司，我也希望踏踏实实地投入到增加英语圈客户的工作中。"
       }
      ],
@@ -2496,7 +2662,90 @@ window.DEMO_SET = {
       "why": "日本企业会确认你入职后能否用日语推进工作"
      }
     ],
-    "label": "市场营销（用英文写经历）"
+    "label": "市场营销（用英文写经历）",
+    "explain": {
+     "lang": "zh",
+     "overview": "这是一份按日本惯例写的职务经历书：开头是三个关键数字和职务概要，再按时间倒序（现职在前）列出各公司的职务和成果，最后是技能・工具・语言和自我PR。日本的招聘方会看数字是否具体、有没有写明对比基准，本人的角色是否清楚，以及日语能做到什么程度是否写得具体。",
+     "sections": [
+      {
+       "title": "職務要約",
+       "ja": "米国のEC企業で6年間、検索広告とメールマーケティングを担当しました。",
+       "tr": "在美国的一家电商企业负责了6年搜索广告和邮件营销。",
+       "notes": [
+        "职务概要用「です・ます」。注意时态：前一份工作用「担当しました」（过去、已结束），下一句的现职用「受け持っています」（正在负责）。招聘方会通过时态区分过去和现在的职务。",
+        "开头先写年数和领域，招聘方马上就能定位你的背景。这段概要最后写了「英語は母語、日本語はN3です。」：母语不是日语的求职者在概要里就写明语言水平，可以避免之后出现认知偏差。"
+       ]
+      },
+      {
+       "title": "職務経歴（サンプルクラフトジャパン株式会社）",
+       "ja": "作り手の日本語の情報を同僚と読み込み、英語商品ページ約300件を改稿。改稿したページのCVRが1.8%から2.6%に上昇（前後3か月の比較）",
+       "tr": "和同事一起研读制作者提供的日文资料，改写了约300个英文商品页面。改写后页面的转化率（CVR）从1.8%升至2.6%（前后各3个月对比）。",
+       "notes": [
+        "前半句以「改稿」（改写）结尾，后半句以结果「上昇」（上升）结尾，都是体言止め。括号里的「前後3か月の比較」写明了对比基准，让数字更可信——日本的招聘方常会问“和什么相比？”。",
+        "「同僚と読み込み」如实说明了以N3水平你是怎样处理日文资料的，同时也清楚表明改写是你负责的部分。把“谁做了什么”写准确，更容易获得招聘方的信任。"
+       ]
+      },
+      {
+       "title": "職務経歴（Sample Home Goods, Inc.／シニアスペシャリスト）",
+       "ja": "ニュースレターだけのメールに自動配信（ウェルカム、カゴ落ち、購入後、休眠復帰）を構築。メール経由の売上比率が14%→22%（2020年→2022年）",
+       "tr": "为原本只发新闻简报（Newsletter）的邮件渠道搭建了自动发送邮件（欢迎、弃购提醒、购后、沉睡用户唤回）。经由邮件的销售额占比：14%→22%（2020年→2022年）。",
+       "notes": [
+        "「カゴ落ち」（弃购：加入购物车后没有下单）和「休眠復帰」（唤回长期没有购买的顾客）是日本电商行业实际使用的说法，业内的招聘方一看就懂。",
+        "这一条先写本人做了什么（「構築」），再写前后对比的数字和期间（2020年→2022年）。光看数字分不清是不是你的功劳，所以先写本人的动作很重要。"
+       ]
+      },
+      {
+       "title": "職務経歴（Sample Home Goods, Inc.／検索広告担当）",
+       "ja": "ショッピング広告を商品カテゴリ・利益率で分け、利益率の高いカテゴリへ予算を移動（計画は上長が承認）。ROAS 3.1（2017年）→4.2（2018年）",
+       "tr": "将购物广告按商品类别和利润率拆分，把预算转向利润率高的类别（方案经上级批准）。ROAS：3.1（2017年）→4.2（2018年）。",
+       "notes": [
+        "「（計画は上長が承認）」如实划清了你的权限范围：具体工作是你做的，方案由上级批准。日本的招聘方会确认你自己能决定到什么程度，面试时也会追问，这里写准确就不会被问住。",
+        "ROAS、CVR这类指标在日本的营销文件里也直接用英文缩写，不需要翻成日语。"
+       ]
+      },
+      {
+       "title": "自己PR（日本の商品を、英語で伝わる言葉に）",
+       "ja": "商品の背景を英語圏のお客様が読みたくなる言葉にする仕事は、扱う商品が変わっても続けられます。",
+       "tr": "把商品背后的故事写成英语圈顾客愿意读的文字，这份工作即使经手的商品变了，我也能继续做下去。",
+       "notes": [
+        "自我PR用「です・ます」，最后像这句一样说明为什么换了公司也能发挥。「扱う商品が変わっても」告诉招聘方：这项能力并不局限于刀具和餐具。",
+        "这句前面用具体事实作证据（「2025年に最も反応のよかったメールは、その中の1通でした」）。用事实而不是「得意です」之类的自我评价，说服力更强。"
+       ]
+      },
+      {
+       "title": "自己PR（テストの結果を、チームの手順にする）",
+       "ja": "試した結果を残して次の判断を速くする進め方は、立ち上げたばかりのECでこそ生かせると考えています。",
+       "tr": "把试验结果记录下来、让下一次判断更快，我认为这种做法正是在刚起步的电商业务中最能发挥作用。",
+       "notes": [
+        "「立ち上げたばかりのEC」（刚起步的电商）说的是应聘公司的情况，不点名也能让结尾这句针对对方。「〜でこそ」（正是在……才）起强调作用。",
+        "「〜と考えています」是自我PR里常用的稳妥表态：有自信，但不强加于人。"
+       ]
+      }
+     ],
+     "naturalness": [
+      {
+       "ja": "ニュースレターだけのメールに",
+       "issue": "「だけ」偏口语，而且没有过去式，看不出这是你搭建自动发送之前的状态。改成「のみだった」更书面，前后对比也更清楚。",
+       "suggestion": "ニュースレターのみだったメールに"
+      },
+      {
+       "ja": "広告運用、メール配信、英語の商品ページまでを担当し",
+       "issue": "「広告運用」「メール配信」是工作内容，「英語の商品ページ」却是东西，并列不整齐；「まで」也最好和「から」搭配成「AからBまで」。加上职历栏里用的「制作」，两个问题都能解决。",
+       "suggestion": "広告運用からメール配信、英語の商品ページ制作までを担当し"
+      },
+      {
+       "ja": "効いたことと効かなかったことを",
+       "issue": "「効いた」是口语说法，书面材料里用「効果があった」更正式。",
+       "suggestion": "効果があったことと、なかったことを"
+      }
+     ],
+     "conventions": [
+      "职历按时间倒序（现职在前）排列，这是中途采用常见的写法；履历书的学历・职历栏则一律按时间顺序（旧的在前）。外国公司用英文正式名称并注明国家，如「Sample Home Goods, Inc.（米国）」；日本公司用正式全称（「株式会社」不要简写成「（株）」）。",
+      "职务概要和自我PR用「です・ます」；业务内容和成果条目用体言止め。写数字时注明期间或对比基准（FY2023→FY2025、「前後3か月の比較」），并把本人的成果和团队的成果分开，如「チーム全体の成果」。",
+      "日语水平要写得诚实、具体。这份文件在概要里写了N3，在技能栏补充了计划于2026年12月报考N2，以及工作中用日语做什么（公司内部聊天、每周一次的例会）。比起「ビジネスレベル」这类笼统的说法，日本的招聘方更看重这样的具体信息；面试时也可能确认日语能力，所以书面上写的要和实际能做到的一致。",
+      "书面语里称对方公司为「貴社」，面试时口头说「御社」。文末写「以上」表示结束。"
+     ]
+    }
    },
    "en": {
     "analysis": {
@@ -2680,7 +2929,7 @@ window.DEMO_SET = {
         "Close by adding that you are at N3 and will take the N2 in December"
        ],
        "answer": "エミリー・カーターと申します。アメリカの大学でマーケティングを学び、米国のEC企業で6年間、検索広告とメールマーケティングを担当しました。2023年に来日し、現在はサンプルクラフトジャパンで、日本の包丁や食器を米国・英国・豪州に販売する英語のECサイトのマーケティングを、同僚と2名で担当しています。日本語はN3で、今年12月にN2を受験します。本日はよろしくお願いいたします。",
-       "answer_easy": "エミリー・カーターです。アメリカのEC企業で、6年間、広告とメールの仕事をしました。2023年に日本に来ました。今は、日本の包丁や食器を海外に売るサイトで、マーケティングをしています。チームは2人です。日本語はN3です。12月にN2を受けます。よろしくお願いいたします。",
+       "answer_easy": "エミリー・カーターです。アメリカのEC企業《きぎょう》で、6年間《ねんかん》、広告《こうこく》とメールの仕事《しごと》をしました。2023年《ねん》に日本《にほん》に来《き》ました。今《いま》は、日本《にほん》の包丁《ほうちょう》や食器《しょっき》を海外《かいがい》に売《う》るサイトで、マーケティングをしています。チームは2人《ふたり》です。日本語《にほんご》はN3です。12月《がつ》にN2を受《う》けます。よろしくお願《ねが》いいたします。",
        "answer_tr": "My name is Emily Carter. I studied marketing at a university in the US and spent 6 years handling paid search and email marketing at a US e-commerce company. I came to Japan in 2023, and I now handle marketing, in a team of 2 with a colleague, for Sample Craft Japan's English e-commerce site, which sells Japanese kitchen knives and tableware to the US, the UK and Australia. My Japanese is at N3, and I will take the N2 this December. Thank you for having me today."
       },
       {
@@ -2693,7 +2942,7 @@ window.DEMO_SET = {
         "You want to think about how to reach overseas customers from inside the company that makes the products"
        ],
        "answer": "現職では、広告の予算やブランドの方針をシンガポールの本社が決めており、私の仕事は決まった予算の中での配分と、施策の実行が中心です。同僚と工房を訪ねて作り手の話をメールにしたところ、その中の1通が、2025年でいちばん反応のよいメールになりました。商品をつくる会社の中で、海外のお客様への伝え方をブランドの方と一緒に考えたいと思い、転職を決めました。日本語を毎日使って働きたいという思いもあります。",
-       "answer_easy": "今の会社では、広告の予算やブランドの方針は、シンガポールの本社が決めます。私の仕事は、決まった予算で施策を実行することが中心です。作り手の話をメールにしたとき、とても反応がよかったです。商品を作る会社で、伝え方から考えたいと思いました。日本語を毎日使って、働きたいとも思っています。",
+       "answer_easy": "今《いま》の会社《かいしゃ》では、広告《こうこく》の予算《よさん》やブランドの方針《ほうしん》は、シンガポールの本社《ほんしゃ》が決《き》めます。私《わたし》の仕事《しごと》は、決《き》まった予算《よさん》で施策《しさく》を実行《じっこう》することが中心《ちゅうしん》です。作《つく》り手《て》の話《はなし》をメールにしたとき、とても反応《はんのう》がよかったです。商品《しょうひん》を作《つく》る会社《かいしゃ》で、伝《つた》え方《かた》から考《かんが》えたいと思《おも》いました。日本語《にほんご》を毎日使《まいにちつか》って、働《はたら》きたいとも思《おも》っています。",
        "answer_tr": "At my current job, the ad budget and the brand direction are decided by our head office in Singapore, and my work is mostly splitting the budget I am given and carrying out campaigns. When my colleague and I visited workshops and turned the makers' stories into emails, one of them became our best-performing email of 2025. I decided to change jobs because I want to think about how to reach overseas customers together with the brand team, inside the company that makes the products. I also want to work in a place where I use Japanese every day."
       },
       {
@@ -2706,7 +2955,7 @@ window.DEMO_SET = {
         "Use your product page experience to explain in English how to brew tea and where it comes from"
        ],
        "answer": "御社が日本茶のD2Cブランドとして、英語圏向けのサイトを開設されている点に惹かれました。現職では、包丁の手入れガイドを特典にした登録ポップアップを設け、メール会員を2年で約8,000人から21,000人に増やしました。求人票にある会員登録の導線づくりやシナリオ配信は、この経験をそのまま生かせる仕事です。お茶の淹れ方や産地の話を英語で伝えることにも、商品ページを書き直してきた経験が役立つと考えています。",
-       "answer_easy": "御社は日本茶のブランドで、英語のサイトも作っています。そこに惹かれました。今の会社で、メールの登録を増やす工夫をしました。会員は、2年で約8,000人から21,000人になりました。求人票にあるメールの仕事で、この経験を生かせます。お茶の淹れ方や産地の話を、英語で伝えたいです。",
+       "answer_easy": "御社《おんしゃ》は日本茶《にほんちゃ》のブランドで、英語《えいご》のサイトも作《つく》っています。そこに惹《ひ》かれました。今《いま》の会社《かいしゃ》で、メールの登録《とうろく》を増《ふ》やす工夫《くふう》をしました。会員《かいいん》は、2年《ねん》で約《やく》8,000人《にん》から21,000人《にん》になりました。求人票《きゅうじんひょう》にあるメールの仕事《しごと》で、この経験《けいけん》を生《い》かせます。お茶《ちゃ》の淹《い》れ方《かた》や産地《さんち》の話《はなし》を、英語《えいご》で伝《つた》えたいです。",
        "answer_tr": "What drew me to your company is that, as a Japanese tea D2C brand, you have opened a site for English-speaking markets. At my current job, I set up a sign-up pop-up offering a knife care guide and grew our email list from about 8,000 to 21,000 subscribers in 2 years. Building the sign-up flow and automated emails, as your posting mentions, is work where I can use this experience directly. I also believe my experience rewriting product pages will help in explaining in English how to brew tea and where it comes from."
       },
       {
@@ -2719,7 +2968,7 @@ window.DEMO_SET = {
         "How you make up for it: you have decided the split by country and channel yourself"
        ],
        "answer": "強みは、試した結果を、チームが使える形で残すことです。米国の会社ではメールのA/Bテストを年に約50件行い、効いたことと効かなかったことを手順書にまとめて共有しました。弱みは、予算や方針を決める立場の経験が少ないことです。現職では予算は本社が決めますが、その中での国別・チャネル別の配分は私が決めています。この経験を土台に、計画の段階から関わっていきたいと考えています。",
-       "answer_easy": "強みは、テストの結果を残して、チームで使えるようにすることです。前の会社で、メールのテストを1年に約50回しました。結果は手順書にまとめました。弱みは、予算を決める仕事の経験が少ないことです。今は、決まった予算を国ごとに分けています。これからは、計画から関わりたいです。",
+       "answer_easy": "強《つよ》みは、テストの結果《けっか》を残《のこ》して、チームで使《つか》えるようにすることです。前《まえ》の会社《かいしゃ》で、メールのテストを1年《ねん》に約《やく》50回《かい》しました。結果《けっか》は手順書《てじゅんしょ》にまとめました。弱《よわ》みは、予算《よさん》を決《き》める仕事《しごと》の経験《けいけん》が少《すく》ないことです。今《いま》は、決《き》まった予算《よさん》を国《くに》ごとに分《わ》けています。これからは、計画《けいかく》から関《かか》わりたいです。",
        "answer_tr": "My strength is keeping what we tested in a form the team can use. At the US company I ran about 50 email A/B tests a year and summarized what worked and what didn't in a playbook that I shared with the team. My weakness is that I have little experience in a role that decides budgets and plans. At my current job, head office sets the budget, but I decide how it is split by country and channel. Building on this, I want to get involved from the planning stage."
       },
       {
@@ -2732,7 +2981,7 @@ window.DEMO_SET = {
         "Be honest about other companies; do not claim it is your \"first choice\""
        ],
        "answer": "希望年収は650万円以上を考えておりますが、お任せいただく役割に応じて、ご相談させていただければと思います。現職の退職には2か月前の申し出が必要なため、入社は2027年2月以降であれば可能です。他社の選考状況は【要記入：現在の選考状況（社数・段階）】です。その中でも、日本のブランドの海外ECを社内から育てられる点で、御社に強く惹かれております。",
-       "answer_easy": "年収は650万円以上を希望します。仕事の内容によって、ご相談させてください。今の会社には、2か月前に伝える必要があります。入社は2027年2月からできます。ほかの会社の選考は【要記入：現在の選考状況（社数・段階）】です。御社に、強く惹かれています。",
+       "answer_easy": "年収《ねんしゅう》は650万円以上《まんえんいじょう》を希望《きぼう》します。仕事《しごと》の内容《ないよう》によって、ご相談《そうだん》させてください。今《いま》の会社《かいしゃ》には、2か月前《げつまえ》に伝《つた》える必要《ひつよう》があります。入社《にゅうしゃ》は2027年《ねん》2月《がつ》からできます。ほかの会社《かいしゃ》の選考《せんこう》は【要記入《ようきにゅう》：現在《げんざい》の選考状況《せんこうじょうきょう》（社数《しゃすう》・段階《だんかい》）】です。御社《おんしゃ》に、強《つよ》く惹《ひ》かれています。",
        "answer_tr": "I am hoping for an annual salary of 650万 yen or more, but I would be glad to discuss it in light of the role you would give me. My current job requires 2 months' notice, so I can start in February 2027 or later. My status with other companies is 【要記入：where you are with other companies (how many, and at what stage)】. Among them, I am strongly drawn to your company because I could grow a Japanese brand's overseas e-commerce from inside the company."
       },
       {
@@ -2745,7 +2994,7 @@ window.DEMO_SET = {
         "CVR 1.8% → 2.6%, 3 months before vs 3 months after: state the comparison accurately"
        ],
        "answer": "作り手からの商品情報は日本語で届くため、まず日本人の同僚と一緒に読み込み、内容を確かめました。そのうえで、使い方、手入れの方法、誰が作ったかを、英語で書き直しました。2024年に約300件を改稿し、改稿したページのCVRは、改稿前の3か月の1.8%から、改稿後の3か月で2.6%に上がりました。日本語の読み込みは同僚の力を借り、英語の文章は私が担当しています。",
-       "answer_easy": "作り手の情報は、日本語で届きます。まず、同僚と一緒に読みました。それから、使い方や手入れの方法、作った人のことを英語で書きました。2024年に、約300ページを書き直しました。購入率は、1.8%から2.6%に上がりました。日本語は同僚に手伝ってもらい、英語は私が書いています。",
+       "answer_easy": "作《つく》り手《て》の情報《じょうほう》は、日本語《にほんご》で届《とど》きます。まず、同僚《どうりょう》と一緒《いっしょ》に読《よ》みました。それから、使《つか》い方《かた》や手入《てい》れの方法《ほうほう》、作《つく》った人《ひと》のことを英語《えいご》で書《か》きました。2024年《ねん》に、約《やく》300ページを書《か》き直《なお》しました。購入率《こうにゅうりつ》は、1.8%から2.6%に上《あ》がりました。日本語《にほんご》は同僚《どうりょう》に手伝《てつだ》ってもらい、英語《えいご》は私《わたし》が書《か》いています。",
        "answer_tr": "Product information from the makers comes in Japanese, so first I went through it with my Japanese colleague to check the content. Then I rewrote, in English, how to use each item, how to care for it, and who made it. I rewrote about 300 pages in 2024, and the CVR of the rewritten pages rose from 1.8% in the 3 months before to 2.6% in the 3 months after. My colleague helps me read the Japanese, and I write the English."
       },
       {
@@ -2758,7 +3007,7 @@ window.DEMO_SET = {
         "After joining, learn from product planning and sort out in English what to convey"
        ],
        "answer": "日本茶や食品を販売した経験はありません。これまで扱ってきたのは、米国ではキッチン用品と生活雑貨、現職では日本の包丁や食器、文具です。ただ、使い方や手入れの方法、作り手のことを英語で伝える仕事は、お茶の淹れ方や産地の話を伝えることに近いと考えています。入社後は、まず商品企画の方にお茶の基本を教わり、海外のお客様が知りたい点を英語で整理するところから始めたいです。",
-       "answer_easy": "日本茶や食品を売った経験は、ありません。今までは、包丁や食器などを売ってきました。でも、使い方や作った人の話を英語で伝える仕事は、お茶でも同じだと思います。入社したら、まず商品企画の方に、お茶のことを教えていただきたいです。",
+       "answer_easy": "日本茶《にほんちゃ》や食品《しょくひん》を売《う》った経験《けいけん》は、ありません。今《いま》までは、包丁《ほうちょう》や食器《しょっき》などを売《う》ってきました。でも、使《つか》い方《かた》や作《つく》った人《ひと》の話《はなし》を英語《えいご》で伝《つた》える仕事《しごと》は、お茶《ちゃ》でも同《おな》じだと思《おも》います。入社《にゅうしゃ》したら、まず商品企画《しょうひんきかく》の方《かた》に、お茶《ちゃ》のことを教《おし》えていただきたいです。",
        "answer_tr": "I have no experience selling Japanese tea or food. What I have handled is kitchenware and home goods in the US, and Japanese kitchen knives, tableware and stationery at my current job. Still, I think conveying in English how to use and care for a product and who made it is close to conveying how to brew tea and where it comes from. After joining, I would like to start by learning the basics of tea from the product planning team and organizing in English what overseas customers want to know."
       },
       {
@@ -2771,7 +3020,7 @@ window.DEMO_SET = {
         "Separate what you do in Japanese (chat, reporting at the weekly meeting) from what you get help with"
        ],
        "answer": "米国の会社で日本製の包丁の広告を担当したことがきっかけで、日本の工芸品に興味を持ち、2023年に来日しました。日本語はN3で、求人票の目安のN2にはまだ届いていませんが、12月に受験します。現職では、社内のチャットと週1回の定例会議は日本語で、自分の数字も日本語で報告しています。作り手との細かい話し合いは同僚に助けてもらい、長いメールは翻訳ツールで書いて、同僚に確認してもらっています。",
-       "answer_easy": "前の会社で、日本の包丁の広告を担当しました。それで日本の工芸品が好きになり、2023年に日本に来ました。日本語はN3で、12月にN2を受けます。今の会社では、チャットと毎週の会議は日本語です。自分の数字も、日本語で報告しています。むずかしい話し合いは、同僚に手伝ってもらっています。",
+       "answer_easy": "前《まえ》の会社《かいしゃ》で、日本《にほん》の包丁《ほうちょう》の広告《こうこく》を担当《たんとう》しました。それで日本《にほん》の工芸品《こうげいひん》が好《す》きになり、2023年《ねん》に日本《にほん》に来《き》ました。日本語《にほんご》はN3で、12月《がつ》にN2を受《う》けます。今《いま》の会社《かいしゃ》では、チャットと毎週《まいしゅう》の会議《かいぎ》は日本語《にほんご》です。自分《じぶん》の数字《すうじ》も、日本語《にほんご》で報告《ほうこく》しています。むずかしい話《はな》し合《あ》いは、同僚《どうりょう》に手伝《てつだ》ってもらっています。",
        "answer_tr": "Running ads for Japanese kitchen knives at the US company got me interested in Japanese crafts, and I came to Japan in 2023. My Japanese is at N3; it has not yet reached the N2 your posting gives as a guide, but I will take the test in December. At my current job, our team chat and the weekly team meeting are in Japanese, and I report my own numbers in Japanese. My colleague helps me with detailed discussions with makers, and I write long emails with a translation tool and ask my colleague to check them."
       },
       {
@@ -2784,7 +3033,7 @@ window.DEMO_SET = {
         "Check beforehand whether you need to notify immigration after changing jobs"
        ],
        "answer": "在留資格は「技術・人文知識・国際業務」で、在留期限は2028年8月です。2023年に来日してから、東京の会社でマーケティングの仕事をしてきました。これからも日本で長く働いていきたいと考えています。日本語も、毎日の仕事の中で使いながら伸ばしていくつもりです。御社でも、英語圏のお客様を増やしていく仕事に、腰を据えて取り組みたいと考えております。",
-       "answer_easy": "在留資格は「技術・人文知識・国際業務」です。期限は2028年8月です。2023年から、東京の会社で働いています。これからも、日本で長く働きたいです。日本語も、仕事で使いながら勉強を続けます。御社でも、長く働きたいと思っています。",
+       "answer_easy": "在留資格《ざいりゅうしかく》は「技術《ぎじゅつ》・人文知識《じんぶんちしき》・国際業務《こくさいぎょうむ》」です。期限《きげん》は2028年《ねん》8月《がつ》です。2023年《ねん》から、東京《とうきょう》の会社《かいしゃ》で働《はたら》いています。これからも、日本《にほん》で長《なが》く働《はたら》きたいです。日本語《にほんご》も、仕事《しごと》で使《つか》いながら勉強《べんきょう》を続《つづ》けます。御社《おんしゃ》でも、長《なが》く働《はたら》きたいと思《おも》っています。",
        "answer_tr": "My residence status is \"Engineer/Specialist in Humanities/International Services\" (技術・人文知識・国際業務), and my period of stay runs until August 2028. Since coming to Japan in 2023, I have worked in marketing at a company in Tokyo. I want to keep working in Japan for a long time, and I intend to keep improving my Japanese by using it in my daily work. At your company too, I want to commit to the work of steadily growing your English-speaking customer base."
       }
      ],
@@ -2814,7 +3063,90 @@ window.DEMO_SET = {
       "why": "Japanese employers check whether you can carry your work forward in Japanese after joining"
      }
     ],
-    "label": "Marketer (notes in English)"
+    "label": "Marketer (notes in English)",
+    "explain": {
+     "lang": "en",
+     "overview": "This is a career history (職務経歴書) written the Japanese way: three key numbers at the top, a career summary, then the duties and achievements at each company in reverse chronological order (current job first), followed by skills, tools and languages, and self-PR. Japanese recruiters look at whether the numbers are specific and give their basis, whether your own role is clear, and whether what you can do in Japanese is stated concretely.",
+     "sections": [
+      {
+       "title": "職務要約",
+       "ja": "米国のEC企業で6年間、検索広告とメールマーケティングを担当しました。",
+       "tr": "For 6 years, I was in charge of search advertising and email marketing at an e-commerce company in the US.",
+       "notes": [
+        "The summary is in です・ます. Note the tense: the past job ends in 「担当しました」 (\"was in charge of\", finished), and the current job in the next sentence ends in 「受け持っています」 (\"am in charge of\", ongoing). Recruiters read the tense to tell your past roles from your current one.",
+        "Opening with the number of years and the field lets a recruiter place you at once. The summary ends with 「英語は母語、日本語はN3です。」 (\"English is my native language; my Japanese is N3.\"): for a non-native candidate, stating the language level in the summary avoids a mismatch later."
+       ]
+      },
+      {
+       "title": "職務経歴（サンプルクラフトジャパン株式会社）",
+       "ja": "作り手の日本語の情報を同僚と読み込み、英語商品ページ約300件を改稿。改稿したページのCVRが1.8%から2.6%に上昇（前後3か月の比較）",
+       "tr": "Went through the makers' information in Japanese with a colleague and rewrote about 300 English product pages. The CVR of the rewritten pages rose from 1.8% to 2.6% (comparing the 3 months before and after)",
+       "notes": [
+        "Both parts end in 体言止め: the action on 改稿 (\"rewriting\") and the result on 上昇 (\"rise\"). The note in parentheses, 「前後3か月の比較」, gives the basis of the comparison, which makes the number credible; Japanese recruiters often ask \"compared with what?\"",
+        "「同僚と読み込み」 (\"went through it with a colleague\") is honest about how you handle Japanese at N3, while still making clear that the rewriting was your part. Recruiters trust a document that is precise about who did what."
+       ]
+      },
+      {
+       "title": "職務経歴（Sample Home Goods, Inc.／シニアスペシャリスト）",
+       "ja": "ニュースレターだけのメールに自動配信（ウェルカム、カゴ落ち、購入後、休眠復帰）を構築。メール経由の売上比率が14%→22%（2020年→2022年）",
+       "tr": "Built automated emails (welcome, abandoned cart, post-purchase, win-back) for an email program that had only a newsletter. Share of sales via email: 14% → 22% (2020 → 2022)",
+       "notes": [
+        "「カゴ落ち」 (cart abandonment) and 「休眠復帰」 (winning back inactive customers) are the terms Japanese e-commerce teams actually use, so a recruiter in the field understands the flows at once.",
+        "The bullet starts with what you did yourself (構築, \"built\"), then gives the before-and-after number with its period (2020年→2022年). A number alone doesn't show whether it came from your work, so putting your own action first matters."
+       ]
+      },
+      {
+       "title": "職務経歴（Sample Home Goods, Inc.／検索広告担当）",
+       "ja": "ショッピング広告を商品カテゴリ・利益率で分け、利益率の高いカテゴリへ予算を移動（計画は上長が承認）。ROAS 3.1（2017年）→4.2（2018年）",
+       "tr": "Split the shopping ads by product category and profit margin, and moved budget to the high-margin categories (the plan was approved by my manager). ROAS 3.1 (2017) → 4.2 (2018)",
+       "notes": [
+        "「（計画は上長が承認）」 (\"the plan was approved by my manager\") draws an honest line around your role: you did the work, and your manager approved the plan. Japanese recruiters check how far your own decisions went and will ask about it in the interview, so precise wording here protects you.",
+        "Metrics such as ROAS and CVR are written as they are in Japanese marketing documents too; there is no need to translate them."
+       ]
+      },
+      {
+       "title": "自己PR（日本の商品を、英語で伝わる言葉に）",
+       "ja": "商品の背景を英語圏のお客様が読みたくなる言葉にする仕事は、扱う商品が変わっても続けられます。",
+       "tr": "Putting the background of products into words that customers in English-speaking countries want to read is work I can keep doing even when the products I handle change.",
+       "notes": [
+        "Self-PR is in です・ます and closes, as here, with why the strength carries over to a new company. 「扱う商品が変わっても」 (\"even when the products I handle change\") tells the recruiter that the skill is not tied to knives and tableware.",
+        "The sentence before it gives the evidence (「2025年に最も反応のよかったメールは、その中の1通でした」). A concrete fact makes the claim more convincing than a self-assessment such as 「得意です」 (\"I'm good at it\")."
+       ]
+      },
+      {
+       "title": "自己PR（テストの結果を、チームの手順にする）",
+       "ja": "試した結果を残して次の判断を速くする進め方は、立ち上げたばかりのECでこそ生かせると考えています。",
+       "tr": "I believe this way of working, keeping a record of what was tested so that the next decision is faster, is most useful precisely at an online store that has just been launched.",
+       "notes": [
+        "「立ち上げたばかりのEC」 (\"an online store that has just been launched\") refers to the situation at the company you are applying to without naming it, so the closing sentence speaks to them directly. 「〜でこそ」 (\"precisely at\") adds emphasis.",
+        "「〜と考えています」 (\"I believe\") is the usual measured way to make a claim in a self-PR: confident, but not pushy."
+       ]
+      }
+     ],
+     "naturalness": [
+      {
+       "ja": "ニュースレターだけのメールに",
+       "issue": "「だけ」 (\"just\") is conversational, and without a past form it is not clear that this was the situation before you built the flows. 「のみだった」 (\"had only been\") is more written and makes the before-and-after clear.",
+       "suggestion": "ニュースレターのみだったメールに"
+      },
+      {
+       "ja": "広告運用、メール配信、英語の商品ページまでを担当し",
+       "issue": "「広告運用」 (\"running ads\") and 「メール配信」 (\"sending email\") are tasks, but 「英語の商品ページ」 (\"English product pages\") is a thing, so the list is uneven; 「まで」 (\"up to\") also reads more naturally as 「AからBまで」 (\"from A to B\"). Adding 制作 (\"creating\"), the word your work history uses, fixes both.",
+       "suggestion": "広告運用からメール配信、英語の商品ページ制作までを担当し"
+      },
+      {
+       "ja": "効いたことと効かなかったことを",
+       "issue": "「効いた」 (\"worked\") is everyday speech. In a document, 「効果があった」 (\"was effective\") sounds more businesslike.",
+       "suggestion": "効果があったことと、なかったことを"
+      }
+     ],
+     "conventions": [
+      "Jobs are listed in reverse chronological order (current job first), which is common for experienced hires; the rirekisho's work history lines always run oldest first. Write a foreign company under its official English name and add the country, as in 「Sample Home Goods, Inc.（米国）」, and write Japanese company names in full (株式会社, not (株)).",
+      "Write the career summary and the self-PR in です・ます, and the duty and achievement bullets in 体言止め. With numbers, give the period or the basis (FY2023→FY2025, 「前後3か月の比較」), and keep your own results apart from the team's, as in 「チーム全体の成果」 (\"result of the whole team\").",
+      "State your Japanese honestly and concretely. Here the summary says N3, and the skills section adds the N2 exam you plan to take in December 2026 and what you do in Japanese at work (internal chat and the weekly meeting). Japanese recruiters value this more than a vague label like 「ビジネスレベル」 (\"business level\"), and they may check your Japanese in the interview, so the document should match what you can actually do.",
+      "In writing, call the company you are applying to 「貴社」; when speaking in an interview, say 「御社」. Write 「以上」 at the end to mark the end of the document."
+     ]
+    }
    }
   },
   "rireki": {

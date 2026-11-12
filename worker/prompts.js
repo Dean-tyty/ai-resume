@@ -6,6 +6,8 @@ function answersBlock(ctx) {
   Object.keys(ctx.answers || {}).forEach((k) => { const a = String(ctx.answers[k] || '').trim(); if (a) lines.push('Q: ' + k + '\nA: ' + a); });
   return lines.length ? '\n# 追加の回答（本人）\n' + lines.join('\n') : '';
 }
+// a posting whose company is not named yet (社名非公開)
+const anonNote = (c) => (c.anon && !c.name ? '※社名非公開の求人：社名や、その会社だけの事実（理念・製品名・ニュース）を推測で書かない。志望動機・回答は、求人票にある業界・事業内容・規模・職務への関心で組み立て、「御社」「貴社」で呼ぶ。\n' : '');
 function intentBlock(ctx, forDoc) {
   const it = ctx.intent || {}; const has = (it.reason || it.axis || it.conditions || '').trim();
   if (!has) return '\n# 本人の転職の軸\n（未入力。動機や転職理由を推測で作らない）';
@@ -65,14 +67,16 @@ export function P_ANALYZE(ctx, c) {
 3. 要件に対して経歴の裏付けが弱い点は gaps に正直に書き、書類でどう扱うか（盛らずにどう書くか）を添える。
 4. episode_ids には候補者データの episodes の id だけを使う。
 5. template：応募先の業界・社風に合う書類デザインを1つ選ぶ。standard＝罫線の表組み・明朝体（金融・メーカー・官公庁など伝統的な企業）、modern＝落ち着いたゴシック体（業界を問わない）、premium＝実績ハイライトと時系列表示（IT・Web・スタートアップ・外資系・コンサルなど）、engineer＝プロジェクトごとの表（役割・規模・担当工程・開発環境）とテクニカルスキル表。応募職種が ITエンジニア（開発・インフラ・QA・PM・データなど）で、候補者データに projects がある場合は engineer を選ぶ。premium は、応募職種が数値で成果を示しにくい職種（経理・総務・法務など）の場合や、応募要件に関係する強い数値実績が候補者データに2つ未満の場合は選ばない。
+6. conditions：本人の転職の軸の「希望条件」に書かれた条件（年収・勤務地・勤務形態・勤務時間・入社時期など）ごとに、求人票の記載と照らして match を付ける。○＝合う、△＝一部だけ合う・相談次第、×＝合わない、?＝求人票に記載がない。本人が書いていない条件は出さない。希望条件が未入力なら空の配列。
+7. 求人票が「【登録用・汎用版】」で始まる場合は、特定の会社の求人ではなく、転職サイトの Web 職務経歴書・転職エージェントへの登録・スカウト用の1通。company は「登録用（汎用版）」、position は希望職種とし、values と requirements は、その職種の中途採用で一般に重視される点を一般知識から挙げる（source は "一般知識"、quote は空）。特定の会社に向けた言葉（社風・事業への共感など）は使わず、どの応募先にも出せる方針にする。conditions は空の配列。
 
 # 出力形式（JSONのみ）
-{"company":"正式な会社名","position":"応募職種","summary":"この求人が本当に求めていることを1文で（60字以内）","values":[{"label":"重視していること（15字以内）","detail":"具体的に（50字以内）","source":"求人票|企業情報|公開情報|一般知識","quote":"根拠となる原文の短い抜粋（30字以内、なければ空）"}],"requirements":[{"text":"要件（30字以内）","type":"必須|歓迎","match":"◎|○|△","evidence":"対応する経歴（30字以内）"}],"plan":[{"value":"values の label","episode_ids":["E1"],"angle":"その事例のどこをどう見せるか（60字以内）"}],"summary_angle":"職務要約の打ち出し方（60字以内）","pr_themes":["自己PRの見出し候補（20字以内）"],"keywords":["書類に自然に入れたい語"],"gaps":["裏付けが弱い点と書類での扱い方（60字以内）"],"template":"standard|modern|premium|engineer","template_reason":"選んだ理由（40字以内）"}
+{"company":"正式な会社名","position":"応募職種","summary":"この求人が本当に求めていることを1文で（60字以内）","values":[{"label":"重視していること（15字以内）","detail":"具体的に（50字以内）","source":"求人票|企業情報|公開情報|一般知識","quote":"根拠となる原文の短い抜粋（30字以内、なければ空）"}],"requirements":[{"text":"要件（30字以内）","type":"必須|歓迎","match":"◎|○|△","evidence":"対応する経歴（30字以内）"}],"conditions":[{"item":"条件の種類（10字以内）","posting":"求人票の記載（30字以内、なければ 記載なし）","wish":"本人の希望（30字以内）","match":"○|△|×|?"}],"plan":[{"value":"values の label","episode_ids":["E1"],"angle":"その事例のどこをどう見せるか（60字以内）"}],"summary_angle":"職務要約の打ち出し方（60字以内）","pr_themes":["自己PRの見出し候補（20字以内）"],"keywords":["書類に自然に入れたい語"],"gaps":["裏付けが弱い点と書類での扱い方（60字以内）"],"template":"standard|modern|premium|engineer","template_reason":"選んだ理由（40字以内）"}
 件数の目安：values 3〜5、requirements は求人票の要件すべて（最大8）、plan 2〜4、pr_themes 2〜3、keywords 5〜8。
-${uiName(ctx) ? `言語：本人は${uiName(ctx)}で読みます。company・position・keywords・quote は日本語（求人票の表記）のまま、それ以外の文章（summary、values の label と detail、requirements の text と evidence、plan の angle、summary_angle、pr_themes、gaps、template_reason）は${uiName(ctx)}で書く。source と type と match の値は上の日本語のまま。${ctx.uiLang === 'zh' ? '中国語は中国大陸で自然な表現にし、日本語の漢語をそのまま使わない（例：中堅企業→中型企业、活用→使用）。' : ''}
+${uiName(ctx) ? `言語：本人は${uiName(ctx)}で読みます。company・position・keywords・quote は日本語（求人票の表記）のまま、それ以外の文章（summary、values の label と detail、requirements の text と evidence、conditions の item と posting と wish、plan の angle、summary_angle、pr_themes、gaps、template_reason）は${uiName(ctx)}で書く。source と type と match の値は上の日本語のまま。${ctx.uiLang === 'zh' ? '中国語は中国大陸で自然な表現にし、日本語の漢語をそのまま使わない（例：中堅企業→中型企业、活用→使用）。' : ''}
 ` : ''}
 # 応募先
-会社名：${c.name || '（求人票から読み取る）'}
+会社名：${c.anon && !c.name ? '社名非公開（ヘッドハンター・エージェント経由の求人。社名を推測しない。company は「社名非公開」とする）' : c.name || '（求人票から読み取る）'}
 本人の優先度：${c.priority}
 本人からの追加指示：${c.memo || 'なし'}
 
@@ -145,9 +149,10 @@ ${GAP_RULE}
 ${engineerRules(ctx, c)}
 # 出力形式（JSONのみ）
 ${isEngineer(ctx, c) ? DOC_SCHEMA_ENG : DOC_SCHEMA}
+${isEngineer(ctx, c) ? '- 候補者データに GitHub・ポートフォリオ・技術ブログなどの URL があれば、tech の最後に「GitHub：URL」の形で1行ずつ入れる（なければ書かない。URL を作らない）。\n' : ''}
 
 # 応募先：${a.company || c.name}（${a.position || ''}）
-## 書類の方針
+${anonNote(c)}## 書類の方針
 ${J({ summary: a.summary, values: a.values, plan: a.plan, summary_angle: a.summary_angle, pr_themes: a.pr_themes, keywords: a.keywords, gaps: a.gaps })}
 ## 求人票（抜粋）
 """
@@ -208,12 +213,12 @@ ${c.research && c.research.facts && c.research.facts.length && c.research.confid
 ${uiName(ctx) ? `{"motivation":{"long":"","short":"","long_tr":"long の${uiName(ctx)}訳","short_tr":"","used":["使った公開情報の id"]},"flow":{"note":"","steps":[{"name":"","who":"","focus":""}]},"questions":[{"q":"日本語の質問","q_tr":"q の${uiName(ctx)}訳","intent":"","points":[""],"answer":"日本語の回答例","answer_easy":"同じ内容のやさしい日本語版","answer_tr":"answer の${uiName(ctx)}訳"}],"reverse":["日本語の逆質問"],"reverse_tr":["reverse の${uiName(ctx)}訳"],"cautions":[""]}
 件数：flow.steps 3〜5、questions 9、reverse 3、cautions 2〜4。
 言語：面接は日本語なので、motivation の long と short、questions の q と answer と answer_easy、reverse は日本語で書く。本人は${uiName(ctx)}で読むので、*_tr にその忠実な訳を、flow（note・name・who・focus）、intent、points、cautions は${uiName(ctx)}で書く。${trRule(ctx)}
-answer_easy：日本語が母語でない人が自分の言葉で話せるように、answer と同じ要点を、短い文（1文40字以内）・よく使う語彙（日本語能力試験 N3〜N2 程度）・敬語は「です・ます」と基本の謙譲語だけで書く（100〜160字）。`
+answer_easy：日本語が母語でない人が自分の言葉で話せるように、answer と同じ要点を、短い文（1文40字以内）・よく使う語彙（日本語能力試験 N3〜N2 程度）・敬語は「です・ます」と基本の謙譲語だけで書く（100〜160字。読み仮名は数えない）。声に出して練習できるよう、漢字が続く部分ごとに、直後に読みをひらがなで《》に入れる（例：前職《ぜんしょく》では、顧客《こきゃく》の解約率《かいやくりつ》を改善《かいぜん》しました。送り仮名は《》の外）。answer と reverse には読みを付けない。`
   : `{"motivation":{"long":"志望動機（280〜320字。転職の軸が未入力なら【要記入】を含める）","short":"志望動機（130〜160字）","used":["使った公開情報の id"]},"flow":{"note":"","steps":[{"name":"","who":"","focus":""}]},"questions":[{"q":"","intent":"質問の意図","points":["回答の要点"],"answer":"回答例"}],"reverse":["逆質問"],"cautions":["注意点と対策"]}
 件数：flow.steps 3〜5、questions 9、reverse 3、cautions 2〜4。`}
 
 # 応募先：${a.company || c.name}（${a.position || ''}）
-## 方針
+${anonNote(c)}## 方針
 ${J({ summary: a.summary, values: a.values, gaps: a.gaps })}
 ## 求人票
 """
@@ -234,6 +239,7 @@ export function P_PREP(ctx, c, i) {
   const past = c.stages.slice(0, i).map((s) => ({ step: s.name, status: s.status, date: s.date, format: s.format, interviewer: s.who, record: s.log }));
   return `あなたは日本の中途採用の面接対策コーチです（本人の優先度：${c.priority}）。応募先「${a.company || c.name}」の選考で、本人がこれまでに受けた選考の記録をもとに、次の「${st.name}」の対策を作ってください。今日の日付は${ctx.today}です。
 
+${anonNote(c)}
 # 厳守
 - 根拠は、下の選考記録・提出した職務経歴書・候補者データ・方針だけ。面接官の意図や評価は推測であることがわかる書き方にする。
 - 前回うまく答えられなかった点は、事実を盛らずに答え直す方法を示す。候補者データや記録にない具体例は足さず、必要なら【要記入：何を書くか】とする。
@@ -266,7 +272,7 @@ export function P_RK(ctx, c) {
 
 # 厳守
 - 候補者データ・本人の転職の軸・提出する職務経歴書にない事実や動機を作らない。足りない部分は【要記入：何を書くか】とする。
-- です・ます調で200〜260字。職務経歴書の自己PRの繰り返しにせず、志望動機を中心に、生かせる経験を1つ添える。
+- です・ます調で240〜300字（履歴書の欄に収まる長さ）。職務経歴書の自己PRの繰り返しにせず、志望動機を中心に、生かせる経験を1つ添える。
 - 公開情報の調査がある場合、使うのは事業・顧客・職種に関する変わりにくい事実を1つまで。ニュース・数字・日付・スローガンの引用は入れない（履歴書は提出後も残り、面接で読み返されるため）。面接用の志望動機の文をそのまま使わない（骨子は同じでよい）。
 - 書き言葉なので応募先は「貴社」と呼ぶ。本人の優先度が「併願」なら「第一志望」と書かない。
 - hope（本人希望記入欄）：本人の希望条件のうち、勤務地・勤務時間・勤務形態・職種・入社可能時期など、譲れない条件だけを「勤務地：東京都内を希望いたします。」のように1〜3文で書く。年収・待遇の希望は書かず「給与・待遇は貴社の規定に従います。」とする。希望条件が未入力か譲れない条件がなければ「貴社の規定に従います。」だけにする。
@@ -277,7 +283,7 @@ ${uiName(ctx) ? `{"motive":"","motive_tr":"motive の${uiName(ctx)}訳","hope":"
 本人は${uiName(ctx)}で読むので motive_tr・hope_tr に忠実な訳を書く（motive・hope は日本語）。${trRule(ctx)}` : '{"motive":"","hope":""}'}
 
 # 応募先：${a.company || c.name}（${a.position || ''}）（本人の優先度：${c.priority}）
-${J({ summary: a.summary, values: a.values })}
+${anonNote(c)}${J({ summary: a.summary, values: a.values })}
 ${c.pack && c.pack.motivation.long ? '# 面接用に作成済みの志望動機（参考）\n' + c.pack.motivation.long : ''}
 ${researchBlock(c)}# 提出する職務経歴書（要約と自己PR）
 ${J({ summary: (c.doc || {}).summary, pr: (c.doc || {}).pr })}

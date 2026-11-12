@@ -12,7 +12,7 @@
 import { PROMPTS } from './prompts.js';
 import { MAX_PAYLOAD, CONSENT_VERSION, SLOT_MAX, FREE_SLOT_MAX, PREVIEW, RESEARCH_PER_COMPANY, REVIEW_SITES } from './config.js';
 import { account, claimSlot, holdSlot, finishSlot, unlockSlot, credits, countUse, hasPaid, takeResearch, giveBackResearch } from './db.js';
-import { body, fail, str, sizeOf, jpDate, NO_STORE, sameCompany, sha256 } from './util.js';
+import { body, fail, str, sizeOf, jpDate, NO_STORE, sameCompany, normCo, sha256 } from './util.js';
 import { track } from './stats.js';
 import { notify } from './notify.js';
 import MOCK from './mock.json';
@@ -60,7 +60,7 @@ function cleanCompany(c) {
   if (!c || typeof c !== 'object' || !/^[a-z0-9]{4,16}$/.test(c.id || '')) return null;
   const m = c.pack && c.pack.motivation;
   return {
-    id: c.id, name: str(c.name, 120), job: str(c.job, 12000), info: str(c.info, 6000), priority: str(c.priority, 10) || '本命', memo: str(c.memo, 1500),
+    id: c.id, name: str(c.name, 120), anon: c.anon === true, job: str(c.job, 12000), info: str(c.info, 6000), priority: str(c.priority, 10) || '本命', memo: str(c.memo, 1500),
     analysis: obj(c.analysis, 40000), doc: obj(c.doc, 60000), maxPages: c.maxPages === 3 ? 3 : 2, research: obj(c.research, 24000),
     // the pages the user pointed at (job posting, official site): host names only, to tell same-name companies apart
     hosts: Array.isArray(c.hosts) ? c.hosts.slice(0, 3).map((x) => str(x, 100).toLowerCase()).filter((x) => /^[a-z0-9.-]+\.[a-z]{2,}$/.test(x)) : [],
@@ -177,7 +177,8 @@ export async function handleAI(request, env, ctxExec, auth) {
         // a re-analysis that turns out to be another company's posting is not given out under this credit
         const found = task === 'analyze' ? String(r.value.company || '') : '';
         if (slot.label && found && !sameCompany(slot.label, found)) throw new AIError('company_changed', '', { label: slot.label });
-        if (!(await finishSlot(env, auth.id, c.id, true, slot.label || found || named))) throw new AIError('no_credit');
+        const lab = [slot.label, found, named].find((x) => normCo(x)) || '';   // 社名非公開: not kept until the name is known
+        if (!(await finishSlot(env, auth.id, c.id, true, lab))) throw new AIError('no_credit');
         slot.done = true;
       }
       if (task === 'profile') track(env, 'profile', request);
