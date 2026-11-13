@@ -110,7 +110,7 @@ async function push() {
 }
 function syncUI() {
   const el = $('#sync'); if (!el) return;
-  el.textContent = !state || state.demo ? '' : !acct.user ? 'ログインすると保存されます' : acct.me && !acct.me.consent ? '同意するとアカウントに保存されます'
+  el.textContent = !state || state.demo ? '' : !acct.user ? 'ログインすると保存されます' : acct.me && !acct.me.consent ? '同意後に保存'
     : acct.conflict ? '別の端末で更新されています' : acct.full ? '容量の上限のため未保存' : acct.offline ? 'オフライン・未保存' : acct.syncing || acct.dirty ? '保存中…' : '保存済み';
   el.className = 'sync' + (acct.conflict || acct.offline || acct.full ? ' warn' : '');
 }
@@ -171,7 +171,7 @@ const overPreview = (c) => !!(acct.me && locked(c) && !c.doc && !acct.me.preview
 const previewsLeft = () => (acct.me && acct.me.free ? acct.me.free.previews : Infinity);
 const isPaid = () => !!(acct.me && acct.me.paid);
 const researchLeft = (c) => (CFG.research || 3) - ((acct.me && acct.me.research[c.id]) || 0);
-const RESUMABLE = new Set(['extract', 'analyze', 'generate', 'pack', 'prep', 'rkMotive', 'explain', 'analyzeAll', 'generateAll', 'research', 'fetchJob', 'pdf', 'docx', 'rkPdf', 'enPdf', 'enDocx', 'copyField', 'copyText', 'copyPart']);
+const RESUMABLE = new Set(['extract', 'analyze', 'generate', 'pack', 'prep', 'rkMotive', 'explain', 'analyzeAll', 'generateAll', 'research', 'fetchJob', 'pdf', 'docx', 'rkPdf', 'enPdf', 'enDocx', 'copyField', 'copyText', 'copyPart', 'taste']);
 const SHOW_ONLY = new Set();   // after a purchase these would be shown, not started (none now: using a credit is always asked first)
 // made and read on the screen before the 応募先 uses its credit; the others use it (worker/ai.js TASKS)
 const PREVIEW_TASKS = new Set(['generate', 'shorten', 'explain']);
@@ -489,7 +489,7 @@ function tailoredHTML(c) {
     state.profile && /[A-Za-z]{4,}\s[A-Za-z]{3,}/.test(state.raw || '') && !/[\u3040-\u30ff]/.test((state.raw || '').slice(0, 200)) ? '日本で働き続ける予定や、日本語での業務経験を教えてください' : '',
   ].filter(Boolean).slice(0, 4);
   const askHTML = qs.length ? `<div class="asks"><b>この会社の面接で聞かれそうな質問（求人の分析から・一部）</b><ul>${qs.map((t) => `<li>${h(t)}</li>`).join('')}</ul><p class="hint tiny" style="margin:4px 0 0">1社分を使うと、これらを含む9問前後の想定質問に、回答例・答え方のポイント（経歴にない経験は盛らずに、近い経験でどう答えるか）・やさしい日本語の版を作ります。</p></div>` : '';
-  return `${vsHTML}<div class="tailored"><b>この会社向けに作ったところ</b>${rows.map(([k, v]) => `<div><span>${h(k)}</span><span>${h(v)}</span></div>`).join('')}<p class="hint tiny" style="margin:6px 0 0">1社分を使うと、この内容に合わせた志望動機（300字・150字）、想定質問と回答例（9問前後）、逆質問、選考ごとの面接対策も作れます。</p></div>${askHTML}`;
+  return `${vsHTML}<div class="tailored"><b>この会社向けに作ったところ</b>${rows.map(([k, v]) => `<div><span>${h(k)}</span><span>${h(v)}</span></div>`).join('')}<p class="hint tiny" style="margin:6px 0 0">1社分を使うと、この内容に合わせた志望動機（300字・150字）、想定質問と回答例（9問前後）、逆質問、選考ごとの面接対策も作れます。</p></div>${c.taste || c.tasteStatus === 'run' ? tasteHTML(c, 'buy') : askHTML + tasteHTML(c, 'buy')}`;
 }
 // bought recently: a bigger pack for the difference (worker/billing.js upgradeOffer works out the same)
 function upgradeHTML(packs) {
@@ -562,6 +562,7 @@ async function ensureUnlocked(c) {
       <ul class="trust buyer">${docsFree() ? '<li>英文レジュメの作成と保存</li>' : '<li>職務経歴書・英文レジュメの保存（PDF・Word）とコピー</li>'}<li>志望動機・想定質問と回答例・逆質問、履歴書の志望動機</li><li>選考ごとの面接対策</li>${acct.me.paid ? `<li>会社の公開情報の調査（${CFG.research || 3}回まで）</li>` : ''}</ul>
       <p class="hint">この会社の分は、このあと何度作り直しても追加の利用枠はかかりません。使った1社分は戻せません。利用枠：あと${n}社分 → ${n - 1}社分</p>
       ${acct.me.paid ? '' : `<p class="hint">無料の1社分はこれだけです。${docsFree() ? '2社目からの志望動機・面接準備' : '2社目からの保存'}には利用枠の購入が必要です。応募するつもりの会社に使ってください。</p>`}
+      ${!acct.me.paid && !docsFree() && !c.general && !state.companies.some((x) => x.general) ? '<p class="hint">同じ職務経歴書で多くの会社に応募する予定（転職サイトの Web 職務経歴書・エージェント登録）なら、無料の1社分は、ステップ2の「登録用の汎用版」に使う方が向いています。</p>' : ''}
       <div class="row"><span class="spacer"></span><button class="btn" data-act="closeModal">やめる</button><button class="btn primary" data-act="unlockOk">1社分を使って続ける</button></div>`);
     modalResolve = done;
   });
@@ -607,7 +608,7 @@ async function paidReturn() {
     await new Promise((ok) => setTimeout(ok, 2500));
   }
   hideNotice();
-  if (done()) { render(); const went = runPending(); showNotice(`お支払いが完了し、利用枠を追加しました（あと${acct.me.credits}社分）。` + (went ? '' : '会社の公開情報の調査と、採用ページ URL の読み込みも使えます。')); }
+  if (done()) { render(); const went = runPending(); showNotice([`お支払いが完了し、利用枠を追加しました（あと${acct.me.credits}社分）。`, went ? '' : '会社の公開情報の調査と、採用ページ URL の読み込みも使えます。']); }
   else showNotice('お支払いの確認に時間がかかっています。数分後にページを再読み込みしてください。解決しない場合はお問い合わせください。');
 }
 async function deleteAccount() {
@@ -690,6 +691,39 @@ function normPack(p) {
     flow: { note: Sx(p.flow && p.flow.note), steps: A(p.flow && p.flow.steps).map((s) => ({ name: Sx(s.name), who: Sx(s.who), focus: Sx(s.focus) })) },
     questions: A(p.questions).map((q) => ({ q: Sx(q.q), q_tr: Sx(q.q_tr), intent: Sx(q.intent), points: A(q.points).map(Sx), answer: spoken(q.answer), answer_easy: spoken(q.answer_easy), answer_tr: Sx(q.answer_tr) })),
     reverse: A(p.reverse).map(spoken), reverse_tr: A(p.reverse_tr).map(Sx), cautions: A(p.cautions).map(Sx) };
+}
+// the free look at one company's interview prep (the short 志望動機 and one question with its answer)
+function normTaste(t) {
+  t = t || {}; const q = t.question || {};
+  return { short: Sx(t.short), short_tr: Sx(t.short_tr), q: { q: Sx(q.q), q_tr: Sx(q.q_tr), intent: Sx(q.intent), points: A(q.points).map(Sx), answer: spoken(q.answer), answer_easy: spoken(q.answer_easy), answer_tr: Sx(q.answer_tr) } };
+}
+// step 1 without a 職務経歴書 (phones): one employer at a time, seven short answers, written into the career box
+const QA_FIELDS = [
+  ['co', '会社名と、何の会社か', '例：株式会社〇〇（レディースアパレルの販売）'],
+  ['period', '働いた期間', '例：2019年4月〜現在'],
+  ['role', '職種・役職・雇用形態', '例：販売 → 2022年から店長（正社員）'],
+  ['team', '人数や規模（部下・チーム・担当した店舗やお客様の数）', '例：スタッフ8名、月の来店 約3,000人'],
+  ['work', '担当していた仕事', '例：接客販売、シフト作成、新人教育、在庫と発注、売上の集計'],
+  ['result', '数字で言える成果（売上・件数・％・順位・期間など。だいたいでも可）', '例：予算比 105%（2023年度）、リピート率 28%→35%'],
+  ['how', '工夫したこと・任されたこと', '例：購入後のお礼メッセージを全員で始めた／エリアの新人研修を担当'],
+];
+function qaFormHTML() {
+  return `<h2 id="modalTitle">質問に答えて経歴を書く</h2>
+    <p class="hint">1社ずつ答えてください。分からない欄は空のままで大丈夫です。数字は「約」「だいたい」でもかまいません（あとで確認を求められます）。</p>
+    ${QA_FIELDS.map(([k, l, ph]) => `<label for="qa-${k}">${l}</label><textarea id="qa-${k}" rows="${k === 'work' || k === 'result' || k === 'how' ? 2 : 1}" placeholder="${ph}"></textarea>`).join('')}
+    <label for="qa-skill">資格・スキル・語学（最後の1回だけで大丈夫です）</label><textarea id="qa-skill" rows="1" placeholder="例：普通自動車免許、ITパスポート勉強中、Excel（集計・グラフ）"></textarea>
+    <div class="row"><span class="spacer"></span><button class="btn" data-act="closeModal">閉じる</button><button class="btn" data-act="qaAdd" data-more="1">書き込んで、もう1社答える</button><button class="btn primary" data-act="qaAdd">書き込む</button></div>`;
+}
+function qaAdd(more) {
+  const v = (k) => (($('#qa-' + k) || {}).value || '').trim();
+  const L = [];
+  if (v('co')) L.push(`■ ${v('co')}${v('period') ? '（' + v('period') + '）' : ''}`); else if (v('period')) L.push(`■ ${v('period')}`);
+  [['role', '職種・役職'], ['team', '規模'], ['work', '担当した仕事'], ['result', '成果'], ['how', '工夫したこと・任されたこと']].forEach(([k, l]) => { if (v(k)) L.push(`${l}：${v(k)}`); });
+  if (v('skill')) L.push('', `資格・スキル・語学：${v('skill')}`);
+  if (!L.length) { toast('どれか1つは入力してください'); return; }
+  state.raw = (state.raw.trim() ? state.raw.trim() + '\n\n' : '') + L.join('\n');
+  save(); closeModal(true); render();
+  if (more) openModal(qaFormHTML()); else toast('経歴の欄に書き込みました');
 }
 function normPrep(p) {
   p = p || {};
@@ -779,6 +813,8 @@ async function extractProfile() {
     state.profileStatus = 'done';
   } catch (e) { state.profileStatus = 'err'; state.profileError = errMsg(e); }
   save(); render();
+  // on a phone the result is far below the button: brought into view
+  if (state.profileStatus === 'done' && state.step === 1 && window.innerWidth < 720) setTimeout(() => { const r = $('#result'); if (r) r.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 200);
 }
 async function analyze(c) {
   if (!state.profile) { toast('先に「経歴」で経歴を整理してください'); return; }
@@ -951,6 +987,14 @@ async function makePack(c) {
   catch (e) { c.packStatus = c.pack ? 'done' : 'err'; c.packError = errMsg(e); }
   save(); render();
 }
+async function makeTaste(c) {
+  c.tasteStatus = 'run'; c.tasteError = ''; c.tasteSince = Date.now(); render(); reBuy();
+  try { c.taste = normTaste(await ask('taste', { c }, 'taste-' + c.id)); c.tasteStatus = 'done'; }
+  catch (e) { c.tasteStatus = c.taste ? 'done' : 'err'; c.tasteError = e && e.code === 'limit' ? 'お試しで見られる回数を使い切りました。この会社の面接準備は、1社分を使って作れます。' : errMsg(e); }
+  save(); render(); reBuy();
+}
+// the purchase sheet, drawn again while it is open (the free look runs and lands in it)
+function reBuy() { if (ui.buyArgs && !$('#modal').classList.contains('hidden') && $('#modal .packs')) { const [r, k, x] = ui.buyArgs; openBuy(r, k, x); } }
 async function makePrep(c, i) {
   const s = c.stages[i];
   s.prepStatus = 'run'; s.prepError = ''; s.since = Date.now(); render();
@@ -1270,7 +1314,8 @@ async function copy(text) {
 }
 
 // ---------------- rendering helpers ----------------
-function showNotice(t) { const n = $('#notice'); n.innerHTML = '<div>' + h(t) + '<button class="x" data-act="hideNotice" aria-label="閉じる">×</button></div>'; n.classList.remove('hidden'); }
+// t: a text, or several texts (each is translated on the English / Chinese page)
+function showNotice(t) { const n = $('#notice'); n.innerHTML = '<div><span class="nt">' + [].concat(t).filter(Boolean).map((x) => `<span>${h(x)}</span>`).join('') + '</span><button class="x" data-act="hideNotice" aria-label="閉じる">×</button></div>'; n.classList.remove('hidden'); }
 function hideNotice() { $('#notice').classList.add('hidden'); }
 let toastT;
 function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('on'), 2200); }
@@ -1377,6 +1422,7 @@ function render1() {
       <input type="text" id="in-name" data-bind="name" value="${h(state.name)}" placeholder="例：佐藤 健太" autocomplete="name">${nameHint()}
       ${UI_LANG !== 'ja' ? '<p class="hint tiny">書類に載る氏名です。在留カードと同じ表記で書いてください（漢字の名前は漢字で、アルファベットの名前はアルファベットかカタカナで）。</p>' : ''}
       <div class="importer"><button class="btn small" data-act="pickResume">ファイルから読み込む（Word・PDF）</button><span class="hint tiny">今の職務経歴書や履歴書（英語・中国語のものも可）のファイルから文章を読み取ります。ファイルはこの端末の中で読むだけで、送信しません。</span><span id="importStatus" class="hint tiny"></span></div>
+      <div class="importer"><button class="btn small" data-act="qaForm">質問に答えて書く</button><span class="hint tiny">職務経歴書を持っていない方・スマホで入力する方向け。会社ごとに7つの質問に短く答えると、下の欄に書き込みます。</span></div>
       <label for="in-raw" class="lab-row">経歴・現在の職務経歴書<span class="cc" id="rawCount">${len(state.raw)}字</span></label>
       <textarea id="in-raw" data-bind="raw" rows="16" placeholder="例）2016年4月 〇〇株式会社 入社。法人営業として既存顧客80社を担当…">${h(state.raw)}</textarea>
       <details class="intent" ${intentFilled ? 'open' : ''}><summary>転職の軸（任意・志望動機と面接対策に使います）</summary>
@@ -1836,6 +1882,21 @@ function editorHTML(d, theme) {
 }
 // the translation under a Japanese text, on the English / Chinese page
 const trl = (t, tag) => (t && UI_LANG !== 'ja' ? `<${tag || 'div'} class="trl" lang="${UI_LANG === 'zh' ? 'zh-Hans' : 'en'}">${h(t)}</${tag || 'div'}>` : '');
+// before the credit: this company's short 志望動機 and one likely question, answered from the user's own career
+// (free, a few companies; ai.js 'taste'). where: 'pack' (the tab), 'buy' (the purchase sheet), 's4' (step 4)
+function tasteHTML(c, where) {
+  if (!c || c.pack || c.general || state.demo || !c.analysis) return '';
+  const t = c.taste; const id = `data-id="${c.id}"`;
+  if (c.tasteStatus === 'run') return `<div class="taste"><div class="status">${spin}この会社の志望動機と想定質問を、あなたの経歴から作っています… ${elapsed(c.tasteSince, '20〜40秒')}</div></div>`;
+  if (!t) return `<div class="taste ask"><div><b>払う前に、この会社の分を見てみる（無料）</b><div class="hint tiny" style="margin:2px 0 0">この会社の志望動機（150字）と、面接で突かれそうな質問1問への回答例を、あなたの経歴から作ります。利用枠は使いません。</div></div><button class="btn ${where === 'buy' ? '' : 'primary'}" data-act="taste" ${id}>無料で見る</button>${c.tasteError ? `<div class="status err" style="flex-basis:100%">${h(c.tasteError)}</div>` : ''}</div>`;
+  const fill = (x) => h(x).replace(/【要記入[^】]*】/g, (m) => `<mark class="todo">${m}</mark>`);
+  const q = t.q;
+  return `<div class="taste got nocopy"><b>この会社の面接準備（無料で見られる一部）</b>
+    ${t.short ? `<div class="mv"><div class="h"><span>志望動機（150字版）</span></div><div data-noi18n>${fill(t.short)}</div>${trl(t.short_tr)}</div>` : ''}
+    ${q.q ? `<div class="tq"><div class="tq-q">Q. <span data-noi18n>${h(q.q)}</span>${trl(q.q_tr, 'span')}</div>${q.intent ? `<div class="intent">意図：${h(q.intent)}</div>` : ''}${q.points.length ? `<ul>${q.points.map((x) => `<li>${h(x)}</li>`).join('')}</ul>` : ''}<div class="mv"><div class="h"><span>回答例</span></div><div data-noi18n>${fill(q.answer)}</div>${trl(q.answer_tr)}</div>${q.answer_easy ? `<details class="easy"><summary>やさしい日本語の版（自分の言葉で話す練習に）</summary><div data-noi18n class="easytx">${rubyFill(q.answer_easy)}</div></details>` : ''}</div>` : ''}
+    <p class="hint tiny" style="margin:8px 0 0">1社分を使うと、志望動機の300字版、残りの想定質問（全部で9問前後）と回答例、逆質問、突っ込まれやすい点と対策、選考ごとの面接対策を作り、コピーもできます。</p>
+    ${where === 'buy' ? '' : `<div class="row" style="margin:8px 0 0"><span class="spacer"></span><button class="btn primary" data-act="packFor" ${id}>この会社の面接準備を作る（1社分）</button></div>`}</div>`;
+}
 function packHTML(c) {
   const p = c.pack;
   let s = `<div class="card pack"><div class="row" style="margin:0"><div><h2>志望動機・面接準備</h2><div class="hint" style="margin:0">提出した職務経歴書と矛盾しない志望動機・想定問答をまとめて作ります。回答例は丸暗記用ではなく、要点と30〜40秒の話し方の例です。【要記入】は、あなたにしか書けない部分です。</div>${UI_LANG !== 'ja' ? '<div class="hint" style="margin:6px 0 0">日本企業の面接は日本語で行われることが多いです。回答例は丸暗記せず、要点を自分の日本語で話せるように練習してください。訳は、それぞれの文が何を言っているかを確かめるためのものです。【要記入】を日本語で書くのが難しければ、伝えたい内容を「経歴」や「転職の軸」に母語で書いてから作り直すと、AI が日本語にします。</div>' : ''}</div><span class="spacer"></span>
@@ -1843,6 +1904,7 @@ function packHTML(c) {
     <button class="btn ${p ? 'ghost' : 'primary'}" data-act="pack" ${c.packStatus === 'run' ? 'disabled' : ''}>${p ? '作り直す' : '作成する'}</button></div>`;
   if (c.packStatus === 'run') s += `<div class="status">${spin}${stage('pack', c.packSince)} ${elapsed(c.packSince, '1〜2分')} ${abortBtn('pack-' + c.id)}</div>`;
   if (c.packError) s += `<div class="status err">${h(c.packError)}</div>`;
+  if (!p && locked(c) && c.packStatus !== 'run') s += tasteHTML(c, 'pack');
   if (p) {
     const fill = (t) => h(t).replace(/【要記入[^】]*】/g, (m) => `<mark class="todo">${m}</mark>`);
     const cnt = (t, lo, hi) => { const n = len(t); return `<span class="${n < lo || n > hi ? 'off' : ''}">${n}字・目安${lo}〜${hi}字</span>`; };
@@ -1965,6 +2027,7 @@ function stagesHTML(c) {
   return `<div class="row" style="margin:0"><div><h2>${h(cname(c))} の選考</h2>${c.analysis && c.analysis.position ? `<div class="cc">${h(c.analysis.position)}</div>` : ''}<p class="hint" style="margin:2px 0 0">面接が終わったら、聞かれたことと詰まったことを残してください。次のステップの対策に使います。</p></div><span class="spacer"></span>
     <label style="margin:0">結果</label><select data-c4="result" style="width:auto">${['選考中', '内定', '見送り', '辞退'].map((o) => `<option value="${o}" ${c.result === o ? 'selected' : ''}>${o}</option>`).join('')}</select></div>
   ${nextPrepHTML(c, ci)}
+  ${locked(c) && !c.pack ? tasteHTML(c, 's4') : ''}
   <div class="stages">${c.stages.map((s, i) => {
     const prevLogged = c.stages.slice(0, i).some(hasLog);
     const canPrep = i > 0 && (prevLogged || c.doc) && s.status !== '通過' && s.status !== '不通過' && s.status !== '辞退';
@@ -2138,9 +2201,13 @@ document.addEventListener('click', (e) => {
     case 'extract': extractProfile(); break;
     case 'sampleRaw': state.raw = DEMO.raw; if (!state.name) state.name = DEMO.name; save(); render(); break;
     case 'ruby': ui.ruby = !!b.checked; render(); break;
+    case 'qaForm': openModal(qaFormHTML()); setTimeout(() => { const t = $('#qa-co'); if (t) t.focus(); }, 50); break;
+    case 'qaAdd': qaAdd(!!b.dataset.more); break;
+    case 'taste': { const x = company(b.dataset.id); if (x && x.tasteStatus !== 'run') makeTaste(x); break; }
+    case 'packFor': { const x = company(b.dataset.id); if (!x) break; state.active = x.id; if (x.doc) { state.step = 3; x.tab = 'pack'; save(); render(); makePack(x); } else { toast('先に、この会社の書類を作成してください（ステップ2）'); state.step = 2; save(); render(); } break; }
     case 'anon': { const x = company(b.dataset.id); if (x) { x.anon = !!b.checked; save(); render(); } break; }
     case 'addGeneral': { if (state.companies.some((x) => x.general)) break; const nc = newCompany({ general: true, priority: '併願' }); state.companies.unshift(nc); save(); render(); setTimeout(() => { const t = document.querySelector(`[data-cid="${nc.id}"] [data-cf=target]`); if (t) t.focus(); }, 50); break; }
-    case 'addCompany': { const nc = newCompany(); state.companies.unshift(nc); save(); render(); setTimeout(() => { const t = document.querySelector(`[data-cid="${nc.id}"] [data-cf=job]`); if (t) { t.scrollIntoView({ block: 'center' }); t.focus(); } }, 30); break; }
+    case 'addCompany': { const empty = state.companies.find((x) => !x.general && !x.sample && !x.job.trim() && !x.name.trim() && !x.analysis); const nc = empty || newCompany(); if (!empty) state.companies.unshift(nc); save(); render(); setTimeout(() => { const t = document.querySelector(`[data-cid="${nc.id}"] [data-cf=job]`); if (t) { t.scrollIntoView({ block: 'center' }); t.focus(); } }, 30); break; }
     case 'sampleJob': state.companies.unshift(newCompany({ name: DEMO.jobName, job: DEMO.job, info: DEMO.companyInfo, sample: true })); save(); render(); break;
     case 'delCompany': if (c && !BUSY.includes(c.status) && confirm2(b, '本当に削除（もう一度押す）')) { state.companies = state.companies.filter((x) => x !== c); save(); render(); toast('削除しました'); } break;
     case 'analyze': if (c) analyze(c); break;

@@ -168,6 +168,12 @@ ok((await page.innerText('#modal')).includes('画面で確認できています'
 ok((await page.innerText('#modal')).includes('英語での業務経験') && (await page.innerText('#modal')).includes('聞かれそうな質問'), 'purchase dialog lists questions this company\'s interview is likely to ask');
 ok((await page.innerText('#modal')).includes('差額で'), 'first purchase: says a small pack can be upgraded later');
 await shot('buy');
+// before paying: this company's short 志望動機 and one question with its answer, free, shown in the same dialog
+await page.click('#modal [data-act=taste]');
+await page.waitForSelector('#modal .taste.got', { timeout: 15000 });
+ok((await page.innerText('#modal .taste.got')).includes('中堅企業の顧客を担当した経験') && !!(await page.$('#modal .packs')), 'free look: one question with its answer, in the purchase dialog');
+ok(!(await page.$('#modal .taste.got [data-act=copyText]')), 'free look: no copy button');
+await shot('buy-taste');
 // a fourth company cannot be made before buying (2 free previews)
 ok((await api('/api/ai', { task: 'generate', ctx: { profile: { careers: [] } }, c: { id: 'zzzz9', name: '株式会社テスト九号', job: 'x', analysis: { company: '株式会社テスト九号' } } })).error.code === 'preview_limit', 'server: no third free preview');
 await page.click('[data-act=buy][data-pack=p5]');

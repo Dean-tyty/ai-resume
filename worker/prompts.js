@@ -234,6 +234,37 @@ ${J(stripDoc(c.doc))}
 # 候補者データ
 ${J(slimProfile(ctx))}${intentBlock(ctx, false)}`;
 }
+// a free look before the credit is used: the short 志望動機 and the one question this company is most likely to
+// press on, answered from the user's own career (the full pack is P_PACK)
+export function P_TASTE(ctx, c) {
+  const a = c.analysis || {};
+  return `あなたは日本の中途採用で面接官を多く務めてきた採用担当者です。以下の応募先と候補者について、面接準備の一部（志望動機の短い版と、想定質問1問）だけを作ってください。今日の日付は${ctx.today}です。
+
+# 厳守
+- 候補者データ・職務経歴書・本人の転職の軸にない具体的な手順・数字・エピソード・動機は足さない。足りない部分は【要記入：何を書くか】と書く。
+- 志望動機（short）：書き言葉の「です・ます」で130〜160字、応募先は「貴社」。理念への共感だけにせず、この職種の役割と本人の経験の接点を中心にする。
+- 質問（question）は1問だけ：方針の gaps か、requirements で match が「△」の要件のうち、この会社の面接で最も突かれやすいものを選ぶ。どちらもなければ、この求人ならではの質問にする。「自己紹介」「志望動機」「強み・弱み」は選ばない。
+- 回答例（answer）：話し言葉の「です・ます」で150〜220字、応募先は「御社」。経験が足りない点は最初に認め、近い実績でどう補うかを事実で答える。盛らない。
+- points は回答の要点を2〜3個。intent は質問の意図を1文。
+${LEVEL_RULE}
+
+# 出力形式（JSONのみ）
+${uiName(ctx) ? `{"short":"日本語の志望動機","short_tr":"short の${uiName(ctx)}訳","question":{"q":"日本語の質問","q_tr":"q の${uiName(ctx)}訳","intent":"","points":[""],"answer":"日本語の回答例","answer_easy":"同じ内容のやさしい日本語版","answer_tr":"answer の${uiName(ctx)}訳"}}
+言語：short、q、answer、answer_easy は日本語。*_tr はその忠実な${uiName(ctx)}訳。intent と points は${uiName(ctx)}で書く。${trRule(ctx)}
+answer_easy：answer と同じ要点を、短い文（1文40字以内）・よく使う語彙（日本語能力試験 N3〜N2 程度）で書く（100〜160字。読み仮名は数えない）。漢字が続く部分ごとに、直後に読みをひらがなで《》に入れる（例：前職《ぜんしょく》では、顧客《こきゃく》の解約率《かいやくりつ》を改善《かいぜん》しました）。`
+  : '{"short":"志望動機（130〜160字）","question":{"q":"","intent":"質問の意図","points":["回答の要点"],"answer":"回答例"}}'}
+
+# 応募先：${a.company || c.name}（${a.position || ''}）
+${anonNote(c)}## 方針
+${J({ summary: a.summary, values: a.values, requirements: a.requirements, gaps: a.gaps })}
+## 求人票
+"""
+${(c.job || '').slice(0, 4000)}
+"""
+${c.doc ? `## 提出する職務経歴書\n${J(stripDoc(c.doc))}\n` : ''}
+# 候補者データ
+${J(slimProfile(ctx))}${intentBlock(ctx, false)}`;
+}
 export function P_PREP(ctx, c, i) {
   const a = c.analysis || {}; const st = c.stages[i];
   const past = c.stages.slice(0, i).map((s) => ({ step: s.name, status: s.status, date: s.date, format: s.format, interviewer: s.who, record: s.log }));

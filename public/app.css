@@ -750,7 +750,7 @@ fl-header{white-space:nowrap}   /* inherited into the kit's header (its shadow D
 .refunds>div{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:8px 10px;border:1px solid var(--line2);border-radius:10px;margin:4px 0}
 .conds{margin:0 0 12px;padding:10px 14px;border:1px solid var(--line2);border-radius:12px;font-size:13px}
 .conds.bad{border-color:#d9a08b;background:#fff8f5}
-.conds>.tiny{display:block;margin:2px 0 6px;color:#9a3b1c}
+.conds>span.tiny{display:block;margin:2px 0 6px;color:#9a3b1c}
 .conds .req{margin-top:6px}
 .req .m.x{background:#fbe3dc;color:#9a3b1c}
 .formcopy{margin:10px 0 4px;font-size:13px}
@@ -772,3 +772,21 @@ fl-header{white-space:nowrap}   /* inherited into the kit's header (its shadow D
 .rubyopt input{width:auto;margin:0}
 .easytx{line-height:2.1}
 .easytx rt{font-size:.6em;color:var(--ink2)}
+/* the free look at one company's interview prep */
+.taste{margin:12px 0 0;padding:12px 14px;border:1px solid var(--line2);border-radius:12px;background:#fff;font-size:13.5px}
+.taste.ask{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between;border-style:dashed}
+.taste.got{-webkit-user-select:none;user-select:none}
+.taste .mv{margin-top:8px}
+.taste .tq{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+.taste .tq-q{font-weight:600}
+.taste ul{margin:4px 0 0;padding-left:18px}
+#notice .nt>span+span{margin-left:.3em}
+.lp-ev{max-width:1080px;margin:8px auto 28px;padding:0 20px}
+.lp-ev h2{font-size:20px;margin:0 0 4px}
+.ev-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:12px 0}
+.ev{border:1px solid var(--line2);border-radius:14px;padding:14px 16px;background:#fff;font-size:13.5px}
+.ev p{margin:2px 0 10px}
+.ev p[lang=ja]{font-size:15px;font-weight:600}
+.ev s{color:var(--ink2);font-weight:400}
+.ev-l{display:block;font-size:11.5px;color:var(--ink2);letter-spacing:.04em}
+@media (max-width:720px){.ev-grid{grid-template-columns:1fr}}

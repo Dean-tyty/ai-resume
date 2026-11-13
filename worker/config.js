@@ -12,7 +12,8 @@ export const FREE_CREDITS = 1;                         // 応募先 a new accoun
 //   requests: AI requests one locked 応募先 may use
 export const PREVIEW = { free: 2, open: 3, requests: 20 };
 // accounts that have never bought: AI requests in all (not per day), by task
-export const FREE_LIFE = { profile: 6, analyze: 10 };
+// taste: the free look at one company's 志望動機（150字）and one interview question with its answer (ai.js 'taste')
+export const FREE_LIFE = { profile: 6, analyze: 10, taste: 4 };
 export const FREE_SLOT_MAX = 40;                       // AI requests the free 応募先 may use in all (buyers: SLOT_MAX)
 // p1: the one company with an interview (dearer per company, which also makes the 5社 pack the clear choice)
 export const PACKS = {
@@ -28,7 +29,7 @@ export const REFUND_DAYS = 7;
 // buying a bigger pack within this many days of the last purchase costs only the difference (billing.js upgradeOffer)
 export const UPGRADE_DAYS = 30;
 // cost guards: AI calls per user per day (all tasks / by task), and per 応募先 per day
-export const LIMITS = { day: 150, profile: 15, analyze: 40, company: 40, research: 10, fetch: 30 };
+export const LIMITS = { day: 150, profile: 15, analyze: 40, company: 40, research: 10, fetch: 30, taste: 8 };
 // for users who have bought credits only (the cost of web searches): reading a posting from its URL, and
 // researching a company's public information — this many times per 応募先 in all
 export const RESEARCH_PER_COMPANY = 3;

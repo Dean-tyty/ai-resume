@@ -33,6 +33,8 @@ const TASKS = {
   rk: ['P_RK', 4000, true, 'unlock'],
   english: ['P_ENGLISH', 14000, true, 'unlock'],
   research: ['P_RESEARCH', 12000, true, 'unlock'],
+  // a free look before the credit: this company's 150字 志望動機 and one likely question with its answer
+  taste: ['P_TASTE', 3000, true, ''],
 };
 // for users who have bought credits only, and at most RESEARCH_PER_COMPANY times per 応募先: web searches cost
 const PAID_ONLY = new Set(['research']);
@@ -79,7 +81,7 @@ function missing(task, ctx, c, b) {
   if (task === 'research') return (c.name || (c.analysis && c.analysis.company) || c.job).trim() ? '' : 'company';   // no career data needed
   if (!ctx.profile) return 'profile';
   if (task === 'analyze') return c.job.trim() ? '' : 'job';
-  if (task === 'generate' || task === 'english') return c.analysis ? '' : 'analysis';
+  if (task === 'generate' || task === 'english' || task === 'taste') return c.analysis ? '' : 'analysis';
   if (['shorten', 'pack', 'rk', 'explain'].includes(task) && !c.doc) return 'doc';
   if (task === 'prep' && !c.stages[b.i]) return 'stage';
   return '';
