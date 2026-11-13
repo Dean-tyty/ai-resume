@@ -2192,7 +2192,8 @@ document.addEventListener('change', (e) => {
 });
 document.addEventListener('click', (e) => {
   const b = e.target.closest('[data-act]'); if (!b) return;
-  if (RESUMABLE.has(b.dataset.act)) { lastAct = Object.assign({}, b.dataset); delete lastAct.confirm; delete lastAct.orig; }
+  // (the free look asked for inside the purchase sheet does not replace the save that opened the sheet)
+  if (RESUMABLE.has(b.dataset.act) && !(b.dataset.act === 'taste' && b.closest('#modal'))) { lastAct = Object.assign({}, b.dataset); delete lastAct.confirm; delete lastAct.orig; }
   else if (!b.closest('#modal')) lastAct = null;
   lastFocus = `[data-act="${CSS.escape(b.dataset.act)}"]` + (b.dataset.id ? `[data-id="${CSS.escape(b.dataset.id)}"]` : '');
   const act = b.dataset.act; const c = b.dataset.id ? company(b.dataset.id) : company(state.step === 4 ? state.active4 : state.active);

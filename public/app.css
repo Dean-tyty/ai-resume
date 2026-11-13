@@ -368,7 +368,7 @@ body.noscroll{overflow:hidden}
 .consent li{margin:6px 0}
 .check{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;margin-top:12px;cursor:pointer}
 .check input{margin-top:5px;width:16px;height:16px;flex:none}
-.packs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0 6px}
+.packs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:14px 0 6px}
 .buy-pack{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:2px;border:1px solid var(--line2);background:#fff;border-radius:14px;padding:14px 16px;cursor:pointer;text-align:left;font:inherit;color:inherit}
 @media (hover:hover){.buy-pack:hover{border-color:var(--ink)}}
 .buy-pack.rec{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
@@ -376,6 +376,7 @@ body.noscroll{overflow:hidden}
 .buy-pack b{font-size:22px}
 .buy-pack small{font-size:12px;color:var(--ink3)}
 .buy-pack .badge{position:absolute;top:-10px;right:12px;background:var(--ink);color:#fff;font-size:12px;border-radius:999px;padding:1px 9px}
+@media (max-width:560px){.packs{grid-template-columns:1fr}.buy-pack{display:grid;grid-template-columns:1fr auto;align-items:center;gap:0 10px;padding:12px 14px}.buy-pack b{grid-column:2;grid-row:1 / span 2}.buy-pack .go{grid-column:1 / -1}}
 .status.warn{color:var(--warn);background:var(--warn-soft);border-radius:10px;padding:8px 12px}
 @media (max-width:480px){.modal .sheet{padding:22px 18px}}
 .acct{flex-wrap:nowrap;white-space:nowrap}

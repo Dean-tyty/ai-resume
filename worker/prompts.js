@@ -441,4 +441,4 @@ function researchBlock(c) {
 ${J({ overview: r.overview, hiring_context: r.hiring_context || '', facts, position: (r.position || []).map((p) => p.text), hooks: r.hooks || [], question_seeds: seeds, caveats: r.caveats || [] })}\n`;
 }
 
-export const PROMPTS = { P_PROFILE, P_ANALYZE, P_GENERATE, P_SHORTEN, P_PACK, P_PREP, P_RK, P_EXPLAIN, P_ENGLISH, P_RESEARCH };
+export const PROMPTS = { P_PROFILE, P_ANALYZE, P_GENERATE, P_SHORTEN, P_PACK, P_TASTE, P_PREP, P_RK, P_EXPLAIN, P_ENGLISH, P_RESEARCH };

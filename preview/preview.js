@@ -74,7 +74,7 @@
         }
         // as on the server: the 職務経歴書 may be made before the credit is used (a preview); the rest uses it
         const PREVIEW_TASKS = ['generate', 'shorten', 'explain'];
-        if (c && body.task !== 'analyze' && !sample && !u.slots.includes(c.id)) {
+        if (c && body.task !== 'analyze' && body.task !== 'taste' && !sample && !u.slots.includes(c.id)) {
           if (PREVIEW_TASKS.includes(body.task)) {
             if (!u.previews.includes(c.id)) {
               if (!u.paid && u.used >= FREE) return res(402, { error: { code: 'preview_limit', credits: u.credits } });
