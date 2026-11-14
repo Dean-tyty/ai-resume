@@ -1910,13 +1910,13 @@ function tasteHTML(c, where) {
   const t = c.taste; const id = `data-id="${c.id}"`;
   if (c.tasteStatus === 'run') return `<div class="taste"><div class="status">${spin}この会社の志望動機と想定質問を、あなたの経歴から作っています… ${elapsed(c.tasteSince, '20〜40秒')}</div></div>`;
   if (!t && where === 's4') return `<div class="taste ask"><div><b>面接が決まったら：この会社の面接対策</b><div class="hint tiny" style="margin:2px 0 0">想定質問と回答例（9問前後）・逆質問・突っ込まれやすい点と対策・志望動機に加えて、面接の記録から次の選考の対策も作れます（この会社で1社分・${fromPrice()}）。まず1問を、あなたの経歴で無料で試せます。</div></div><button class="btn primary" data-act="taste" ${id}>無料で1問見る</button>${c.tasteError ? `<div class="status err" style="flex-basis:100%">${h(c.tasteError)}</div>` : ''}</div>`;
-  if (!t) return `<div class="taste ask"><div><b>払う前に、この会社の分を見てみる（無料）</b><div class="hint tiny" style="margin:2px 0 0">この会社の志望動機（150字）と、面接で突かれそうな質問1問への回答例を、あなたの経歴から作ります。利用枠は使いません。</div></div><button class="btn ${where === 'buy' ? '' : 'primary'}" data-act="taste" ${id}>無料で見る</button>${c.tasteError ? `<div class="status err" style="flex-basis:100%">${h(c.tasteError)}</div>` : ''}</div>`;
+  if (!t) return `<div class="taste ask"><div><b>払う前に、この会社の分を見てみる（無料）</b><div class="hint tiny" style="margin:2px 0 0">この会社の志望動機の書き出しと、面接で突かれそうな質問1問への回答例を、あなたの経歴から作ります。利用枠は使いません。</div></div><button class="btn ${where === 'buy' ? '' : 'primary'}" data-act="taste" ${id}>無料で見る</button>${c.tasteError ? `<div class="status err" style="flex-basis:100%">${h(c.tasteError)}</div>` : ''}</div>`;
   const fill = (x) => h(x).replace(/【要記入[^】]*】/g, (m) => `<mark class="todo">${m}</mark>`);
   const q = t.q;
   return `<div class="taste got nocopy"><b>この会社の面接準備（無料で見られる一部）</b>
-    ${t.short ? `<div class="mv"><div class="h"><span>志望動機（150字版）</span></div><div data-noi18n>${fill(t.short)}</div>${trl(t.short_tr)}</div>` : ''}
+    ${t.short ? `<div class="mv"><div class="h"><span>志望動機（書き出し）</span></div><div data-noi18n>${fill(t.short)}</div>${trl(t.short_tr)}</div>` : ''}
     ${q.q ? `<div class="tq"><div class="tq-q">Q. <span data-noi18n>${h(q.q)}</span>${trl(q.q_tr, 'span')}</div>${q.intent ? `<div class="intent">意図：${h(q.intent)}</div>` : ''}${q.points.length ? `<ul>${q.points.map((x) => `<li>${h(x)}</li>`).join('')}</ul>` : ''}<div class="mv"><div class="h"><span>回答例</span></div><div data-noi18n>${fill(q.answer)}</div>${trl(q.answer_tr)}</div>${q.answer_easy ? `<details class="easy"><summary>やさしい日本語の版（自分の言葉で話す練習に）</summary><div data-noi18n class="easytx">${rubyFill(q.answer_easy)}</div></details>` : ''}</div>` : ''}
-    <p class="hint tiny" style="margin:8px 0 0">1社分を使うと、志望動機の300字版、残りの想定質問（全部で9問前後）と回答例、逆質問、突っ込まれやすい点と対策、選考ごとの面接対策を作り、コピーもできます。</p>
+    <p class="hint tiny" style="margin:8px 0 0">1社分を使うと、志望動機の全文（300字・150字）、残りの想定質問（全部で9問前後）と回答例、逆質問、突っ込まれやすい点と対策、選考ごとの面接対策を作り、コピーもできます。</p>
     ${where === 'buy' ? '' : `<div class="row" style="margin:8px 0 0"><span class="spacer"></span><button class="btn primary" data-act="packFor" ${id}>この会社の面接準備を作る（1社分）</button></div>`}</div>`;
 }
 function packHTML(c) {
@@ -2357,7 +2357,7 @@ async function readyFor(qs) {
 }
 function renderPrices() {
   const el = $('#price .prices'); const packs = CFG.packs || []; if (!el || !packs.length) return;
-  el.innerHTML = `<div class="pc"><span>最初の${CFG.free || 1}社</span><b>無料</b><small>職務経歴書・履歴書・面接準備まで</small></div>` + packs.map((p) => `<div class="pc ${p.rec ? 'rec' : ''}">${p.rec ? '<span class="badge">おすすめ</span>' : ''}<span>${h(p.label)}${p.credits === 1 ? '<em class="pc-for">面接が決まった1社の対策に</em>' : ''}</span><b>${p.price.toLocaleString('ja-JP')}円</b><small>1社あたり${Math.round(p.price / p.credits).toLocaleString('ja-JP')}円</small><small class="plus">＋ 会社の公開情報の調査・採用ページ URL の読み込み</small></div>`).join('');
+  el.innerHTML = `<div class="pc m-a"><span>最初の${CFG.free || 1}社</span><b>無料</b><small>職務経歴書・履歴書・面接準備まで</small></div><div class="pc m-b"><span>職務経歴書・履歴書</span><b>無料</b><small>2社まで作成・保存。面接準備は1問お試し</small></div>` + packs.map((p) => `<div class="pc ${p.rec ? 'rec' : ''}">${p.rec ? '<span class="badge">おすすめ</span>' : ''}<span>${h(p.label)}${p.credits === 1 ? '<em class="pc-for">面接が決まった1社の対策に</em>' : ''}</span><b>${p.price.toLocaleString('ja-JP')}円</b><small>1社あたり${Math.round(p.price / p.credits).toLocaleString('ja-JP')}円</small><small class="plus">＋ 会社の公開情報の調査・採用ページ URL の読み込み</small></div>`).join('');
 }
 async function boot() {
   renderPrices();
