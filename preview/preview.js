@@ -14,7 +14,7 @@
   });
   window.APP_CONFIG = {
     clerkKey: '', dev: true, preview: { free: 2, open: 3, requests: 20 }, free: 1, consent: 'preview', retention: 365, research: 3, freeLife: { profile: 6, analyze: 10 }, upgradeDays: 30, refundDays: 7, payMethods: ['card'],
-    packs: [{ id: 'p1', credits: 1, price: 980, label: '1社分' }, { id: 'p5', credits: 5, price: 2480, label: '5社パック', rec: true }, { id: 'p10', credits: 10, price: 3980, label: '10社パック' }],
+    packs: [{ id: 'p1', credits: 1, price: 980, label: '1社分' }, { id: 'p3', credits: 3, price: 1980, label: '3社パック' }, { id: 'p5', credits: 5, price: 2480, label: '5社パック', rec: true }, { id: 'p10', credits: 10, price: 3980, label: '10社パック' }],
     terms: 'https://www.flatland.co.jp/legal/terms/resume/', privacy: 'https://www.flatland.co.jp/privacy/',
   };
   const MOCK = __MOCK__;
@@ -24,7 +24,7 @@
   const keep = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* memory only */ } };
   const wait = (ms) => new Promise((ok) => setTimeout(ok, ms));
   const res = (status, body) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
-  const PACKS = { p1: 1, p5: 5, p10: 10 };
+  const PACKS = { p1: 1, p3: 3, p5: 5, p10: 10 };
   const realFetch = window.fetch.bind(window);
   window.fetch = async function (input, init) {
     const url = new URL(typeof input === 'string' ? input : input.url, location.href);

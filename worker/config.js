@@ -1,5 +1,5 @@
 // Product settings. Prices shown on the page come from here; the amounts actually charged come from the
-// Stripe Prices named in the secrets STRIPE_PRICE_<PACK> (STRIPE_PRICE_P1, _P5, _P10) — keep the two in
+// Stripe Prices named in the secrets STRIPE_PRICE_<PACK> (STRIPE_PRICE_P1, _P3, _P5, _P10) — keep the two in
 // step. A pack whose secret is not set is not offered (index.js configJS).
 export const PRODUCT = { id: 'resume', name: '職務経歴書AI', terms: 'https://www.flatland.co.jp/legal/terms/resume/', privacy: 'https://www.flatland.co.jp/privacy/' };
 export const CONSENT_VERSION = '2026-11-01';          // bump when the consent text changes: everyone is asked again
@@ -18,6 +18,7 @@ export const FREE_SLOT_MAX = 40;                       // AI requests the free �
 // p1: the one company with an interview (dearer per company, which also makes the 5社 pack the clear choice)
 export const PACKS = {
   p1: { credits: 1, price: 980, label: '1社分' },
+  p3: { credits: 3, price: 1980, label: '3社パック' },
   p5: { credits: 5, price: 2480, label: '5社パック', rec: true },
   p10: { credits: 10, price: 3980, label: '10社パック' },
 };

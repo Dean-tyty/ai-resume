@@ -166,7 +166,12 @@ const locked = (c) => !!c && !c.sample && !state.demo && !hasSlot(c);
 // and the other AI documents); docLocked: the documents of this 応募先 cannot leave the page yet
 const docsFree = () => (acct.me ? acct.me.variant === 'b' : !!CFG.docsFree);
 // the landing page has both models' copy (.m-a / .m-b); the class picks one
-const modelClass = () => document.documentElement.classList.toggle('docs-free', docsFree());
+const MODEL_SLOTS = new Map();   // element → the comment that marks its place
+function modelClass() {
+  const b = docsFree(); document.documentElement.classList.toggle('docs-free', b);
+  document.querySelectorAll('.m-a, .m-b').forEach((el) => { if (!MODEL_SLOTS.has(el)) { const ph = document.createComment('m'); el.before(ph); MODEL_SLOTS.set(el, ph); } });
+  MODEL_SLOTS.forEach((ph, el) => { const show = el.classList.contains('m-b') === b; if (!ph.isConnected) { MODEL_SLOTS.delete(el); return; } if (show && !el.isConnected) ph.after(el); else if (!show && el.isConnected) el.remove(); });
+}
 modelClass();
 const docLocked = (c) => locked(c) && !docsFree();
 // a new company that cannot be made before buying (the free previews are used up)
@@ -514,8 +519,8 @@ function refundsHTML() {
   const pk = (id) => ((CFG.packs || []).find((p) => p.id === id) || {}).label || id;
   return `<div class="refunds">${rs.map((r) => { const d = new Date(r.until); return `<div><span>${h(pk(r.pack))}${r.up ? '（差額）' : ''}・${r.amount.toLocaleString('ja-JP')}円は、まだ1社分も使っていないため、${d.getMonth() + 1}月${d.getDate()}日まで返金できます。</span><button class="btn small ghost" data-act="refund" data-session="${h(r.session)}">返金する</button></div>`; }).join('')}</div>`;
 }
-const PLAN = [['1', '1〜2社', 1], ['5', '3〜5社', 5], ['10', '6社以上', 10]];
-function openBuy(reason, kind, c) {
+const PLAN = [['1', '1社', 1], ['3', '2〜3社', 3], ['5', '4〜5社', 5], ['10', '6社以上', 10]];
+function openBuy(reason, kind, c, fresh) {
   const packs = CFG.packs || [];
   const left = acct.me ? acct.me.credits : null;
   if (reason || kind) savePending();
@@ -535,7 +540,7 @@ function openBuy(reason, kind, c) {
   // the prices come first (on a phone the sheet is long); what this company's credit gives follows
   openModal(`<button class="sheet-x" data-act="closeModal" aria-label="閉じる">×</button><h2 id="modalTitle">${title}</h2>
     ${reason ? `<p class="status warn">${h(reason)}</p>` : ''}${lead}
-    ${kind === 'unlock' && c ? tasteHTML(c, 'buy') : ''}
+    ${kind === 'unlock' && c ? (c.taste && c.tasteStatus !== 'run' && !fresh ? `<details class="taste-fold"><summary>無料で見た内容（志望動機の書き出し・想定質問1問）</summary>${tasteHTML(c, 'buy')}</details>` : tasteHTML(c, 'buy')) : ''}
     ${buyer ? `<p class="hint" style="margin:0 0 8px">${docsFree() ? '購入すると、すでに登録した会社にも使えます。' : '無料の1社分では使えません。購入すると、すでに登録した会社にも使えます。'}</p>` : ''}
     <div class="plan-q"><span>書き分けたい・面接対策をしたい会社：</span>${PLAN.map(([k, l]) => `<button class="${ui.plan === k ? 'on' : ''}" data-act="plan" data-v="${k}">${l}</button>`).join('')}</div>
     <div class="packs">${packs.map((p) => `<button class="buy-pack ${p === rec ? 'rec' : ''}" data-act="buy" data-pack="${h(p.id)}">${p === rec && packs.length > 1 ? '<span class="badge">おすすめ</span>' : ''}<span class="pl">${h(p.label)}</span><b>${p.price.toLocaleString('ja-JP')}円</b><small>1社あたり${Math.round(p.price / p.credits).toLocaleString('ja-JP')}円</small><span class="go">購入へ進む →</span></button>`).join('')}</div>
@@ -566,7 +571,7 @@ async function ensureUnlocked(c) {
       <p>「${h(cname(c))}」で、次のことができるようになります。</p>
       <ul class="trust buyer">${docsFree() ? '<li>英文レジュメの作成と保存</li>' : '<li>職務経歴書・英文レジュメの保存（PDF・Word）とコピー</li>'}<li>志望動機・想定質問と回答例・逆質問、履歴書の志望動機</li><li>選考ごとの面接対策</li>${acct.me.paid ? `<li>会社の公開情報の調査（${CFG.research || 3}回まで）</li>` : ''}</ul>
       <p class="hint">この会社の分は、このあと何度作り直しても追加の利用枠はかかりません。使った1社分は戻せません。利用枠：あと${n}社分 → ${n - 1}社分</p>
-      ${acct.me.paid ? '' : `<p class="hint">無料の1社分はこれだけです。${docsFree() ? '2社目からの志望動機・面接準備' : '2社目からの保存'}には利用枠の購入が必要です。応募するつもりの会社に使ってください。</p>`}
+      ${acct.me.paid ? '' : `<p class="hint">${docsFree() ? '無料の1社分はこれだけです。2社目からの志望動機・面接準備には利用枠の購入が必要です。応募するつもりの会社に使ってください。' : '無料の1社分はこれだけです。2社目からの保存には利用枠の購入が必要です。応募するつもりの会社に使ってください。'}</p>`}
       ${!acct.me.paid && !docsFree() && !c.general && !state.companies.some((x) => x.general) ? '<p class="hint">同じ職務経歴書で多くの会社に応募する予定（転職サイトの Web 職務経歴書・エージェント登録）なら、無料の1社分は、ステップ2の「登録用の汎用版」に使う方が向いています。</p>' : ''}
       <div class="row"><span class="spacer"></span><button class="btn" data-act="closeModal">やめる</button><button class="btn primary" data-act="unlockOk">1社分を使って続ける</button></div>`);
     modalResolve = done;
@@ -631,7 +636,7 @@ function acctUI() {
   if (!acct.user) { el.innerHTML = `<a class="pricelink" href="#price" data-act="toPrice">料金</a><button class="btn primary small" data-act="login">ログイン</button>`; return; }
   const n = acct.me ? acct.me.credits : null;
   const needs = n === 0 && state && !state.demo && state.companies.some((c) => c.doc && docLocked(c));
-  const pill = `<button class="credit ${needs ? 'zero' : ''}" data-act="openBuy" title="書類の保存・面接準備に使える応募先の数（追加できます）">${n == null ? '…' : `<span class="unit">利用枠 </span>あと<b>${n}</b>社`}<span class="plus">＋</span></button>`;
+  const pill = `<button class="credit ${needs ? 'zero' : ''}" data-act="openBuy" title="書類の保存・面接準備に使える応募先の数（追加できます）">${n == null ? '…' : docsFree() && n === 0 && !acct.me.paid ? '<span>面接準備の利用枠</span>' : `<span class="unit">利用枠 </span>あと<b>${n}</b>社`}<span class="plus">＋</span></button>`;
   if (CFG.dev) { el.innerHTML = pill + `<button class="btn ghost small" data-act="devLogout">${h(acct.user.id)}（ログアウト）</button>`; return; }
   if (!el.querySelector('#userBtn')) { el.innerHTML = '<span id="pill"></span><div id="userBtn"></div>'; try { window.Clerk.mountUserButton($('#userBtn')); } catch (e) { console.error(e); } }
   $('#pill').innerHTML = pill;
@@ -1015,7 +1020,7 @@ async function makeTaste(c) {
   save(); render(); reBuy();
 }
 // the purchase sheet, drawn again while it is open (the free look runs and lands in it)
-function reBuy() { if (ui.buyArgs && !$('#modal').classList.contains('hidden') && $('#modal .packs')) { const [r, k, x] = ui.buyArgs; openBuy(r, k, x); } }
+function reBuy() { if (ui.buyArgs && !$('#modal').classList.contains('hidden') && $('#modal .packs')) { const [r, k, x] = ui.buyArgs; openBuy(r, k, x, true); } }
 async function makePrep(c, i) {
   const s = c.stages[i];
   s.prepStatus = 'run'; s.prepError = ''; s.since = Date.now(); render();
@@ -1379,7 +1384,7 @@ function creditNote(c) {
   if (!acct.me || !c.analysis) return '';
   if (!acct.me.previews.has(c.id) && previewsLeft() <= 0) return `<p class="hint credit-note warn">購入前に無料で作成・確認できる応募先は${(CFG.preview && CFG.preview.free) || 2}社までです。<button class="linkbtn" data-act="openBuy" data-why="preview">利用枠を追加する</button></p>`;
   if (docsFree()) return acct.me.credits > 0 ? '<p class="hint credit-note">職務経歴書の作成・保存・コピーは無料です（利用枠は使いません）。志望動機・面接準備を作るときに、この会社で1社分を使います。</p>'
-    : `<p class="hint credit-note">職務経歴書の作成・保存・コピーは無料です。志望動機・面接準備には、利用枠の購入が必要です（${fromPrice()}）。</p>`;
+    : `<p class="hint credit-note">職務経歴書の作成・保存・コピーは、購入前は${(CFG.preview && CFG.preview.free) || 2}社まで無料です。志望動機・面接準備には、利用枠の購入が必要です（${fromPrice()}）。払う前に、1問を無料で試せます。</p>`;
   return acct.me.credits > 0 ? '<p class="hint credit-note">書類を作って画面で確認するまでは、利用枠は使いません。保存（PDF・Word）・コピーするか、志望動機・面接準備を作るときに、この会社で1社分を使います。</p>'
     : `<p class="hint credit-note">書類を作って画面で確認するのは無料です。保存・コピーと志望動機・面接準備には、利用枠の購入が必要です（${fromPrice()}）。</p>`;
 }
@@ -2360,7 +2365,7 @@ function renderPrices() {
   el.innerHTML = `<div class="pc m-a"><span>最初の${CFG.free || 1}社</span><b>無料</b><small>職務経歴書・履歴書・面接準備まで</small></div><div class="pc m-b"><span>職務経歴書・履歴書</span><b>無料</b><small>2社まで作成・保存。面接準備は1問お試し</small></div>` + packs.map((p) => `<div class="pc ${p.rec ? 'rec' : ''}">${p.rec ? '<span class="badge">おすすめ</span>' : ''}<span>${h(p.label)}${p.credits === 1 ? '<em class="pc-for">面接が決まった1社の対策に</em>' : ''}</span><b>${p.price.toLocaleString('ja-JP')}円</b><small>1社あたり${Math.round(p.price / p.credits).toLocaleString('ja-JP')}円</small><small class="plus">＋ 会社の公開情報の調査・採用ページ URL の読み込み</small></div>`).join('');
 }
 async function boot() {
-  renderPrices();
+  renderPrices(); modelClass();
   // what this browser has, shown at once; the account's copy replaces it once sign-in is known
   state = readLocal(GUEST) || fresh(); migrate(state); ui.lp = !hasOwnData(state);
   render();

@@ -368,7 +368,7 @@ body.noscroll{overflow:hidden}
 .consent li{margin:6px 0}
 .check{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;margin-top:12px;cursor:pointer}
 .check input{margin-top:5px;width:16px;height:16px;flex:none}
-.packs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:14px 0 6px}
+.packs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:14px 0 6px}
 .buy-pack{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:2px;border:1px solid var(--line2);background:#fff;border-radius:14px;padding:14px 16px;cursor:pointer;text-align:left;font:inherit;color:inherit}
 @media (hover:hover){.buy-pack:hover{border-color:var(--ink)}}
 .buy-pack.rec{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
@@ -808,3 +808,5 @@ html:not([lang=en]) .for-en{display:none}
   #printArea ul{margin:3pt 0 0;padding-left:14pt;font-size:10pt} #printArea .ps-note{font-size:9.5pt;color:#444}
   #printArea rt{font-size:6pt}
 }
+.taste-fold{margin:10px 0 0;font-size:13.5px}
+.taste-fold>summary{cursor:pointer;color:var(--ink2)}
