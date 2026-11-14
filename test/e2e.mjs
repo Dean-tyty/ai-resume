@@ -248,7 +248,7 @@ ok(/あと\s*3/.test(await page.innerText('#acct .credit')), 'credits unchanged 
 {
   const vb = 'vb_' + Date.now().toString(36);
   const me = await (await fetch(BASE + '/api/me', { headers: { authorization: 'Dev ' + vb } })).json();
-  ok(me.variant === 'b', 'variant b given to a test login');
+  ok(me.variant === 'b' && me.credits === 0, 'variant b given to a test login: documents free, no free credit');
 }
 await page.waitForFunction(() => document.querySelector('#sync').textContent === '保存済み', null, { timeout: 8000 });
 

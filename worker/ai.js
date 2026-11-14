@@ -183,6 +183,11 @@ export async function handleAI(request, env, ctxExec, auth) {
         if (!(await finishSlot(env, auth.id, c.id, true, lab))) throw new AIError('no_credit');
         slot.done = true;
       }
+      // the free look shows how the 志望動機 opens, not the whole of it (the 150字 version is part of the paid pack)
+      if (task === 'taste' && r.value && typeof r.value.short === 'string') {
+        const cut = (t, sep) => { const i = String(t).indexOf(sep); return i > 0 && i < String(t).length - 1 ? String(t).slice(0, i + 1) + '…' : String(t); };
+        r.value.short = cut(r.value.short, '。'); if (typeof r.value.short_tr === 'string') r.value.short_tr = cut(cut(r.value.short_tr, '。'), '. ').trim();
+      }
       if (task === 'profile') track(env, 'profile', request);
       if (task === 'generate') track(env, 'doc', request);
       out = { result: r.value, credits: await credits(env, auth.id), slot: slot ? slot.state : '', unlocked: !!(slot && slot.unlocked) };

@@ -27,6 +27,7 @@ function configJS(env) {
     // only the packs that can be paid for (their Stripe Price is set; all of them with the test payment)
     packs: Object.entries(PACKS).filter(([id]) => env.STRIPE_MOCK === '1' || env['STRIPE_PRICE_' + id.toUpperCase()]).map(([id, p]) => ({ id, ...p })), free: FREE_CREDITS, consent: CONSENT_VERSION,
     terms: PRODUCT.terms, privacy: PRODUCT.privacy, retention: RETENTION_DAYS, research: RESEARCH_PER_COMPANY,
+    docsFree: env.DOCS_FREE === '1',
     preview: PREVIEW, freeLife: FREE_LIFE, upgradeDays: UPGRADE_DAYS, refundDays: REFUND_DAYS,
     // payment methods turned on in the Stripe dashboard, as the page names them (var PAY_METHODS, e.g. "card,wallet,paypay,konbini")
     payMethods: String(env.PAY_METHODS || 'card').split(',').map((x) => x.trim()).filter((x) => ['card', 'wallet', 'paypay', 'konbini'].includes(x)),

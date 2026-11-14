@@ -791,3 +791,20 @@ fl-header{white-space:nowrap}   /* inherited into the kit's header (its shadow D
 .ev s{color:var(--ink2);font-weight:400}
 .ev-l{display:block;font-size:11.5px;color:var(--ink2);letter-spacing:.04em}
 @media (max-width:720px){.ev-grid{grid-template-columns:1fr}}
+html:not(.docs-free) .m-b{display:none}
+html.docs-free .m-a{display:none}
+.sheet-x{position:sticky;top:0;float:right;margin:-6px -8px 0 8px;width:34px;height:34px;border-radius:999px;border:1px solid var(--line2);background:#fff;font-size:20px;line-height:1;cursor:pointer;z-index:2}
+html[lang=en] .for-zh{display:none}
+html:not([lang=en]) .for-en{display:none}
+/* printing a part of the page (review sheet, interview sheet) */
+#printArea{display:none}
+.trprint{margin:0 0 8px;text-align:right}
+@media print{
+  body.printing>*:not(#printArea){display:none!important}
+  body.printing #printArea{display:block;font-size:11pt;line-height:1.6;color:#000}
+  #printArea h1{font-size:15pt;margin:0 0 8pt} #printArea h2{font-size:12pt;margin:12pt 0 4pt}
+  #printArea .ps-r,#printArea .qa{break-inside:avoid;margin:0 0 9pt;padding:0 0 7pt;border-bottom:.5pt solid #bbb}
+  #printArea .ps-h{font-size:9pt;color:#555} #printArea .ps-ja{font-weight:600} #printArea .ps-tr{margin-top:2pt}
+  #printArea ul{margin:3pt 0 0;padding-left:14pt;font-size:10pt} #printArea .ps-note{font-size:9.5pt;color:#444}
+  #printArea rt{font-size:6pt}
+}

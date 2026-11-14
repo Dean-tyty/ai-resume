@@ -23,9 +23,11 @@ export const PACKS = {
 };
 // a purchase can be refunded within this many days when no credit has been used since (billing.js refund)
 export const REFUND_DAYS = 7;
-// The pricing test, set by the secret/var AB_DOCS_FREE (0–100, default 0 = off): that share of new accounts gets
-// variant 'b', where saving and copying a 職務経歴書 needs no credit and the credit is for 志望動機・面接準備・
-// 履歴書の志望動機・英文レジュメ・会社調査 only. Variant shows in /api/me and in the stats (blob 7).
+// Pricing model 'b' (documents free): making, saving and copying the 職務経歴書 needs no credit (2 companies before
+// buying, as PREVIEW.free), there is no free credit, and the credit is for 志望動機・面接準備・履歴書の志望動機・
+// 英文レジュメ・会社調査, with a free look first (ai.js 'taste'). DOCS_FREE=1: every new account, and the landing
+// page says so. AB_DOCS_FREE (0–100): that share of new accounts only (a test; the landing page keeps model 'a').
+// The variant is kept on the account, shown in /api/me and in the stats (blob 7).
 // buying a bigger pack within this many days of the last purchase costs only the difference (billing.js upgradeOffer)
 export const UPGRADE_DAYS = 30;
 // cost guards: AI calls per user per day (all tasks / by task), and per 応募先 per day

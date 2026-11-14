@@ -50,18 +50,22 @@ export async function account(env, auth, { create = true } = {}) {
     else { credits = 0; pending = 1; }
   }
   const m = auth.meta || {};
-  await env.DB.prepare('INSERT OR IGNORE INTO users (id, email, credits, free_pending, src, lang, variant, created_at, seen_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)').bind(auth.id, email, credits, pending, m.src || '', m.lang || '', variantFor(env, auth), now, now).run();
+  // variant b: the 職務経歴書 is free to make and save, so there is no free credit (the credit is for 志望動機・面接準備)
+  const variant = variantFor(env, auth);
+  if (variant === 'b') { credits = 0; pending = 0; }
+  await env.DB.prepare('INSERT OR IGNORE INTO users (id, email, credits, free_pending, src, lang, variant, created_at, seen_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)').bind(auth.id, email, credits, pending, m.src || '', m.lang || '', variant, now, now).run();
   // an address that has had the free 応募先 before: no free previews either
   if (!credits && !pending && !auth.dev) await noFreePreviews(env, auth.id);
   u = await env.DB.prepare('SELECT * FROM users WHERE id = ?').bind(auth.id).first();
   return { user: u, created: true };
 }
 
-// the pricing test (config.js AB): new accounts get 'b' (documents free, the credit is for 志望動機・面接準備 and the
-// rest) at the rate set in AB_DOCS_FREE (0–100), the others 'a'. '' when the test is off. Local test logins whose
+// the pricing model of a new account (config.js): 'b' = documents free (making, saving and copying the 職務経歴書
+// needs no credit; no free credit; the credit is for 志望動機・面接準備 and the rest). DOCS_FREE=1 gives 'b' to
+// every new account; otherwise AB_DOCS_FREE (0–100) gives it to that share and 'a' to the others; '' when both are off. Local test logins whose
 // name starts with "vb_" (id dev_vb_…) are always 'b'.
 export function variantFor(env, auth) {
-  if (auth.dev && /^dev_vb_/.test(auth.id)) return 'b';
+  if (env.DOCS_FREE === '1' || (auth.dev && /^dev_vb_/.test(auth.id))) return 'b';
   const pct = Math.max(0, Math.min(100, Number(env.AB_DOCS_FREE) || 0));
   if (!pct) return '';
   return crypto.getRandomValues(new Uint32Array(1))[0] % 100 < pct ? 'b' : 'a';
